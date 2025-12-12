@@ -46,7 +46,7 @@ import Header from '@/components/dashboard/Header';
 import FilterSection from '@/components/dashboard/FilterSection';
 import StatsCard from '@/components/dashboard/StatsCard';
 import VehicleTable from '@/components/dashboard/VehicleTable';
-import WashTrendsChart from '@/components/dashboard/WashTrendsChart';
+import WashAnalytics from '@/components/dashboard/WashAnalytics';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
 
 
@@ -279,7 +279,11 @@ export default function Dashboard() {
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WashTrendsChart data={washTrendsData} />
+          <WashAnalytics 
+            data={washTrendsData} 
+            vehicles={enrichedVehicles}
+            scans={scans}
+          />
           <VehiclePerformanceChart vehicles={enrichedVehicles} />
         </div>
       </main>
