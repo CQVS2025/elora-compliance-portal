@@ -18,7 +18,7 @@ async function fetchSites(customerId) {
   const response = await base44.functions.invoke('elora_sites', params);
   return response.data.map(s => ({
     id: s.ref,
-    name: s.name
+    name: s.siteName || s.name
   }));
 }
 
