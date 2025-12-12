@@ -1,6 +1,7 @@
 import Dashboard from './pages/Dashboard';
 import MobileDashboard from './pages/MobileDashboard';
 import NotificationSettings from './pages/NotificationSettings';
+import SiteAnalytics from './pages/SiteAnalytics';
 import __Layout from './Layout.jsx';
 
 
@@ -8,6 +9,7 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "MobileDashboard": MobileDashboard,
     "NotificationSettings": NotificationSettings,
+    "SiteAnalytics": SiteAnalytics,
 }
 
 export const pagesConfig = {
