@@ -11,8 +11,12 @@ Deno.serve(async (req) => {
     const siteId = url.searchParams.get('site_id');
 
     const params = new URLSearchParams({ status: '1' }); // active only
-    if (customerId && customerId !== 'all') params.append('customer', customerId);
-    if (siteId && siteId !== 'all') params.append('site', siteId);
+    if (customerId && customerId !== 'all') {
+      params.append('customer', customerId);
+    }
+    if (siteId && siteId !== 'all') {
+      params.append('site', siteId);
+    }
 
     const response = await fetch(`https://www.elora.com.au/api/vehicles?${params.toString()}`, {
       headers: {
