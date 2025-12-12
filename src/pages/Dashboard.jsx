@@ -49,6 +49,7 @@ import VehicleTable from '@/components/dashboard/VehicleTable';
 import WashAnalytics from '@/components/dashboard/WashAnalytics';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
 import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
+import SiteManagement from '@/components/sites/SiteManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
@@ -273,9 +274,10 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            <TabsTrigger value="sites">Sites</TabsTrigger>
           </TabsList>
 
           <TabsContent value="compliance" className="space-y-6">
@@ -301,7 +303,11 @@ export default function Dashboard() {
           <TabsContent value="maintenance" className="mt-6">
             <MaintenanceSection vehicles={enrichedVehicles} />
           </TabsContent>
-        </Tabs>
+
+          <TabsContent value="sites" className="mt-6">
+            <SiteManagement customers={customers} />
+          </TabsContent>
+          </Tabs>
       </main>
 
 
