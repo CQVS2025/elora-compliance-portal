@@ -23,19 +23,14 @@ export default function Header({ onNotificationClick }) {
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left Section */}
         <div className="flex items-center gap-3">
-          <div className="bg-white rounded-lg px-4 py-2 flex items-center justify-center" style={{ width: '80px', height: '48px' }}>
-            <svg viewBox="0 0 40 40" className="w-8 h-8">
-              <circle cx="20" cy="20" r="18" fill="url(#logoGradient)" />
-              <path d="M12 20 L20 12 L28 20 L20 28 Z" fill="white" opacity="0.9" />
-              <defs>
-                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#7CB342" />
-                  <stop offset="100%" stopColor="#9CCC65" />
-                </linearGradient>
-              </defs>
-            </svg>
+          <div className="bg-white rounded-xl px-5 py-3 flex items-center gap-3 shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#7CB342] to-[#9CCC65] rounded-lg flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
+                <path d="M12 2 L22 12 L12 22 L2 12 Z" />
+              </svg>
+            </div>
+            <span className="text-[#0F172A] font-bold text-xl tracking-tight">ELORA</span>
           </div>
-          <span className="text-white font-bold text-base tracking-wide">ELORA</span>
         </div>
 
         {/* Center Section */}
