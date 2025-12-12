@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Truck, CheckCircle, Droplet, Users, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
-import { fetchCustomers, fetchSites, fetchVehicles, fetchScans } from '@/utils/eloraApi';
+import { fetchCustomers, fetchSites, fetchVehicles, fetchScans } from '@/components/eloraApi';
 
 import Header from '@/components/dashboard/Header';
 import FilterSection from '@/components/dashboard/FilterSection';
