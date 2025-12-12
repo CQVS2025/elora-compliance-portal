@@ -1,37 +1,33 @@
-export default async function handler(request, context) {
-  const { secrets, query } = context;
-  
+Deno.serve(async (req) => {
   try {
-    const params = new URLSearchParams();
-    if (query.customer_id) params.append('customer_id', query.customer_id);
+    const apiKey = Deno.env.get("ELORA_API_KEY");
     
-    const url = `https://www.elora.com.au/api/sites${params.toString() ? '?' + params.toString() : ''}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
+    if (!apiKey) {
+      return Response.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
+    const url = new URL(req.url);
+    const customerId = url.searchParams.get('customer_id');
+
+    let apiUrl = 'https://noodlio.eloratracksolutions.com/api/v1/sites';
+    if (customerId) {
+      apiUrl += `?customer_id=${customerId}`;
+    }
+
+    const response = await fetch(apiUrl, {
       headers: {
-        'X-API-Key': secrets.ELORA_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       }
     });
 
     if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: { error: 'Failed to fetch sites from Elora API' }
-      };
+      throw new Error(`Elora API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    
-    return {
-      statusCode: 200,
-      body: data
-    };
+    return Response.json(data);
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message }
-    };
+    return Response.json({ error: error.message }, { status: 500 });
   }
-}
+});

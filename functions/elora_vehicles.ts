@@ -1,40 +1,39 @@
-export default async function handler(request, context) {
-  const { secrets, query } = context;
-  
+Deno.serve(async (req) => {
   try {
+    const apiKey = Deno.env.get("ELORA_API_KEY");
+    
+    if (!apiKey) {
+      return Response.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
+    const url = new URL(req.url);
+    const customerId = url.searchParams.get('customer_id');
+    const siteId = url.searchParams.get('site_id');
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+
     const params = new URLSearchParams();
-    if (query.customer_id) params.append('customer_id', query.customer_id);
-    if (query.site_id) params.append('site_id', query.site_id);
-    if (query.start_date) params.append('start_date', query.start_date);
-    if (query.end_date) params.append('end_date', query.end_date);
-    
-    const url = `https://www.elora.com.au/api/vehicles${params.toString() ? '?' + params.toString() : ''}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
+    if (customerId) params.append('customer_id', customerId);
+    if (siteId) params.append('site_id', siteId);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const apiUrl = `https://noodlio.eloratracksolutions.com/api/v1/vehicles?${params.toString()}`;
+
+    const response = await fetch(apiUrl, {
       headers: {
-        'X-API-Key': secrets.ELORA_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       }
     });
 
     if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: { error: 'Failed to fetch vehicles from Elora API' }
-      };
+      throw new Error(`Elora API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    
-    return {
-      statusCode: 200,
-      body: data
-    };
+    return Response.json(data);
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message }
-    };
+    return Response.json({ error: error.message }, { status: 500 });
   }
-}
+});

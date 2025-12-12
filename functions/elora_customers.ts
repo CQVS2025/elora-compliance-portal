@@ -1,32 +1,25 @@
-export default async function handler(request, context) {
-  const { secrets } = context;
-  
+Deno.serve(async (req) => {
   try {
-    const response = await fetch('https://www.elora.com.au/api/customers', {
-      method: 'GET',
+    const apiKey = Deno.env.get("ELORA_API_KEY");
+    
+    if (!apiKey) {
+      return Response.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
+    const response = await fetch('https://noodlio.eloratracksolutions.com/api/v1/customers', {
       headers: {
-        'X-API-Key': secrets.ELORA_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       }
     });
 
     if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: { error: 'Failed to fetch customers from Elora API' }
-      };
+      throw new Error(`Elora API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    
-    return {
-      statusCode: 200,
-      body: data
-    };
+    return Response.json(data);
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message }
-    };
+    return Response.json({ error: error.message }, { status: 500 });
   }
-}
+});

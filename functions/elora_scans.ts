@@ -1,39 +1,37 @@
-export default async function handler(request, context) {
-  const { secrets, query } = context;
-  
+Deno.serve(async (req) => {
   try {
+    const apiKey = Deno.env.get("ELORA_API_KEY");
+    
+    if (!apiKey) {
+      return Response.json({ error: 'API key not configured' }, { status: 500 });
+    }
+
+    const url = new URL(req.url);
+    const vehicleId = url.searchParams.get('vehicle_id');
+    const startDate = url.searchParams.get('start_date');
+    const endDate = url.searchParams.get('end_date');
+
     const params = new URLSearchParams();
-    if (query.vehicle_id) params.append('vehicle_id', query.vehicle_id);
-    if (query.start_date) params.append('start_date', query.start_date);
-    if (query.end_date) params.append('end_date', query.end_date);
-    
-    const url = `https://www.elora.com.au/api/scans${params.toString() ? '?' + params.toString() : ''}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
+    if (vehicleId) params.append('vehicle_id', vehicleId);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const apiUrl = `https://noodlio.eloratracksolutions.com/api/v1/scans?${params.toString()}`;
+
+    const response = await fetch(apiUrl, {
       headers: {
-        'X-API-Key': secrets.ELORA_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
       }
     });
 
     if (!response.ok) {
-      return {
-        statusCode: response.status,
-        body: { error: 'Failed to fetch scans from Elora API' }
-      };
+      throw new Error(`Elora API error: ${response.statusText}`);
     }
 
     const data = await response.json();
-    
-    return {
-      statusCode: 200,
-      body: data
-    };
+    return Response.json(data);
   } catch (error) {
-    return {
-      statusCode: 500,
-      body: { error: error.message }
-    };
+    return Response.json({ error: error.message }, { status: 500 });
   }
-}
+});
