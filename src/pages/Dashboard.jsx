@@ -48,7 +48,7 @@ import StatsCard from '@/components/dashboard/StatsCard';
 import VehicleTable from '@/components/dashboard/VehicleTable';
 import WashTrendsChart from '@/components/dashboard/WashTrendsChart';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
-import VehicleDetailModal from '@/components/dashboard/VehicleDetailModal';
+
 
 export default function Dashboard() {
   const [selectedCustomer, setSelectedCustomer] = useState('all');
@@ -59,7 +59,7 @@ export default function Dashboard() {
   });
   const [activePeriod, setActivePeriod] = useState('Month');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
 
   // Update date range when period changes
   useEffect(() => {
@@ -272,7 +272,7 @@ export default function Dashboard() {
         {/* Vehicle Table */}
         <VehicleTable
           vehicles={enrichedVehicles}
-          onVehicleClick={setSelectedVehicle}
+          scans={scans}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
         />
@@ -284,12 +284,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {/* Vehicle Detail Modal */}
-      <VehicleDetailModal
-        vehicle={selectedVehicle}
-        open={!!selectedVehicle}
-        onClose={() => setSelectedVehicle(null)}
-      />
+
     </div>
   );
 }

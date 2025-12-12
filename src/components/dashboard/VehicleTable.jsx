@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
 
-export default function VehicleTable({ vehicles, onVehicleClick, searchQuery, setSearchQuery }) {
+export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const itemsPerPage = 10;
 
   const handleSort = (field) => {
@@ -68,6 +69,13 @@ export default function VehicleTable({ vehicles, onVehicleClick, searchQuery, se
     return sortDirection === 'asc' ? 
       <ChevronUp className="w-4 h-4 inline ml-1" /> : 
       <ChevronDown className="w-4 h-4 inline ml-1" />;
+  };
+
+  const getVehicleScans = (vehicleRef) => {
+    if (!scans) return [];
+    return scans
+      .filter(scan => scan.vehicleRef === vehicleRef)
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   };
 
   const columns = [
@@ -131,53 +139,109 @@ export default function VehicleTable({ vehicles, onVehicleClick, searchQuery, se
               {paginatedVehicles.map((vehicle, index) => {
                 const isCompliant = vehicle.washes_completed >= vehicle.target;
                 const progress = Math.min(100, Math.round((vehicle.washes_completed / vehicle.target) * 100));
+                const isExpanded = expandedVehicleId === vehicle.id;
+                const vehicleScans = getVehicleScans(vehicle.id);
                 
                 return (
-                  <motion.tr
-                    key={vehicle.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2, delay: index * 0.03 }}
-                    onClick={() => onVehicleClick(vehicle)}
-                    className={`border-b border-slate-100 cursor-pointer transition-colors hover:bg-[rgba(124,179,66,0.08)] ${
-                      index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
-                    }`}
-                  >
-                    <td className="px-4 py-4 font-semibold text-slate-800">{vehicle.name}</td>
-                    <td className="px-4 py-4 font-mono text-sm text-slate-500">{vehicle.rfid}</td>
-                    <td className="px-4 py-4 text-slate-700">{vehicle.site_name}</td>
-                    <td className="px-4 py-4 text-slate-800">{vehicle.washes_completed}</td>
-                    <td className="px-4 py-4 text-slate-500">{vehicle.target}</td>
-                    <td className="px-4 py-4">
-                      <Badge 
-                        className={`px-3 py-1 text-xs font-medium ${
-                          isCompliant 
-                            ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
-                            : 'bg-red-500 text-white hover:bg-red-600'
-                        }`}
-                      >
-                        {isCompliant ? 'Compliant' : 'Non-Compliant'}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-4 w-32">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ 
-                              width: `${progress}%`,
-                              background: 'linear-gradient(90deg, #7CB342 0%, #9CCC65 100%)'
-                            }}
+                  <React.Fragment key={vehicle.id}>
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, delay: index * 0.03 }}
+                      onClick={() => setExpandedVehicleId(isExpanded ? null : vehicle.id)}
+                      className={`border-b border-slate-100 cursor-pointer transition-colors hover:bg-[rgba(124,179,66,0.08)] ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'
+                      } ${isExpanded ? 'bg-[rgba(124,179,66,0.08)]' : ''}`}
+                    >
+                      <td className="px-4 py-4 font-semibold text-slate-800">
+                        <div className="flex items-center gap-2">
+                          <ChevronRightIcon 
+                            className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                           />
+                          {vehicle.name}
                         </div>
-                        <span className="text-xs text-slate-500 w-10">{progress}%</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-sm text-slate-500">
-                      {moment(vehicle.last_scan).fromNow()}
-                    </td>
-                  </motion.tr>
+                      </td>
+                      <td className="px-4 py-4 font-mono text-sm text-slate-500">{vehicle.rfid}</td>
+                      <td className="px-4 py-4 text-slate-700">{vehicle.site_name}</td>
+                      <td className="px-4 py-4 text-slate-800">{vehicle.washes_completed}</td>
+                      <td className="px-4 py-4 text-slate-500">{vehicle.target}</td>
+                      <td className="px-4 py-4">
+                        <Badge 
+                          className={`px-3 py-1 text-xs font-medium ${
+                            isCompliant 
+                              ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
+                              : 'bg-red-500 text-white hover:bg-red-600'
+                          }`}
+                        >
+                          {isCompliant ? 'Compliant' : 'Non-Compliant'}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-4 w-32">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${progress}%`,
+                                background: 'linear-gradient(90deg, #7CB342 0%, #9CCC65 100%)'
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-slate-500 w-10">{progress}%</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-slate-500">
+                        {moment(vehicle.last_scan).fromNow()}
+                      </td>
+                    </motion.tr>
+                    
+                    {isExpanded && (
+                      <motion.tr
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="bg-slate-50 border-b border-slate-100"
+                      >
+                        <td colSpan={8} className="px-4 py-4">
+                          <div className="ml-6 bg-white rounded-lg border border-slate-200 p-4">
+                            <h3 className="text-sm font-bold text-slate-800 mb-3">Wash History</h3>
+                            {vehicleScans.length === 0 ? (
+                              <p className="text-sm text-slate-500">No wash history available for the selected period.</p>
+                            ) : (
+                              <div className="space-y-2 max-h-64 overflow-y-auto">
+                                {vehicleScans.map((scan, scanIndex) => (
+                                  <div 
+                                    key={scanIndex}
+                                    className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors"
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div>
+                                        <p className="text-sm font-semibold text-slate-800">
+                                          {moment(scan.timestamp).format('MMM D, YYYY')}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                          {moment(scan.timestamp).format('h:mm A')}
+                                        </p>
+                                      </div>
+                                      <div className="h-8 w-px bg-slate-200" />
+                                      <div>
+                                        <p className="text-sm text-slate-700">{scan.siteName || vehicle.site_name}</p>
+                                        <p className="text-xs text-slate-500">Site</p>
+                                      </div>
+                                    </div>
+                                    <Badge className="bg-[#7CB342]/10 text-[#7CB342] hover:bg-[#7CB342]/20">
+                                      {scan.washType || scan.washNumber || 'Wash'}
+                                    </Badge>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </AnimatePresence>
