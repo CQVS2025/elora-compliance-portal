@@ -12,11 +12,11 @@ Deno.serve(async (req) => {
     const endDate = url.searchParams.get('end_date');
 
     const params = new URLSearchParams();
-    if (vehicleId) params.append('vehicle_id', vehicleId);
+    if (vehicleId && vehicleId !== 'all') params.append('vehicle_id', vehicleId);
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const apiUrl = `https://www.elora.com.au/api/scans?${params.toString()}`;
+    const apiUrl = `https://www.elora.com.au/api/scans${params.toString() ? '?' + params.toString() : ''}`;
 
     const response = await fetch(apiUrl, {
       headers: {
@@ -26,12 +26,32 @@ Deno.serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Elora API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`Elora API error (${response.status}):`, errorText);
+      return Response.json({ 
+        error: `Elora API error: ${response.status}`,
+        details: errorText 
+      }, { status: response.status });
     }
 
     const data = await response.json();
-    return Response.json(data.data || []);
+    
+    if (Array.isArray(data)) {
+      return Response.json(data);
+    } else if (data.body && Array.isArray(data.body)) {
+      return Response.json(data.body);
+    } else if (data.data && Array.isArray(data.data)) {
+      return Response.json(data.data);
+    } else {
+      console.warn('Unexpected response structure:', data);
+      return Response.json([]);
+    }
+    
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Server error:', error);
+    return Response.json({ 
+      error: error.message,
+      stack: error.stack 
+    }, { status: 500 });
   }
 });
