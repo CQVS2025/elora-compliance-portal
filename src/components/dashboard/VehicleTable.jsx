@@ -8,8 +8,10 @@ import moment from 'moment';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
 import MaintenanceModal from '@/components/maintenance/MaintenanceModal';
+import { usePermissions } from '@/components/auth/PermissionGuard';
 
 export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
+  const permissions = usePermissions();
   const queryClient = useQueryClient();
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
   const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
@@ -153,14 +155,16 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                 className="pl-10 w-64 border-slate-200 focus-visible:ring-[#7CB342]"
               />
             </div>
-            <Button 
-              variant="outline" 
-              onClick={exportToCSV}
-              className="border-[#7CB342] text-[#7CB342] hover:bg-[#7CB342] hover:text-white transition-all duration-300"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </Button>
+            {permissions.canExportData && (
+              <Button 
+                variant="outline" 
+                onClick={exportToCSV}
+                className="border-[#7CB342] text-[#7CB342] hover:bg-[#7CB342] hover:text-white transition-all duration-300"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -303,14 +307,16 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                             <div className="bg-white rounded-lg border border-slate-200 p-4">
                               <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-slate-800">Maintenance History</h3>
-                                <Button
-                                  size="sm"
-                                  onClick={(e) => handleAddMaintenance(vehicle, e)}
-                                  className="bg-[#7CB342] hover:bg-[#689F38]"
-                                >
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Add Service
-                                </Button>
+                                {permissions.canEditVehicles && (
+                                  <Button
+                                    size="sm"
+                                    onClick={(e) => handleAddMaintenance(vehicle, e)}
+                                    className="bg-[#7CB342] hover:bg-[#689F38]"
+                                  >
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Add Service
+                                  </Button>
+                                )}
                               </div>
                               {vehicleMaintenance.length === 0 ? (
                                 <p className="text-sm text-slate-500">No maintenance records yet</p>

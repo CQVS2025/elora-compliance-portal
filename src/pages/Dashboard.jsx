@@ -51,10 +51,13 @@ import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceCh
 import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
+import RoleManagement from '@/components/admin/RoleManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
 
 
 export default function Dashboard() {
+  const permissions = usePermissions();
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [dateRange, setDateRange] = useState({
@@ -191,21 +194,24 @@ export default function Dashboard() {
     });
   }, [vehicles, washCounts]);
 
+  // Apply permission-based filtering
+  const { filteredVehicles, filteredSites } = useFilteredData(enrichedVehicles, allSites);
+
   // Calculate stats
   const stats = useMemo(() => {
-    const compliantCount = enrichedVehicles.filter(v => v.washes_completed >= v.target).length;
-    const totalWashes = enrichedVehicles.reduce((sum, v) => sum + (v.washes_completed || 0), 0);
-    const activeDriversCount = enrichedVehicles.filter(v => v.washes_completed > 0).length;
+    const compliantCount = filteredVehicles.filter(v => v.washes_completed >= v.target).length;
+    const totalWashes = filteredVehicles.reduce((sum, v) => sum + (v.washes_completed || 0), 0);
+    const activeDriversCount = filteredVehicles.filter(v => v.washes_completed > 0).length;
     
     return {
-      totalVehicles: enrichedVehicles.length,
-      complianceRate: enrichedVehicles.length > 0 
-        ? Math.round((compliantCount / enrichedVehicles.length) * 100) 
+      totalVehicles: filteredVehicles.length,
+      complianceRate: filteredVehicles.length > 0 
+        ? Math.round((compliantCount / filteredVehicles.length) * 100) 
         : 0,
       monthlyWashes: totalWashes,
       activeDrivers: activeDriversCount,
     };
-  }, [enrichedVehicles]);
+  }, [filteredVehicles]);
 
   const isLoading = customersLoading || sitesLoading || vehiclesLoading;
 
@@ -255,7 +261,7 @@ export default function Dashboard() {
         {/* Filters */}
         <FilterSection
           customers={customers}
-          sites={allSites}
+          sites={filteredSites}
           selectedCustomer={selectedCustomer}
           setSelectedCustomer={setSelectedCustomer}
           selectedSite={selectedSite}
@@ -275,17 +281,18 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsList className={`grid w-full ${permissions.canManageUsers ? 'max-w-4xl grid-cols-5' : 'max-w-3xl grid-cols-4'}`}>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="sites">Sites</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+            {permissions.canViewMaintenance && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
+            {permissions.canManageSites && <TabsTrigger value="sites">Sites</TabsTrigger>}
+            {permissions.canViewReports && <TabsTrigger value="reports">Reports</TabsTrigger>}
+            {permissions.canManageUsers && <TabsTrigger value="users">Users</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="compliance" className="space-y-6">
             {/* Vehicle Table */}
             <VehicleTable
-              vehicles={enrichedVehicles}
+              vehicles={filteredVehicles}
               scans={scans}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -295,24 +302,44 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <WashAnalytics 
                 data={washTrendsData} 
-                vehicles={enrichedVehicles}
+                vehicles={filteredVehicles}
                 scans={scans}
               />
-              <VehiclePerformanceChart vehicles={enrichedVehicles} />
+              <VehiclePerformanceChart vehicles={filteredVehicles} />
             </div>
           </TabsContent>
 
-          <TabsContent value="maintenance" className="mt-6">
-            <MaintenanceSection vehicles={enrichedVehicles} />
-          </TabsContent>
+          {permissions.canViewMaintenance && (
+            <TabsContent value="maintenance" className="mt-6">
+              <PermissionGuard require="canViewMaintenance">
+                <MaintenanceSection vehicles={filteredVehicles} />
+              </PermissionGuard>
+            </TabsContent>
+          )}
 
-          <TabsContent value="sites" className="mt-6">
-            <SiteManagement customers={customers} vehicles={enrichedVehicles} />
-          </TabsContent>
+          {permissions.canManageSites && (
+            <TabsContent value="sites" className="mt-6">
+              <PermissionGuard require="canManageSites">
+                <SiteManagement customers={customers} vehicles={enrichedVehicles} />
+              </PermissionGuard>
+            </TabsContent>
+          )}
 
-          <TabsContent value="reports" className="mt-6">
-            <ReportsDashboard vehicles={enrichedVehicles} scans={scans} />
-          </TabsContent>
+          {permissions.canViewReports && (
+            <TabsContent value="reports" className="mt-6">
+              <PermissionGuard require="canViewReports">
+                <ReportsDashboard vehicles={filteredVehicles} scans={scans} />
+              </PermissionGuard>
+            </TabsContent>
+          )}
+
+          {permissions.canManageUsers && (
+            <TabsContent value="users" className="mt-6">
+              <PermissionGuard require="canManageUsers">
+                <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
+              </PermissionGuard>
+            </TabsContent>
+          )}
           </Tabs>
       </main>
 
