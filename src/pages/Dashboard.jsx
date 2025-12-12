@@ -7,19 +7,25 @@ import { base44 } from "@/api/base44Client";
 
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
-  return response.data;
+  return response.data.map(c => ({
+    id: c.ref,
+    name: c.name
+  }));
 }
 
 async function fetchSites(customerId) {
-  const params = customerId ? { customer_id: customerId } : {};
+  const params = customerId && customerId !== 'all' ? { customer_id: customerId } : {};
   const response = await base44.functions.invoke('elora_sites', params);
-  return response.data;
+  return response.data.map(s => ({
+    id: s.ref,
+    name: s.name
+  }));
 }
 
 async function fetchVehicles({ customerId, siteId, startDate, endDate } = {}) {
   const params = {};
-  if (customerId) params.customer_id = customerId;
-  if (siteId) params.site_id = siteId;
+  if (customerId && customerId !== 'all') params.customer_id = customerId;
+  if (siteId && siteId !== 'all') params.site_id = siteId;
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
   
@@ -83,14 +89,14 @@ export default function Dashboard() {
 
   const { data: allSites = [], isLoading: sitesLoading } = useQuery({
     queryKey: ['sites', selectedCustomer],
-    queryFn: () => fetchSites(selectedCustomer !== 'all' ? selectedCustomer : undefined),
+    queryFn: () => fetchSites(selectedCustomer),
   });
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
     queryKey: ['vehicles', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
     queryFn: () => fetchVehicles({
-      customerId: selectedCustomer !== 'all' ? selectedCustomer : undefined,
-      siteId: selectedSite !== 'all' ? selectedSite : undefined,
+      customerId: selectedCustomer,
+      siteId: selectedSite,
       startDate: dateRange.start,
       endDate: dateRange.end
     }),
@@ -129,6 +135,11 @@ export default function Dashboard() {
     }
     return days;
   }, [scans, dateRange]);
+
+  // Reset site when customer changes
+  useEffect(() => {
+    setSelectedSite('all');
+  }, [selectedCustomer]);
 
   // Create site lookup map
   const sitesMap = useMemo(() => {
