@@ -16,6 +16,8 @@ export default function AssignVehiclesModal({ open, onClose, site, vehicles, onS
     if (open && site) {
       const assigned = vehicles.filter(v => v.site_id === site.id).map(v => v.id);
       setSelectedVehicles(assigned);
+    } else {
+      setSelectedVehicles([]);
     }
   }, [open, site, vehicles]);
 
@@ -64,17 +66,19 @@ export default function AssignVehiclesModal({ open, onClose, site, vehicles, onS
   };
 
   const filteredVehicles = vehicles.filter(v =>
-    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.rfid.toLowerCase().includes(searchQuery.toLowerCase())
+    v.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.rfid?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const assignedCount = selectedVehicles.length;
+
+  if (!site) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Assign Vehicles to {site?.name}</DialogTitle>
+          <DialogTitle>Assign Vehicles to {site.name}</DialogTitle>
           <p className="text-sm text-slate-600">
             Select which vehicles should be assigned to this site
           </p>

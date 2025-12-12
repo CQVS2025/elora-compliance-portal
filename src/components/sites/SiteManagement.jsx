@@ -58,7 +58,7 @@ export default function SiteManagement({ customers, vehicles }) {
   };
 
   const filteredSites = sites.filter(site =>
-    site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    site.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (site.customer_name && site.customer_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (site.city && site.city.toLowerCase().includes(searchQuery.toLowerCase()))
   );

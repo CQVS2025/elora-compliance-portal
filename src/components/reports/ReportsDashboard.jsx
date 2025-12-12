@@ -41,6 +41,16 @@ export default function ReportsDashboard({ vehicles, scans }) {
 
   // Fleet Compliance Analysis
   const complianceStats = useMemo(() => {
+    if (!vehicles || vehicles.length === 0) {
+      return {
+        compliantVehicles: 0,
+        nonCompliantVehicles: 0,
+        totalVehicles: 0,
+        complianceRate: 0,
+        trend: 'warning'
+      };
+    }
+    
     const compliant = vehicles.filter(v => v.washes_completed >= v.target).length;
     const total = vehicles.length;
     const rate = total > 0 ? Math.round((compliant / total) * 100) : 0;
@@ -56,6 +66,8 @@ export default function ReportsDashboard({ vehicles, scans }) {
 
   // Wash Frequency by Site
   const washFrequencyBySite = useMemo(() => {
+    if (!scans || scans.length === 0) return [];
+    
     const siteWashes = {};
     scans.forEach(scan => {
       const siteName = scan.siteName || 'Unknown';
@@ -121,7 +133,7 @@ export default function ReportsDashboard({ vehicles, scans }) {
     for (let i = 29; i >= 0; i--) {
       const date = moment().subtract(i, 'days');
       const dateStr = date.format('YYYY-MM-DD');
-      const scansOnDate = scans.filter(s => moment(s.timestamp).format('YYYY-MM-DD') === dateStr).length;
+      const scansOnDate = scans?.filter(s => moment(s.timestamp).format('YYYY-MM-DD') === dateStr).length || 0;
       
       days.push({
         date: date.format('MMM D'),
