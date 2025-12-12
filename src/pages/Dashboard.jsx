@@ -18,24 +18,23 @@ async function fetchSites(customerId) {
   const response = await base44.functions.invoke('elora_sites', params);
   return response.data.map(s => ({
     id: s.ref,
-    name: s.siteName || s.name
+    name: s.siteName
   }));
 }
 
-async function fetchVehicles({ customerId, siteId, startDate, endDate } = {}) {
+async function fetchVehicles({ customerId, siteId } = {}) {
   const params = {};
   if (customerId && customerId !== 'all') params.customer_id = customerId;
   if (siteId && siteId !== 'all') params.site_id = siteId;
-  if (startDate) params.start_date = startDate;
-  if (endDate) params.end_date = endDate;
   
   const response = await base44.functions.invoke('elora_vehicles', params);
   return response.data;
 }
 
-async function fetchScans({ vehicleId, startDate, endDate } = {}) {
+async function fetchScans({ customerId, siteId, startDate, endDate } = {}) {
   const params = {};
-  if (vehicleId) params.vehicle_id = vehicleId;
+  if (customerId && customerId !== 'all') params.customer_id = customerId;
+  if (siteId && siteId !== 'all') params.site_id = siteId;
   if (startDate) params.start_date = startDate;
   if (endDate) params.end_date = endDate;
   
@@ -93,8 +92,16 @@ export default function Dashboard() {
   });
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
-    queryKey: ['vehicles', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
+    queryKey: ['vehicles', selectedCustomer, selectedSite],
     queryFn: () => fetchVehicles({
+      customerId: selectedCustomer,
+      siteId: selectedSite
+    }),
+  });
+
+  const { data: scans = [] } = useQuery({
+    queryKey: ['scans', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
+    queryFn: () => fetchScans({
       customerId: selectedCustomer,
       siteId: selectedSite,
       startDate: dateRange.start,
@@ -102,20 +109,7 @@ export default function Dashboard() {
     }),
   });
 
-  const { data: allScans = [] } = useQuery({
-    queryKey: ['scans', dateRange.start, dateRange.end],
-    queryFn: () => fetchScans({
-      startDate: dateRange.start,
-      endDate: dateRange.end
-    }),
-  });
 
-  // Filter scans to only include those from filtered vehicles
-  const scans = useMemo(() => {
-    if (!vehicles.length || !allScans.length) return [];
-    const vehicleIds = new Set(vehicles.map(v => v.internalVehicleId));
-    return allScans.filter(scan => vehicleIds.has(scan.internalVehicleId));
-  }, [allScans, vehicles]);
 
   // Generate chart data based on scans
   const washTrendsData = useMemo(() => {
@@ -161,32 +155,31 @@ export default function Dashboard() {
   const washCounts = useMemo(() => {
     const counts = {};
     scans.forEach(scan => {
-      const vehicleId = scan.internalVehicleId;
-      if (vehicleId) {
-        counts[vehicleId] = (counts[vehicleId] || 0) + 1;
+      const vehicleRef = scan.vehicleRef;
+      if (vehicleRef) {
+        counts[vehicleRef] = (counts[vehicleRef] || 0) + 1;
       }
     });
     return counts;
   }, [scans]);
 
-  // Enrich vehicles with site names, map Elora API fields, and add calculated washes
+  // Enrich vehicles with calculated washes
   const enrichedVehicles = useMemo(() => {
     return vehicles.map(vehicle => {
-      const washCount = washCounts[vehicle.internalVehicleId] || 0;
+      const washCount = washCounts[vehicle.vehicleRef] || 0;
       
       return {
-        ...vehicle,
-        id: vehicle.vehicleRef || vehicle.internalVehicleId,
-        name: vehicle.vehicleName || vehicle.name || 'Unknown',
-        rfid: vehicle.vehicleRfid || vehicle.rfid || '',
-        site_id: vehicle.siteId || vehicle.site_id,
-        site_name: vehicle.siteName || sitesMap[vehicle.siteId || vehicle.site_id] || 'Unknown Site',
+        id: vehicle.vehicleRef,
+        name: vehicle.vehicleName,
+        rfid: vehicle.vehicleRfid,
+        site_id: vehicle.siteId,
+        site_name: vehicle.siteName,
         washes_completed: washCount,
-        target: vehicle.washesPerWeek || vehicle.target || 12,
-        last_scan: vehicle.lastScanAt || vehicle.last_scan,
+        target: vehicle.washesPerWeek || 12,
+        last_scan: vehicle.lastScanAt,
       };
     });
-  }, [vehicles, sitesMap, washCounts]);
+  }, [vehicles, washCounts]);
 
   // Calculate stats
   const stats = useMemo(() => {
