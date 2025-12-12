@@ -305,7 +305,7 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="sites" className="mt-6">
-            <SiteManagement customers={customers} />
+            <SiteManagement customers={customers} vehicles={enrichedVehicles} />
           </TabsContent>
           </Tabs>
       </main>

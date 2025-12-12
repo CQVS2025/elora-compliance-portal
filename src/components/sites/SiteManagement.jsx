@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Plus, MapPin, Phone, Mail, Building2, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Search, Plus, MapPin, Phone, Mail, Building2, Edit, Trash2, AlertCircle, Truck } from 'lucide-react';
 import SiteModal from './SiteModal';
+import AssignVehiclesModal from './AssignVehiclesModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function SiteManagement({ customers }) {
+export default function SiteManagement({ customers, vehicles }) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedSite, setSelectedSite] = useState(null);
 
   const { data: sites = [], isLoading } = useQuery({
@@ -44,6 +46,15 @@ export default function SiteManagement({ customers }) {
   const handleAddNew = () => {
     setSelectedSite(null);
     setModalOpen(true);
+  };
+
+  const handleAssignVehicles = (site) => {
+    setSelectedSite(site);
+    setAssignModalOpen(true);
+  };
+
+  const getAssignedVehicles = (siteId) => {
+    return vehicles?.filter(v => v.site_id === siteId) || [];
   };
 
   const filteredSites = sites.filter(site =>
@@ -195,7 +206,21 @@ export default function SiteManagement({ customers }) {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleAssignVehicles(site)}
+                      className="w-full justify-start text-[#7CB342] hover:text-[#689F38] hover:bg-[#7CB342]/10"
+                    >
+                      <Truck className="w-4 h-4 mr-2" />
+                      <span>
+                        {getAssignedVehicles(site.id).length} vehicle{getAssignedVehicles(site.id).length !== 1 ? 's' : ''} assigned
+                      </span>
+                    </Button>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -240,6 +265,19 @@ export default function SiteManagement({ customers }) {
         customers={customers}
         onSuccess={() => {
           queryClient.invalidateQueries(['sites']);
+        }}
+      />
+
+      <AssignVehiclesModal
+        open={assignModalOpen}
+        onClose={() => {
+          setAssignModalOpen(false);
+          setSelectedSite(null);
+        }}
+        site={selectedSite}
+        vehicles={vehicles || []}
+        onSuccess={() => {
+          queryClient.invalidateQueries(['vehicles']);
         }}
       />
     </div>
