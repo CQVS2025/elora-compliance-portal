@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const apiUrl = `https://noodlio.eloratracksolutions.com/api/scans?${params.toString()}`;
+    const apiUrl = `https://www.elora.com.au/api/scans?${params.toString()}`;
 
     const response = await fetch(apiUrl, {
       headers: {
