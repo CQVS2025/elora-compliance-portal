@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
   return response.data.map(c => ({
-    id: c.ref,
+    id: c.internal_id.toString(),
     name: c.name
   }));
 }
@@ -102,13 +102,20 @@ export default function Dashboard() {
     }),
   });
 
-  const { data: scans = [] } = useQuery({
+  const { data: allScans = [] } = useQuery({
     queryKey: ['scans', dateRange.start, dateRange.end],
     queryFn: () => fetchScans({
       startDate: dateRange.start,
       endDate: dateRange.end
     }),
   });
+
+  // Filter scans to only include those from filtered vehicles
+  const scans = useMemo(() => {
+    if (!vehicles.length || !allScans.length) return [];
+    const vehicleRefs = new Set(vehicles.map(v => v.vehicleRef || v.internalVehicleId));
+    return allScans.filter(scan => vehicleRefs.has(scan.vehicleRef || scan.vehicle_id));
+  }, [allScans, vehicles]);
 
   // Generate chart data based on scans
   const washTrendsData = useMemo(() => {

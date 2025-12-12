@@ -43,9 +43,13 @@ export default function FilterSection({
         </Select>
 
         {/* Site Dropdown */}
-        <Select value={selectedSite} onValueChange={setSelectedSite}>
-          <SelectTrigger className="w-[180px] border-slate-200 focus:ring-[#7CB342]">
-            <SelectValue placeholder="Select Site" />
+        <Select 
+          value={selectedSite} 
+          onValueChange={setSelectedSite}
+          disabled={selectedCustomer === 'all'}
+        >
+          <SelectTrigger className="w-[180px] border-slate-200 focus:ring-[#7CB342] disabled:opacity-50 disabled:cursor-not-allowed">
+            <SelectValue placeholder={selectedCustomer === 'all' ? 'Select customer first' : 'Select Site'} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sites</SelectItem>
