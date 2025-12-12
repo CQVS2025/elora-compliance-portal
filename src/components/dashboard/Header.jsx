@@ -5,18 +5,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  DropdownMenuTrigger } from
+"@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
 export default function Header({ onNotificationClick }) {
   const [showNotifications, setShowNotifications] = useState(false);
-  
+
   const notifications = [
-    { id: 1, message: "BATCHER is non-compliant", time: "2 hours ago", type: "warning" },
-    { id: 2, message: "New vehicle PLX 3156 added", time: "5 hours ago", type: "info" },
-    { id: 3, message: "Monthly report ready", time: "1 day ago", type: "success" },
-  ];
+  { id: 1, message: "BATCHER is non-compliant", time: "2 hours ago", type: "warning" },
+  { id: 2, message: "New vehicle PLX 3156 added", time: "5 hours ago", type: "info" },
+  { id: 3, message: "Monthly report ready", time: "1 day ago", type: "success" }];
+
 
   return (
     <header className="sticky top-0 z-50 w-full h-20" style={{ background: 'linear-gradient(90deg, #0F172A 0%, #1E293B 50%, #334155 100%)' }}>
@@ -39,8 +39,8 @@ export default function Header({ onNotificationClick }) {
         </div>
 
         {/* Center Section */}
-        <h1 className="text-white text-2xl md:text-[28px] font-bold tracking-tight absolute left-1/2 transform -translate-x-1/2">
-          Compliance Portal
+        <h1 className="text-white text-2xl md:text-[28px] font-bold tracking-tight absolute left-1/2 transform -translate-x-1/2">Elora
+
         </h1>
 
         {/* Right Section */}
@@ -59,12 +59,12 @@ export default function Header({ onNotificationClick }) {
               <div className="px-4 py-3 border-b bg-slate-50">
                 <h3 className="font-semibold text-sm">Notifications</h3>
               </div>
-              {notifications.map((notif) => (
-                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-0">
+              {notifications.map((notif) =>
+              <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-0">
                   <p className="text-sm font-medium text-slate-800">{notif.message}</p>
                   <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
                 </div>
-              ))}
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -72,10 +72,10 @@ export default function Header({ onNotificationClick }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                <div 
+                <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                  style={{ background: 'linear-gradient(135deg, #7CB342 0%, #9CCC65 100%)' }}
-                >
+                  style={{ background: 'linear-gradient(135deg, #7CB342 0%, #9CCC65 100%)' }}>
+
                   JH
                 </div>
                 <span className="text-white font-medium hidden md:block">Jenny Harper</span>
@@ -102,10 +102,10 @@ export default function Header({ onNotificationClick }) {
       </div>
       
       {/* Accent Line */}
-      <div 
+      <div
         className="h-0.5 w-full"
-        style={{ background: 'linear-gradient(90deg, #7CB342 0%, #9CCC65 50%, #7CB342 100%)' }}
-      />
-    </header>
-  );
+        style={{ background: 'linear-gradient(90deg, #7CB342 0%, #9CCC65 50%, #7CB342 100%)' }} />
+
+    </header>);
+
 }
