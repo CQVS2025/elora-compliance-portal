@@ -289,6 +289,7 @@ export default function MaintenanceSection({ vehicles }) {
           open={modalOpen}
           onClose={() => setModalOpen(false)}
           vehicle={selectedVehicle}
+          allVehicles={vehicles}
           onSuccess={handleSuccess}
         />
       )}

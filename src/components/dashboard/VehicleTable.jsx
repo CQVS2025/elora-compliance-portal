@@ -416,6 +416,7 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
             setSelectedVehicleForMaintenance(null);
           }}
           vehicle={selectedVehicleForMaintenance}
+          allVehicles={vehicles}
           onSuccess={() => {
             queryClient.invalidateQueries(['maintenance']);
           }}

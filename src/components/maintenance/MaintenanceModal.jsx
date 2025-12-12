@@ -20,7 +20,7 @@ const SERVICE_TYPES = [
   { value: 'other', label: 'Other' }
 ];
 
-export default function MaintenanceModal({ open, onClose, vehicle, maintenance, onSuccess }) {
+export default function MaintenanceModal({ open, onClose, vehicle, maintenance, onSuccess, allVehicles = [] }) {
   const [formData, setFormData] = useState({
     service_date: '',
     service_type: 'oil_change',
@@ -31,43 +31,53 @@ export default function MaintenanceModal({ open, onClose, vehicle, maintenance, 
     notes: '',
     status: 'completed'
   });
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (maintenance) {
-      setFormData({
-        service_date: maintenance.service_date || '',
-        service_type: maintenance.service_type || 'oil_change',
-        cost: maintenance.cost || '',
-        mileage: maintenance.mileage || '',
-        next_service_date: maintenance.next_service_date || '',
-        next_service_mileage: maintenance.next_service_mileage || '',
-        notes: maintenance.notes || '',
-        status: maintenance.status || 'completed'
-      });
-    } else {
-      setFormData({
-        service_date: new Date().toISOString().split('T')[0],
-        service_type: 'oil_change',
-        cost: '',
-        mileage: '',
-        next_service_date: '',
-        next_service_mileage: '',
-        notes: '',
-        status: 'completed'
-      });
+    if (open) {
+      setSelectedVehicle(vehicle);
+      if (maintenance) {
+        setFormData({
+          service_date: maintenance.service_date || '',
+          service_type: maintenance.service_type || 'oil_change',
+          cost: maintenance.cost || '',
+          mileage: maintenance.mileage || '',
+          next_service_date: maintenance.next_service_date || '',
+          next_service_mileage: maintenance.next_service_mileage || '',
+          notes: maintenance.notes || '',
+          status: maintenance.status || 'completed'
+        });
+      } else {
+        setFormData({
+          service_date: new Date().toISOString().split('T')[0],
+          service_type: 'oil_change',
+          cost: '',
+          mileage: '',
+          next_service_date: '',
+          next_service_mileage: '',
+          notes: '',
+          status: 'completed'
+        });
+      }
     }
-  }, [maintenance, open]);
+  }, [maintenance, open, vehicle]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      if (!selectedVehicle) {
+        alert('Please select a vehicle');
+        setLoading(false);
+        return;
+      }
+
       const data = {
         ...formData,
-        vehicle_id: vehicle.id,
-        vehicle_name: vehicle.name,
+        vehicle_id: selectedVehicle.id,
+        vehicle_name: selectedVehicle.name,
         cost: formData.cost ? parseFloat(formData.cost) : null,
         mileage: formData.mileage ? parseInt(formData.mileage) : null,
         next_service_mileage: formData.next_service_mileage ? parseInt(formData.next_service_mileage) : null
@@ -96,11 +106,34 @@ export default function MaintenanceModal({ open, onClose, vehicle, maintenance, 
           <DialogTitle>
             {maintenance ? 'Edit Maintenance Record' : 'Add Maintenance Record'}
           </DialogTitle>
-          <p className="text-sm text-slate-600">Vehicle: {vehicle?.name}</p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Label>Vehicle *</Label>
+              <Select 
+                value={selectedVehicle?.id} 
+                onValueChange={(value) => {
+                  const vehicle = allVehicles.find(v => v.id === value);
+                  setSelectedVehicle(vehicle);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a vehicle">
+                    {selectedVehicle?.name || 'Select a vehicle'}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {allVehicles.map(v => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.name} - {v.rfid}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div>
               <Label>Service Date *</Label>
               <Input
