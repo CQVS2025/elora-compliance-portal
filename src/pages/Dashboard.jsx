@@ -13,12 +13,12 @@ async function fetchCustomers() {
   }));
 }
 
-async function fetchSites(customerId) {
-  const params = customerId && customerId !== 'all' ? { customer_id: customerId } : {};
-  const response = await base44.functions.invoke('elora_sites', params);
+async function fetchSites() {
+  const response = await base44.functions.invoke('elora_sites', {});
   return response.data.map(s => ({
     id: s.ref,
-    name: s.siteName
+    name: s.siteName,
+    customer_ref: s.customerRef
   }));
 }
 
@@ -86,10 +86,16 @@ export default function Dashboard() {
     queryFn: fetchCustomers,
   });
 
-  const { data: allSites = [], isLoading: sitesLoading } = useQuery({
-    queryKey: ['sites', selectedCustomer],
-    queryFn: () => fetchSites(selectedCustomer),
+  const { data: rawSites = [], isLoading: sitesLoading } = useQuery({
+    queryKey: ['sites'],
+    queryFn: () => fetchSites(),
   });
+
+  // Filter sites by selected customer on the client side
+  const allSites = useMemo(() => {
+    if (selectedCustomer === 'all' || !selectedCustomer) return rawSites;
+    return rawSites.filter(site => site.id === selectedCustomer || site.customer_ref === selectedCustomer);
+  }, [rawSites, selectedCustomer]);
 
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
     queryKey: ['vehicles', selectedCustomer, selectedSite],
