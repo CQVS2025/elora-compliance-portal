@@ -87,9 +87,20 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
 
   const getVehicleScans = (vehicleRef) => {
     if (!scans) return [];
-    return scans
-      .filter(scan => scan.vehicleRef === vehicleRef)
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Filter scans for this vehicle and remove duplicates based on timestamp
+    const filtered = scans.filter(scan => scan.vehicleRef === vehicleRef);
+    
+    // Remove exact duplicates by creating unique key from timestamp + scanRef
+    const uniqueScans = filtered.reduce((acc, scan) => {
+      const key = `${scan.timestamp}_${scan.scanRef || scan.washNumber || ''}`;
+      if (!acc.find(s => `${s.timestamp}_${s.scanRef || s.washNumber || ''}` === key)) {
+        acc.push(scan);
+      }
+      return acc;
+    }, []);
+    
+    return uniqueScans.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   };
 
   const getVehicleMaintenance = (vehicleId) => {
@@ -268,13 +279,15 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                                             {moment(scan.timestamp).format('MMM D, YYYY')}
                                           </p>
                                           <p className="text-xs text-slate-500">
-                                            {moment(scan.timestamp).format('h:mm A')}
+                                            {moment(scan.timestamp).format('h:mm:ss A')}
                                           </p>
                                         </div>
                                         <div className="h-8 w-px bg-slate-200" />
                                         <div>
                                           <p className="text-sm text-slate-700">{scan.siteName || vehicle.site_name}</p>
-                                          <p className="text-xs text-slate-500">Site</p>
+                                          <p className="text-xs text-slate-500">
+                                            {scan.scanRef ? `Scan #${scan.scanRef}` : 'Site'}
+                                          </p>
                                         </div>
                                       </div>
                                       <Badge className="bg-[#7CB342]/10 text-[#7CB342] hover:bg-[#7CB342]/20">
