@@ -279,7 +279,7 @@ export default function Dashboard() {
         {/* Filters */}
         <FilterSection
           customers={customers}
-          sites={filteredSites}
+          sites={allSites}
           selectedCustomer={selectedCustomer}
           setSelectedCustomer={setSelectedCustomer}
           selectedSite={selectedSite}
