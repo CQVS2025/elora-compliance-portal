@@ -6,9 +6,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const url = new URL(req.url);
-    const customerId = url.searchParams.get('customer_id');
-    const siteId = url.searchParams.get('site_id');
+    const body = await req.json().catch(() => ({}));
+    const customerId = body.customer_id;
+    const siteId = body.site_id;
 
     const params = new URLSearchParams({ status: '1' }); // active only
     if (customerId && customerId !== 'all') {
