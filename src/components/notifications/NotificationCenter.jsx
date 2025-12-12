@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import moment from 'moment';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 const NOTIFICATION_ICONS = {
   maintenance_due: Wrench,

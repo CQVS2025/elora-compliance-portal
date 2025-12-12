@@ -11,7 +11,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from '@tanstack/react-query';
 import NotificationCenter from '@/components/notifications/NotificationCenter';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 export default function Header() {
   const { data: user } = useQuery({
