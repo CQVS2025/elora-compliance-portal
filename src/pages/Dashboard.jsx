@@ -8,7 +8,7 @@ import { base44 } from "@/api/base44Client";
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
   return response.data.map(c => ({
-    id: c.internal_id.toString(),
+    id: c.ref,
     name: c.name
   }));
 }
@@ -113,8 +113,8 @@ export default function Dashboard() {
   // Filter scans to only include those from filtered vehicles
   const scans = useMemo(() => {
     if (!vehicles.length || !allScans.length) return [];
-    const vehicleRefs = new Set(vehicles.map(v => v.vehicleRef || v.internalVehicleId));
-    return allScans.filter(scan => vehicleRefs.has(scan.vehicleRef || scan.vehicle_id));
+    const vehicleIds = new Set(vehicles.map(v => v.internalVehicleId));
+    return allScans.filter(scan => vehicleIds.has(scan.internalVehicleId));
   }, [allScans, vehicles]);
 
   // Generate chart data based on scans
@@ -161,8 +161,10 @@ export default function Dashboard() {
   const washCounts = useMemo(() => {
     const counts = {};
     scans.forEach(scan => {
-      const vehicleRef = scan.vehicleRef || scan.vehicle_id;
-      counts[vehicleRef] = (counts[vehicleRef] || 0) + 1;
+      const vehicleId = scan.internalVehicleId;
+      if (vehicleId) {
+        counts[vehicleId] = (counts[vehicleId] || 0) + 1;
+      }
     });
     return counts;
   }, [scans]);
@@ -170,18 +172,17 @@ export default function Dashboard() {
   // Enrich vehicles with site names, map Elora API fields, and add calculated washes
   const enrichedVehicles = useMemo(() => {
     return vehicles.map(vehicle => {
-      const vehicleRef = vehicle.vehicleRef || vehicle.internalVehicleId;
-      const washCount = washCounts[vehicleRef] || 0;
+      const washCount = washCounts[vehicle.internalVehicleId] || 0;
       
       return {
         ...vehicle,
-        id: vehicleRef,
+        id: vehicle.vehicleRef || vehicle.internalVehicleId,
         name: vehicle.vehicleName || vehicle.name || 'Unknown',
         rfid: vehicle.vehicleRfid || vehicle.rfid || '',
         site_id: vehicle.siteId || vehicle.site_id,
         site_name: vehicle.siteName || sitesMap[vehicle.siteId || vehicle.site_id] || 'Unknown Site',
         washes_completed: washCount,
-        target: vehicle.protocolNumber || vehicle.target || 12,
+        target: vehicle.washesPerWeek || vehicle.target || 12,
         last_scan: vehicle.lastScanAt || vehicle.last_scan,
       };
     });
