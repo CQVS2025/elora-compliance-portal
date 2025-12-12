@@ -22,14 +22,17 @@ export default function Header({ onNotificationClick }) {
     <header className="sticky top-0 z-50 w-full h-20" style={{ background: 'linear-gradient(90deg, #0F172A 0%, #1E293B 50%, #334155 100%)' }}>
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left Section */}
-        <div className="flex items-center gap-3">
-          <div className="bg-white rounded-xl px-5 py-3 flex items-center gap-3 shadow-lg">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#7CB342] to-[#9CCC65] rounded-lg flex items-center justify-center">
-              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="white">
+        <div className="relative">
+          <div className="bg-white rounded-xl px-4 py-2.5 flex items-center gap-3 shadow-lg">
+            <div className="w-9 h-9 bg-[#7CB342] rounded-md flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="white">
                 <path d="M12 2 L22 12 L12 22 L2 12 Z" />
               </svg>
             </div>
-            <span className="text-[#0F172A] font-bold text-xl tracking-tight">ELORA</span>
+            <span className="text-[#0F172A] font-bold text-lg tracking-tight">ELORA</span>
+          </div>
+          <div className="absolute -bottom-1 left-4 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded">
+            main
           </div>
         </div>
 
