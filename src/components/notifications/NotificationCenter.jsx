@@ -142,7 +142,8 @@ export default function NotificationCenter() {
             <div className="divide-y divide-slate-100">
               {notifications.map((notification) => {
                 const Icon = NOTIFICATION_ICONS[notification.type] || Bell;
-                const severityColor = SEVERITY_COLORS[notification.severity] || SEVERITY_COLORS.info;
+                const severityColorBg = SEVERITY_COLORS[notification.severity] || SEVERITY_COLORS.info;
+                const severityColorText = severityColorBg.replace('bg-', 'text-');
 
                 return (
                   <div
@@ -153,8 +154,8 @@ export default function NotificationCenter() {
                     onClick={() => handleNotificationClick(notification)}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-full ${severityColor}/10 flex items-center justify-center flex-shrink-0`}>
-                        <Icon className={`w-5 h-5 ${severityColor.replace('bg-', 'text-')}`} />
+                      <div className={`w-10 h-10 rounded-full ${severityColorBg}/10 flex items-center justify-center flex-shrink-0`}>
+                        <Icon className={`w-5 h-5 ${severityColorText}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
