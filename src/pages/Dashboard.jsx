@@ -48,6 +48,8 @@ import StatsCard from '@/components/dashboard/StatsCard';
 import VehicleTable from '@/components/dashboard/VehicleTable';
 import WashAnalytics from '@/components/dashboard/WashAnalytics';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
+import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 export default function Dashboard() {
@@ -269,23 +271,37 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Vehicle Table */}
-        <VehicleTable
-          vehicles={enrichedVehicles}
-          scans={scans}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
+        {/* Main Content Tabs */}
+        <Tabs defaultValue="compliance" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          </TabsList>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <WashAnalytics 
-            data={washTrendsData} 
-            vehicles={enrichedVehicles}
-            scans={scans}
-          />
-          <VehiclePerformanceChart vehicles={enrichedVehicles} />
-        </div>
+          <TabsContent value="compliance" className="space-y-6">
+            {/* Vehicle Table */}
+            <VehicleTable
+              vehicles={enrichedVehicles}
+              scans={scans}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <WashAnalytics 
+                data={washTrendsData} 
+                vehicles={enrichedVehicles}
+                scans={scans}
+              />
+              <VehiclePerformanceChart vehicles={enrichedVehicles} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="maintenance" className="mt-6">
+            <MaintenanceSection vehicles={enrichedVehicles} />
+          </TabsContent>
+        </Tabs>
       </main>
 
 

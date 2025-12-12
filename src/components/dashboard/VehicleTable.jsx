@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon, Wrench, Plus } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { base44 } from "@/api/base44Client";
+import MaintenanceModal from '@/components/maintenance/MaintenanceModal';
 
 export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
+  const queryClient = useQueryClient();
+  const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+  const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,11 +77,42 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
       <ChevronDown className="w-4 h-4 inline ml-1" />;
   };
 
+  const { data: maintenanceRecords = [] } = useQuery({
+    queryKey: ['maintenance'],
+    queryFn: async () => {
+      const records = await base44.entities.Maintenance.list('-service_date', 1000);
+      return records;
+    }
+  });
+
   const getVehicleScans = (vehicleRef) => {
     if (!scans) return [];
     return scans
       .filter(scan => scan.vehicleRef === vehicleRef)
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  };
+
+  const getVehicleMaintenance = (vehicleId) => {
+    return maintenanceRecords
+      .filter(record => record.vehicle_id === vehicleId)
+      .sort((a, b) => new Date(b.service_date) - new Date(a.service_date));
+  };
+
+  const hasUpcomingMaintenance = (vehicleId) => {
+    const records = maintenanceRecords.filter(r => r.vehicle_id === vehicleId);
+    const now = new Date();
+    return records.some(r => {
+      if (!r.next_service_date) return false;
+      const nextDate = new Date(r.next_service_date);
+      const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+      return daysUntil >= 0 && daysUntil <= 14;
+    });
+  };
+
+  const handleAddMaintenance = (vehicle, e) => {
+    e.stopPropagation();
+    setSelectedVehicleForMaintenance(vehicle);
+    setMaintenanceModalOpen(true);
   };
 
   const columns = [
@@ -141,6 +178,8 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                 const progress = Math.min(100, Math.round((vehicle.washes_completed / vehicle.target) * 100));
                 const isExpanded = expandedVehicleId === vehicle.id;
                 const vehicleScans = getVehicleScans(vehicle.id);
+                const vehicleMaintenance = getVehicleMaintenance(vehicle.id);
+                const hasAlert = hasUpcomingMaintenance(vehicle.id);
                 
                 return (
                   <React.Fragment key={vehicle.id}>
@@ -160,6 +199,12 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                             className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                           />
                           {vehicle.name}
+                          {hasAlert && (
+                            <Badge className="bg-orange-500 text-white text-xs">
+                              <Wrench className="w-3 h-3 mr-1" />
+                              Due
+                            </Badge>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-4 font-mono text-sm text-slate-500">{vehicle.rfid}</td>
@@ -204,39 +249,90 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                         className="bg-slate-50 border-b border-slate-100"
                       >
                         <td colSpan={8} className="px-4 py-4">
-                          <div className="ml-6 bg-white rounded-lg border border-slate-200 p-4">
-                            <h3 className="text-sm font-bold text-slate-800 mb-3">Wash History</h3>
-                            {vehicleScans.length === 0 ? (
-                              <p className="text-sm text-slate-500">No wash history available for the selected period.</p>
-                            ) : (
-                              <div className="space-y-2 max-h-64 overflow-y-auto">
-                                {vehicleScans.map((scan, scanIndex) => (
-                                  <div 
-                                    key={scanIndex}
-                                    className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors"
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <div>
-                                        <p className="text-sm font-semibold text-slate-800">
-                                          {moment(scan.timestamp).format('MMM D, YYYY')}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                          {moment(scan.timestamp).format('h:mm A')}
-                                        </p>
+                          <div className="ml-6 space-y-4">
+                            {/* Wash History */}
+                            <div className="bg-white rounded-lg border border-slate-200 p-4">
+                              <h3 className="text-sm font-bold text-slate-800 mb-3">Wash History</h3>
+                              {vehicleScans.length === 0 ? (
+                                <p className="text-sm text-slate-500">No wash history available for the selected period.</p>
+                              ) : (
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                  {vehicleScans.map((scan, scanIndex) => (
+                                    <div 
+                                      key={scanIndex}
+                                      className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded border border-slate-100 hover:bg-slate-100 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <div>
+                                          <p className="text-sm font-semibold text-slate-800">
+                                            {moment(scan.timestamp).format('MMM D, YYYY')}
+                                          </p>
+                                          <p className="text-xs text-slate-500">
+                                            {moment(scan.timestamp).format('h:mm A')}
+                                          </p>
+                                        </div>
+                                        <div className="h-8 w-px bg-slate-200" />
+                                        <div>
+                                          <p className="text-sm text-slate-700">{scan.siteName || vehicle.site_name}</p>
+                                          <p className="text-xs text-slate-500">Site</p>
+                                        </div>
                                       </div>
-                                      <div className="h-8 w-px bg-slate-200" />
-                                      <div>
-                                        <p className="text-sm text-slate-700">{scan.siteName || vehicle.site_name}</p>
-                                        <p className="text-xs text-slate-500">Site</p>
-                                      </div>
+                                      <Badge className="bg-[#7CB342]/10 text-[#7CB342] hover:bg-[#7CB342]/20">
+                                        {scan.washType || scan.washNumber || 'Wash'}
+                                      </Badge>
                                     </div>
-                                    <Badge className="bg-[#7CB342]/10 text-[#7CB342] hover:bg-[#7CB342]/20">
-                                      {scan.washType || scan.washNumber || 'Wash'}
-                                    </Badge>
-                                  </div>
-                                ))}
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Maintenance History */}
+                            <div className="bg-white rounded-lg border border-slate-200 p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-bold text-slate-800">Maintenance History</h3>
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => handleAddMaintenance(vehicle, e)}
+                                  className="bg-[#7CB342] hover:bg-[#689F38]"
+                                >
+                                  <Plus className="w-3 h-3 mr-1" />
+                                  Add Service
+                                </Button>
                               </div>
-                            )}
+                              {vehicleMaintenance.length === 0 ? (
+                                <p className="text-sm text-slate-500">No maintenance records yet</p>
+                              ) : (
+                                <div className="space-y-2 max-h-64 overflow-y-auto">
+                                  {vehicleMaintenance.map((record, idx) => (
+                                    <div 
+                                      key={idx}
+                                      className="flex items-center justify-between py-2 px-3 bg-slate-50 rounded border border-slate-100"
+                                    >
+                                      <div className="flex items-center gap-4">
+                                        <Wrench className="w-4 h-4 text-[#7CB342]" />
+                                        <div>
+                                          <p className="text-sm font-semibold text-slate-800">
+                                            {record.service_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                          </p>
+                                          <p className="text-xs text-slate-500">
+                                            {moment(record.service_date).format('MMM D, YYYY')}
+                                            {record.cost && ` • $${record.cost.toFixed(2)}`}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {record.next_service_date && (
+                                        <div className="text-right">
+                                          <p className="text-xs text-slate-600">Next Service</p>
+                                          <p className="text-xs font-semibold text-slate-800">
+                                            {moment(record.next_service_date).format('MMM D, YYYY')}
+                                          </p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </motion.tr>
@@ -298,6 +394,20 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
           </Button>
         </div>
       </div>
+
+      {selectedVehicleForMaintenance && (
+        <MaintenanceModal
+          open={maintenanceModalOpen}
+          onClose={() => {
+            setMaintenanceModalOpen(false);
+            setSelectedVehicleForMaintenance(null);
+          }}
+          vehicle={selectedVehicleForMaintenance}
+          onSuccess={() => {
+            queryClient.invalidateQueries(['maintenance']);
+          }}
+        />
+      )}
     </div>
   );
 }
