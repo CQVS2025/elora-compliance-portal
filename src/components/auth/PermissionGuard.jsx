@@ -58,7 +58,8 @@ export function PermissionGuard({ children, require, fallback }) {
 export function useFilteredData(vehicles, sites) {
   const permissions = usePermissions();
 
-  if (permissions.isAdmin) {
+  // Public view or admin - show all data
+  if (!permissions.user || permissions.isAdmin) {
     return { filteredVehicles: vehicles, filteredSites: sites };
   }
 
