@@ -52,12 +52,14 @@ import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
+import MobileDashboard from './MobileDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
 
 
 export default function Dashboard() {
   const permissions = usePermissions();
+  const [isMobile, setIsMobile] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
   const [dateRange, setDateRange] = useState({
@@ -66,6 +68,17 @@ export default function Dashboard() {
   });
   const [activePeriod, setActivePeriod] = useState('Month');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Detect mobile and redirect drivers to mobile view
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
 
   // Update date range when period changes
@@ -214,6 +227,11 @@ export default function Dashboard() {
   }, [filteredVehicles]);
 
   const isLoading = customersLoading || sitesLoading || vehiclesLoading;
+
+  // Redirect drivers to mobile view on mobile devices
+  if (isMobile && permissions.isDriver) {
+    return <MobileDashboard />;
+  }
 
   if (isLoading) {
     return (
