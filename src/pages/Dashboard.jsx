@@ -139,12 +139,18 @@ export default function Dashboard() {
     return map;
   }, [allSites]);
 
-  // Enrich vehicles with site names
+  // Enrich vehicles with site names and map Elora API fields
   const enrichedVehicles = useMemo(() => {
     return vehicles.map(vehicle => ({
       ...vehicle,
-      site_name: sitesMap[vehicle.site_id] || 'Unknown Site',
-      washes_completed: vehicle.washes || 0,
+      id: vehicle.vehicleRef || vehicle.internalVehicleId,
+      name: vehicle.vehicleName || vehicle.name || 'Unknown',
+      rfid: vehicle.vehicleRfid || vehicle.rfid || '',
+      site_id: vehicle.siteId || vehicle.site_id,
+      site_name: vehicle.siteName || sitesMap[vehicle.siteId || vehicle.site_id] || 'Unknown Site',
+      washes_completed: vehicle.washesPerWeek || vehicle.washes || 0,
+      target: vehicle.protocolNumber || vehicle.target || 12,
+      last_scan: vehicle.lastScanAt || vehicle.last_scan,
     }));
   }, [vehicles, sitesMap]);
 
