@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
 
     const response = await fetch('https://www.elora.com.au/api/customers', {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       }
     });
