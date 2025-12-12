@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    const apiUrl = `https://noodlio.eloratracksolutions.com/api/v1/vehicles?${params.toString()}`;
+    const apiUrl = `https://noodlio.eloratracksolutions.com/api/vehicles?${params.toString()}`;
 
     const response = await fetch(apiUrl, {
       headers: {

@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const response = await fetch('https://noodlio.eloratracksolutions.com/api/v1/customers', {
+    const response = await fetch('https://noodlio.eloratracksolutions.com/api/customers', {
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',

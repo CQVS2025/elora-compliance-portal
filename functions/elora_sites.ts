@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const customerId = url.searchParams.get('customer_id');
 
-    let apiUrl = 'https://noodlio.eloratracksolutions.com/api/v1/sites';
+    let apiUrl = 'https://noodlio.eloratracksolutions.com/api/sites';
     if (customerId) {
       apiUrl += `?customer_id=${customerId}`;
     }
