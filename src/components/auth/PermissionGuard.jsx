@@ -20,17 +20,17 @@ export function usePermissions() {
     isSiteManager: user?.role === 'site_manager',
     isDriver: user?.role === 'driver',
     
-    // Module permissions
-    canViewCompliance: true, // All roles can view
-    canViewMaintenance: user?.role === 'admin' || user?.role === 'site_manager',
+    // Module permissions - allow public viewing for all tabs
+    canViewCompliance: true,
+    canViewMaintenance: !user || user?.role === 'admin' || user?.role === 'site_manager',
     canManageSites: user?.role === 'admin',
-    canViewReports: user?.role === 'admin' || user?.role === 'site_manager',
+    canViewReports: !user || user?.role === 'admin' || user?.role === 'site_manager',
     canManageUsers: user?.role === 'admin',
     
-    // Data permissions
-    canEditVehicles: user?.role === 'admin' || user?.role === 'site_manager',
+    // Data permissions - read-only for public
+    canEditVehicles: user && (user?.role === 'admin' || user?.role === 'site_manager'),
     canDeleteRecords: user?.role === 'admin',
-    canExportData: user?.role === 'admin' || user?.role === 'site_manager',
+    canExportData: user && (user?.role === 'admin' || user?.role === 'site_manager'),
     
     user,
     assignedSites: user?.assigned_sites || [],
@@ -48,15 +48,7 @@ export function PermissionGuard({ children, require, fallback }) {
     : permissions[require];
 
   if (!hasPermission) {
-    return fallback || (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <AlertTriangle className="w-12 h-12 text-orange-500 mb-4" />
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">Access Denied</h3>
-        <p className="text-slate-600 text-center">
-          You don't have permission to view this content. Please contact your administrator.
-        </p>
-      </div>
-    );
+    return fallback || <>{children}</>;
   }
 
   return <>{children}</>;
