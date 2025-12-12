@@ -139,20 +139,35 @@ export default function Dashboard() {
     return map;
   }, [allSites]);
 
-  // Enrich vehicles with site names and map Elora API fields
+  // Calculate wash counts from scans
+  const washCounts = useMemo(() => {
+    const counts = {};
+    scans.forEach(scan => {
+      const vehicleRef = scan.vehicleRef || scan.vehicle_id;
+      counts[vehicleRef] = (counts[vehicleRef] || 0) + 1;
+    });
+    return counts;
+  }, [scans]);
+
+  // Enrich vehicles with site names, map Elora API fields, and add calculated washes
   const enrichedVehicles = useMemo(() => {
-    return vehicles.map(vehicle => ({
-      ...vehicle,
-      id: vehicle.vehicleRef || vehicle.internalVehicleId,
-      name: vehicle.vehicleName || vehicle.name || 'Unknown',
-      rfid: vehicle.vehicleRfid || vehicle.rfid || '',
-      site_id: vehicle.siteId || vehicle.site_id,
-      site_name: vehicle.siteName || sitesMap[vehicle.siteId || vehicle.site_id] || 'Unknown Site',
-      washes_completed: vehicle.washesPerWeek || vehicle.washes || 0,
-      target: vehicle.protocolNumber || vehicle.target || 12,
-      last_scan: vehicle.lastScanAt || vehicle.last_scan,
-    }));
-  }, [vehicles, sitesMap]);
+    return vehicles.map(vehicle => {
+      const vehicleRef = vehicle.vehicleRef || vehicle.internalVehicleId;
+      const washCount = washCounts[vehicleRef] || 0;
+      
+      return {
+        ...vehicle,
+        id: vehicleRef,
+        name: vehicle.vehicleName || vehicle.name || 'Unknown',
+        rfid: vehicle.vehicleRfid || vehicle.rfid || '',
+        site_id: vehicle.siteId || vehicle.site_id,
+        site_name: vehicle.siteName || sitesMap[vehicle.siteId || vehicle.site_id] || 'Unknown Site',
+        washes_completed: washCount,
+        target: vehicle.protocolNumber || vehicle.target || 12,
+        last_scan: vehicle.lastScanAt || vehicle.last_scan,
+      };
+    });
+  }, [vehicles, sitesMap, washCounts]);
 
   // Calculate stats
   const stats = useMemo(() => {
