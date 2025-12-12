@@ -146,7 +146,7 @@ export default function RoleManagement({ vehicles, sites }) {
               <p className="text-center text-slate-500 py-8">No users found</p>
             ) : (
               filteredUsers.map((user) => {
-                const roleConfig = ROLE_CONFIG[user.role || 'driver'];
+                const roleConfig = ROLE_CONFIG[user.role || 'driver'] || ROLE_CONFIG.driver;
                 return (
                   <div
                     key={user.id}
