@@ -6,11 +6,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const url = new URL(req.url);
-    const customerId = url.searchParams.get('customer_id');
-    const siteId = url.searchParams.get('site_id');
-    const startDate = url.searchParams.get('start_date');
-    const endDate = url.searchParams.get('end_date');
+    const body = await req.json().catch(() => ({}));
+    const customerId = body.customer_id;
+    const siteId = body.site_id;
+    const startDate = body.start_date;
+    const endDate = body.end_date;
 
     const params = new URLSearchParams({ 
       export: 'all',
