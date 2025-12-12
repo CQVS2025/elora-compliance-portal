@@ -3,7 +3,39 @@ import { useQuery } from '@tanstack/react-query';
 import { Truck, CheckCircle, Droplet, Users, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
-import { fetchCustomers, fetchSites, fetchVehicles, fetchScans } from '@/components/eloraApi';
+import { base44 } from "@/api/base44Client";
+
+async function fetchCustomers() {
+  const response = await base44.functions.invoke('elora_customers');
+  return response.data;
+}
+
+async function fetchSites(customerId) {
+  const params = customerId ? { customer_id: customerId } : {};
+  const response = await base44.functions.invoke('elora_sites', params);
+  return response.data;
+}
+
+async function fetchVehicles({ customerId, siteId, startDate, endDate } = {}) {
+  const params = {};
+  if (customerId) params.customer_id = customerId;
+  if (siteId) params.site_id = siteId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  
+  const response = await base44.functions.invoke('elora_vehicles', params);
+  return response.data;
+}
+
+async function fetchScans({ vehicleId, startDate, endDate } = {}) {
+  const params = {};
+  if (vehicleId) params.vehicle_id = vehicleId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  
+  const response = await base44.functions.invoke('elora_scans', params);
+  return response.data;
+}
 
 import Header from '@/components/dashboard/Header';
 import FilterSection from '@/components/dashboard/FilterSection';
