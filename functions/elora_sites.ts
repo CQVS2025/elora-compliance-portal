@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const customerId = url.searchParams.get('customer_id');
 
-    const response = await fetch('https://acatc.elora.app/api/sites', {
+    const response = await fetch('https://www.elora.com.au/api/sites', {
       headers: {
         'x-api-key': apiKey
       }

@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     if (startDate) params.append('fromDate', startDate);
     if (endDate) params.append('toDate', endDate);
 
-    const response = await fetch(`https://acatc.elora.app/api/scans?${params.toString()}`, {
+    const response = await fetch(`https://www.elora.com.au/api/scans?${params.toString()}`, {
       headers: {
         'x-api-key': apiKey
       }

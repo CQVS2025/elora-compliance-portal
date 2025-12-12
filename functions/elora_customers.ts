@@ -9,7 +9,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const status = url.searchParams.get('status') || 'active';
 
-    const response = await fetch(`https://acatc.elora.app/api/customers?status=${status}`, {
+    const response = await fetch(`https://www.elora.com.au/api/customers?status=${status}`, {
       headers: {
         'x-api-key': apiKey
       }

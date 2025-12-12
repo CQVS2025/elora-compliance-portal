@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
     if (customerId && customerId !== 'all') params.append('customer', customerId);
     if (siteId && siteId !== 'all') params.append('site', siteId);
 
-    const response = await fetch(`https://acatc.elora.app/api/vehicles?${params.toString()}`, {
+    const response = await fetch(`https://www.elora.com.au/api/vehicles?${params.toString()}`, {
       headers: {
         'x-api-key': apiKey
       }
