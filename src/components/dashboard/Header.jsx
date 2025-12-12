@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronDown, Settings, LogOut, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, ChevronDown, Settings, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,26 +7,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from '@tanstack/react-query';
-import NotificationCenter from '@/components/notifications/NotificationCenter';
-import { Link } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Badge } from "@/components/ui/badge";
 
-export default function Header() {
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me()
-  });
-
-  const handleLogout = () => {
-    base44.auth.logout();
-  };
-
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
+export default function Header({ onNotificationClick }) {
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  const notifications = [
+    { id: 1, message: "BATCHER is non-compliant", time: "2 hours ago", type: "warning" },
+    { id: 2, message: "New vehicle PLX 3156 added", time: "5 hours ago", type: "info" },
+    { id: 3, message: "Monthly report ready", time: "1 day ago", type: "success" },
+  ];
 
   return (
     <header className="sticky top-0 z-50 w-full h-20" style={{ background: 'linear-gradient(90deg, #0F172A 0%, #1E293B 50%, #334155 100%)' }}>
@@ -56,7 +46,27 @@ export default function Header() {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           {/* Notifications */}
-          <NotificationCenter />
+          <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+            <DropdownMenuTrigger asChild>
+              <button className="relative p-2 text-white/80 hover:text-white transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">
+                  3
+                </span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-0">
+              <div className="px-4 py-3 border-b bg-slate-50">
+                <h3 className="font-semibold text-sm">Notifications</h3>
+              </div>
+              {notifications.map((notif) => (
+                <div key={notif.id} className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-0">
+                  <p className="text-sm font-medium text-slate-800">{notif.message}</p>
+                  <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
+                </div>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* User Profile */}
           <DropdownMenu>
@@ -66,9 +76,9 @@ export default function Header() {
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
                   style={{ background: 'linear-gradient(135deg, #7CB342 0%, #9CCC65 100%)' }}
                 >
-                  {getInitials(user?.full_name)}
+                  JH
                 </div>
-                <span className="text-white font-medium hidden md:block">{user?.full_name}</span>
+                <span className="text-white font-medium hidden md:block">Jenny Harper</span>
                 <ChevronDown className="w-4 h-4 text-white/70" />
               </button>
             </DropdownMenuTrigger>
@@ -77,14 +87,12 @@ export default function Header() {
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to={createPageUrl('NotificationSettings')} className="cursor-pointer flex items-center">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Notification Settings
-                </Link>
+              <DropdownMenuItem className="cursor-pointer">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-red-600" onClick={handleLogout}>
+              <DropdownMenuItem className="cursor-pointer text-red-600">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
