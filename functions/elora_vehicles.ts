@@ -9,21 +9,14 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const customerId = url.searchParams.get('customer_id');
     const siteId = url.searchParams.get('site_id');
-    const startDate = url.searchParams.get('start_date');
-    const endDate = url.searchParams.get('end_date');
 
-    const params = new URLSearchParams();
-    if (customerId && customerId !== 'all') params.append('customer_id', customerId);
-    if (siteId && siteId !== 'all') params.append('site_id', siteId);
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
+    const params = new URLSearchParams({ status: '1' }); // active only
+    if (customerId && customerId !== 'all') params.append('customer', customerId);
+    if (siteId && siteId !== 'all') params.append('site', siteId);
 
-    const apiUrl = `https://www.elora.com.au/api/vehicles${params.toString() ? '?' + params.toString() : ''}`;
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`https://acatc.elora.app/api/vehicles?${params.toString()}`, {
       headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json',
+        'x-api-key': apiKey
       }
     });
 
@@ -36,18 +29,8 @@ Deno.serve(async (req) => {
       }, { status: response.status });
     }
 
-    const data = await response.json();
-    
-    if (Array.isArray(data)) {
-      return Response.json(data);
-    } else if (data.body && Array.isArray(data.body)) {
-      return Response.json(data.body);
-    } else if (data.data && Array.isArray(data.data)) {
-      return Response.json(data.data);
-    } else {
-      console.warn('Unexpected response structure:', data);
-      return Response.json([]);
-    }
+    const json = await response.json();
+    return Response.json(json.data || []);
     
   } catch (error) {
     console.error('Server error:', error);

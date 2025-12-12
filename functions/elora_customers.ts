@@ -6,10 +6,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    const response = await fetch('https://www.elora.com.au/api/customers', {
+    const url = new URL(req.url);
+    const status = url.searchParams.get('status') || 'active';
+
+    const response = await fetch(`https://acatc.elora.app/api/customers?status=${status}`, {
       headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json',
+        'x-api-key': apiKey
       }
     });
 
@@ -22,18 +24,8 @@ Deno.serve(async (req) => {
       }, { status: response.status });
     }
 
-    const data = await response.json();
-    
-    if (Array.isArray(data)) {
-      return Response.json(data);
-    } else if (data.body && Array.isArray(data.body)) {
-      return Response.json(data.body);
-    } else if (data.data && Array.isArray(data.data)) {
-      return Response.json(data.data);
-    } else {
-      console.warn('Unexpected response structure:', data);
-      return Response.json([]);
-    }
+    const json = await response.json();
+    return Response.json(json.data || []);
     
   } catch (error) {
     console.error('Server error:', error);

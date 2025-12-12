@@ -7,21 +7,24 @@ Deno.serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const vehicleId = url.searchParams.get('vehicle_id');
+    const customerId = url.searchParams.get('customer_id');
+    const siteId = url.searchParams.get('site_id');
     const startDate = url.searchParams.get('start_date');
     const endDate = url.searchParams.get('end_date');
 
-    const params = new URLSearchParams();
-    if (vehicleId && vehicleId !== 'all') params.append('vehicle_id', vehicleId);
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
+    const params = new URLSearchParams({ 
+      export: 'all',
+      status: 'success'
+    });
+    
+    if (customerId && customerId !== 'all') params.append('customer', customerId);
+    if (siteId && siteId !== 'all') params.append('site', siteId);
+    if (startDate) params.append('fromDate', startDate);
+    if (endDate) params.append('toDate', endDate);
 
-    const apiUrl = `https://www.elora.com.au/api/scans${params.toString() ? '?' + params.toString() : ''}`;
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`https://acatc.elora.app/api/scans?${params.toString()}`, {
       headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json',
+        'x-api-key': apiKey
       }
     });
 
@@ -34,18 +37,8 @@ Deno.serve(async (req) => {
       }, { status: response.status });
     }
 
-    const data = await response.json();
-    
-    if (Array.isArray(data)) {
-      return Response.json(data);
-    } else if (data.body && Array.isArray(data.body)) {
-      return Response.json(data.body);
-    } else if (data.data && Array.isArray(data.data)) {
-      return Response.json(data.data);
-    } else {
-      console.warn('Unexpected response structure:', data);
-      return Response.json([]);
-    }
+    const json = await response.json();
+    return Response.json(json.data || []);
     
   } catch (error) {
     console.error('Server error:', error);

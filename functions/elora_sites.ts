@@ -9,15 +9,9 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const customerId = url.searchParams.get('customer_id');
 
-    let apiUrl = 'https://www.elora.com.au/api/sites';
-    if (customerId && customerId !== 'all') {
-      apiUrl += `?customer_id=${encodeURIComponent(customerId)}`;
-    }
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch('https://acatc.elora.app/api/sites', {
       headers: {
-        'X-API-Key': apiKey,
-        'Content-Type': 'application/json',
+        'x-api-key': apiKey
       }
     });
 
@@ -30,18 +24,14 @@ Deno.serve(async (req) => {
       }, { status: response.status });
     }
 
-    const data = await response.json();
+    let sites = await response.json();
     
-    if (Array.isArray(data)) {
-      return Response.json(data);
-    } else if (data.body && Array.isArray(data.body)) {
-      return Response.json(data.body);
-    } else if (data.data && Array.isArray(data.data)) {
-      return Response.json(data.data);
-    } else {
-      console.warn('Unexpected response structure:', data);
-      return Response.json([]);
+    // Filter by customer on our side since API doesn't support filtering
+    if (customerId && customerId !== 'all') {
+      sites = sites.filter(site => site.customerRef === customerId);
     }
+    
+    return Response.json(sites);
     
   } catch (error) {
     console.error('Server error:', error);
