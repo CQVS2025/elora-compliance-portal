@@ -400,36 +400,30 @@ Highlight best and worst performers with specific metrics.`;
             </SelectContent>
           </Select>
 
-          {permissions.canGenerateAIReports && (
-            <Button
-              onClick={() => setShowAIReportBuilder(!showAIReportBuilder)}
-              className="bg-purple-600 hover:bg-purple-700 gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              AI Report
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowAIReportBuilder(!showAIReportBuilder)}
+            className="bg-purple-600 hover:bg-purple-700 gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            AI Report
+          </Button>
 
-          {permissions.canExportData && (
-            <>
-              <Button 
-                variant="outline" 
-                onClick={exportComplianceReport}
-                className="gap-2"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Export Compliance
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={exportMaintenanceReport}
-                className="gap-2"
-              >
-                <FileText className="w-4 h-4" />
-                Export Maintenance
-              </Button>
-            </>
-          )}
+          <Button 
+            variant="outline" 
+            onClick={exportComplianceReport}
+            className="gap-2"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            Export Compliance
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={exportMaintenanceReport}
+            className="gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Export Maintenance
+          </Button>
         </div>
       </div>
 
@@ -533,24 +527,22 @@ Highlight best and worst performers with specific metrics.`;
                 This report was generated using AI analysis of your fleet data. 
                 Always verify critical decisions with your team.
               </p>
-              {permissions.canExportData && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const blob = new Blob([aiGeneratedReport.content], { type: 'text/plain' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `ai-report-${moment(aiGeneratedReport.generatedAt).format('YYYY-MM-DD-HHmm')}.txt`;
-                    a.click();
-                  }}
-                  className="gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Download Report
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const blob = new Blob([aiGeneratedReport.content], { type: 'text/plain' });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `ai-report-${moment(aiGeneratedReport.generatedAt).format('YYYY-MM-DD-HHmm')}.txt`;
+                  a.click();
+                }}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download Report
+              </Button>
             </div>
           </CardContent>
         </Card>
