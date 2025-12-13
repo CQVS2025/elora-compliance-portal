@@ -121,7 +121,7 @@ const SITE_STATE_MAPPING = {
 };
 
 // State mapping based on site names
-const getStateFromSite = (siteName) => {
+const getStateFromSite = (siteName, customerName = '') => {
   if (!siteName) return 'NSW';
   
   // Direct lookup from mapping
@@ -129,8 +129,24 @@ const getStateFromSite = (siteName) => {
     return SITE_STATE_MAPPING[siteName];
   }
   
-  // Fallback to keyword matching
+  // Check customer name for BORAL - QLD
+  const customerUpper = (customerName || '').toUpperCase();
+  if (customerUpper.includes('BORAL') && customerUpper.includes('QLD')) {
+    return 'QLD';
+  }
+  
+  // Specific QLD site names for BORAL
   const siteUpper = siteName.toUpperCase();
+  const qldSites = ['BURLEIGH', 'ARCHERFIELD', 'BEENLEIGH', 'BENOWA', 'BROWNS PLAINS', 
+                    'CALOUNDRA', 'CAPALABA', 'CLEVELAND', 'EVERTON PARK', 'GEEBUNG',
+                    'IPSWICH', 'KINGSTON', 'LABRADOR', 'MORAYFIELD', 'MURARRIE',
+                    'NARANGBA', 'REDBANK PLAINS', 'SOUTHPORT', 'WACOL'];
+  
+  if (qldSites.some(site => siteUpper.includes(site))) {
+    return 'QLD';
+  }
+  
+  // Fallback to keyword matching
   if (siteUpper.includes('QLD') || siteUpper.includes('BRISBANE') || siteUpper.includes('QUEENSLAND')) return 'QLD';
   if (siteUpper.includes('VIC') || siteUpper.includes('MELBOURNE') || siteUpper.includes('VICTORIA')) return 'VIC';
   if (siteUpper.includes('NSW') || siteUpper.includes('SYDNEY')) return 'NSW';
@@ -220,7 +236,7 @@ export default function UsageCosts({ selectedCustomer, selectedSite, dateRange }
 
     // Calculate costs for each vehicle
     const vehicles = Object.values(vehicleGroups).map(group => {
-      const state = getStateFromSite(group.siteName);
+      const state = getStateFromSite(group.siteName, group.customerName);
       const totalScans = group.scans.length;
       const costPerScan = calculateCostPerScan(group.customerName, state);
       const pricingDetails = getPricingDetails(group.customerName, state);
@@ -282,7 +298,7 @@ export default function UsageCosts({ selectedCustomer, selectedSite, dateRange }
     const dailyGroups = {};
     scans.forEach(scan => {
       const date = moment(scan.timestamp).format('MMM D');
-      const state = getStateFromSite(scan.siteName);
+      const state = getStateFromSite(scan.siteName, scan.customerName);
       const cost = calculateCostPerScan(scan.customerName, state);
       dailyGroups[date] = (dailyGroups[date] || 0) + cost;
     });

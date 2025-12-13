@@ -47,9 +47,26 @@ const calculateCostPerScan = (customerName, state) => {
   return rule.litres * rule.pricePerLitre;
 };
 
-const getStateFromSite = (siteName) => {
+const getStateFromSite = (siteName, customerName = '') => {
   if (!siteName) return 'NSW';
+  
+  // Check customer name for BORAL - QLD
+  const customerUpper = (customerName || '').toUpperCase();
+  if (customerUpper.includes('BORAL') && customerUpper.includes('QLD')) {
+    return 'QLD';
+  }
+  
+  // Specific QLD site names for BORAL
   const siteUpper = siteName.toUpperCase();
+  const qldSites = ['BURLEIGH', 'ARCHERFIELD', 'BEENLEIGH', 'BENOWA', 'BROWNS PLAINS', 
+                    'CALOUNDRA', 'CAPALABA', 'CLEVELAND', 'EVERTON PARK', 'GEEBUNG',
+                    'IPSWICH', 'KINGSTON', 'LABRADOR', 'MORAYFIELD', 'MURARRIE',
+                    'NARANGBA', 'REDBANK PLAINS', 'SOUTHPORT', 'WACOL'];
+  
+  if (qldSites.some(site => siteUpper.includes(site))) {
+    return 'QLD';
+  }
+  
   if (siteUpper.includes('QLD') || siteUpper.includes('BRISBANE')) return 'QLD';
   if (siteUpper.includes('VIC') || siteUpper.includes('MELBOURNE')) return 'VIC';
   return 'NSW';
@@ -106,8 +123,8 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
   const usageCosts = useMemo(() => {
     if (!washHistory.length || !vehicle) return null;
 
-    const state = getStateFromSite(vehicle.site_name);
     const customerName = washHistory[0]?.customerName || '';
+    const state = getStateFromSite(vehicle.site_name, customerName);
     const costPerScan = calculateCostPerScan(customerName, state);
     const totalCost = washHistory.length * costPerScan;
 
