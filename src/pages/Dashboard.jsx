@@ -300,13 +300,13 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className={`grid w-full ${permissions.canManageUsers ? 'max-w-5xl grid-cols-6' : 'max-w-4xl grid-cols-5'}`}>
+          <TabsList className="grid w-full max-w-5xl grid-cols-6">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            {permissions.canViewMaintenance && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
+            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="costs">Usage Costs</TabsTrigger>
-            {permissions.canManageSites && <TabsTrigger value="sites">Sites</TabsTrigger>}
-            {permissions.canViewReports && <TabsTrigger value="reports">Reports</TabsTrigger>}
-            {permissions.canManageUsers && <TabsTrigger value="users">Users</TabsTrigger>}
+            <TabsTrigger value="sites">Sites</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
           </TabsList>
 
           <TabsContent value="compliance" className="space-y-6">
@@ -329,13 +329,9 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {permissions.canViewMaintenance && (
-            <TabsContent value="maintenance" className="mt-6">
-              <PermissionGuard require="canViewMaintenance">
-                <MaintenanceSection vehicles={filteredVehicles} />
-              </PermissionGuard>
-            </TabsContent>
-          )}
+          <TabsContent value="maintenance" className="mt-6">
+            <MaintenanceSection vehicles={filteredVehicles} />
+          </TabsContent>
 
           <TabsContent value="costs" className="mt-6">
             <UsageCosts
@@ -345,29 +341,17 @@ export default function Dashboard() {
             />
           </TabsContent>
 
-          {permissions.canManageSites && (
-            <TabsContent value="sites" className="mt-6">
-              <PermissionGuard require="canManageSites">
-                <SiteManagement customers={customers} vehicles={enrichedVehicles} />
-              </PermissionGuard>
-            </TabsContent>
-          )}
+          <TabsContent value="sites" className="mt-6">
+            <SiteManagement customers={customers} vehicles={enrichedVehicles} />
+          </TabsContent>
 
-          {permissions.canViewReports && (
-            <TabsContent value="reports" className="mt-6">
-              <PermissionGuard require="canViewReports">
-                <ReportsDashboard vehicles={filteredVehicles} scans={scans} />
-              </PermissionGuard>
-            </TabsContent>
-          )}
+          <TabsContent value="reports" className="mt-6">
+            <ReportsDashboard vehicles={filteredVehicles} scans={scans} />
+          </TabsContent>
 
-          {permissions.canManageUsers && (
-            <TabsContent value="users" className="mt-6">
-              <PermissionGuard require="canManageUsers">
-                <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
-              </PermissionGuard>
-            </TabsContent>
-          )}
+          <TabsContent value="users" className="mt-6">
+            <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
+          </TabsContent>
           </Tabs>
       </main>
 
