@@ -8,6 +8,7 @@ import moment from 'moment';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
 import MaintenanceModal from '@/components/maintenance/MaintenanceModal';
+import VehicleProfileModal from '@/components/vehicles/VehicleProfileModal';
 import { usePermissions } from '@/components/auth/PermissionGuard';
 
 export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
@@ -15,6 +16,8 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
   const queryClient = useQueryClient();
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
   const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [selectedVehicleForProfile, setSelectedVehicleForProfile] = useState(null);
   const [sortField, setSortField] = useState('name');
   const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -213,7 +216,16 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                           <ChevronRightIcon 
                             className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                           />
-                          {vehicle.name}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedVehicleForProfile(vehicle);
+                              setProfileModalOpen(true);
+                            }}
+                            className="hover:text-[#7CB342] hover:underline transition-colors"
+                          >
+                            {vehicle.name}
+                          </button>
                           {hasAlert && (
                             <Badge className="bg-orange-500 text-white text-xs">
                               <Wrench className="w-3 h-3 mr-1" />
@@ -428,6 +440,18 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
           }}
         />
       )}
-    </div>
-  );
-}
+
+      {selectedVehicleForProfile && (
+        <VehicleProfileModal
+          open={profileModalOpen}
+          onClose={() => {
+            setProfileModalOpen(false);
+            setSelectedVehicleForProfile(null);
+          }}
+          vehicle={selectedVehicleForProfile}
+          scans={scans}
+        />
+      )}
+      </div>
+      );
+      }
