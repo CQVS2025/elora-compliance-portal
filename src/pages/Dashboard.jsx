@@ -52,6 +52,7 @@ import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
+import UsageCosts from '@/components/costs/UsageCosts';
 import MobileDashboard from './MobileDashboard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
@@ -299,9 +300,10 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className={`grid w-full ${permissions.canManageUsers ? 'max-w-4xl grid-cols-5' : 'max-w-3xl grid-cols-4'}`}>
+          <TabsList className={`grid w-full ${permissions.canManageUsers ? 'max-w-5xl grid-cols-6' : 'max-w-4xl grid-cols-5'}`}>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             {permissions.canViewMaintenance && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
+            <TabsTrigger value="costs">Usage Costs</TabsTrigger>
             {permissions.canManageSites && <TabsTrigger value="sites">Sites</TabsTrigger>}
             {permissions.canViewReports && <TabsTrigger value="reports">Reports</TabsTrigger>}
             {permissions.canManageUsers && <TabsTrigger value="users">Users</TabsTrigger>}
@@ -334,6 +336,14 @@ export default function Dashboard() {
               </PermissionGuard>
             </TabsContent>
           )}
+
+          <TabsContent value="costs" className="mt-6">
+            <UsageCosts
+              selectedCustomer={selectedCustomer}
+              selectedSite={selectedSite}
+              dateRange={dateRange}
+            />
+          </TabsContent>
 
           {permissions.canManageSites && (
             <TabsContent value="sites" className="mt-6">
