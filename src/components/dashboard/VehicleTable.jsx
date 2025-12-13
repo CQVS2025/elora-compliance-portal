@@ -307,7 +307,7 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                             <div className="bg-white rounded-lg border border-slate-200 p-4">
                               <div className="flex items-center justify-between mb-3">
                                 <h3 className="text-sm font-bold text-slate-800">Maintenance History</h3>
-                                {permissions.canEditVehicles && (
+                                {permissions.user && permissions.canEditVehicles && (
                                   <Button
                                     size="sm"
                                     onClick={(e) => handleAddMaintenance(vehicle, e)}
