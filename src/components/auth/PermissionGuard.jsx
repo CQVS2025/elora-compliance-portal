@@ -22,9 +22,9 @@ export function usePermissions() {
     
     // Module permissions - allow public viewing for all tabs
     canViewCompliance: true,
-    canViewMaintenance: !user || user?.role === 'admin' || user?.role === 'site_manager',
+    canViewMaintenance: true,
     canManageSites: user?.role === 'admin',
-    canViewReports: !user || user?.role === 'admin' || user?.role === 'site_manager',
+    canViewReports: true,
     canManageUsers: user?.role === 'admin',
     
     // Data permissions - read-only for public
