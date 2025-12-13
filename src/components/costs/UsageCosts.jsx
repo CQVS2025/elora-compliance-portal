@@ -21,6 +21,7 @@ const PRICING_RULES = {
 
 // State mapping based on site names (temporary until Addresses.xlsx is uploaded)
 const getStateFromSite = (siteName) => {
+  if (!siteName) return 'NSW';
   const siteUpper = siteName.toUpperCase();
   if (siteUpper.includes('QLD') || siteUpper.includes('BRISBANE')) return 'QLD';
   if (siteUpper.includes('VIC') || siteUpper.includes('MELBOURNE')) return 'VIC';
@@ -28,6 +29,7 @@ const getStateFromSite = (siteName) => {
 };
 
 const calculateCostPerScan = (customerName, state) => {
+  if (!customerName) return PRICING_RULES[state].litres * PRICING_RULES[state].pricePerLitre;
   const customerUpper = customerName.toUpperCase();
   
   if (customerUpper.includes('GUNLAKE')) {
@@ -43,6 +45,7 @@ const calculateCostPerScan = (customerName, state) => {
 };
 
 const getPricingDetails = (customerName, state) => {
+  if (!customerName) return PRICING_RULES[state];
   const customerUpper = customerName.toUpperCase();
   
   if (customerUpper.includes('GUNLAKE')) {
