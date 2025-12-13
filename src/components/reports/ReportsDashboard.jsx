@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -20,7 +21,9 @@ import {
   FileText,
   Filter,
   Brain,
-  ZoomIn
+  ZoomIn,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -46,6 +49,13 @@ export default function ReportsDashboard({ vehicles, scans }) {
   const [dateFilter, setDateFilter] = useState('30');
   const [siteFilter, setSiteFilter] = useState('all');
   const [drillDownModal, setDrillDownModal] = useState({ open: false, type: null, data: null });
+  
+  // AI Report Generation States
+  const [showAIReportBuilder, setShowAIReportBuilder] = useState(false);
+  const [aiReportType, setAiReportType] = useState('compliance_trends');
+  const [aiCustomPrompt, setAiCustomPrompt] = useState('');
+  const [generatingAIReport, setGeneratingAIReport] = useState(false);
+  const [aiGeneratedReport, setAiGeneratedReport] = useState(null);
 
   const { data: maintenanceRecords = [] } = useQuery({
     queryKey: ['maintenance'],
@@ -230,6 +240,92 @@ export default function ReportsDashboard({ vehicles, scans }) {
 
   const COLORS = ['#7CB342', '#9CCC65', '#689F38', '#558B2F', '#33691E', '#827717', '#CDDC39'];
 
+  // Generate AI Report
+  const generateAIReport = async () => {
+    setGeneratingAIReport(true);
+    setAiGeneratedReport(null);
+    
+    try {
+      // Prepare data summary for AI
+      const dataSummary = {
+        dateRange: `Last ${dateFilter} days`,
+        site: siteFilter === 'all' ? 'All sites' : siteFilter,
+        compliance: {
+          totalVehicles: complianceStats.totalVehicles,
+          compliantVehicles: complianceStats.compliantVehicles,
+          complianceRate: complianceStats.complianceRate,
+          trend: complianceStats.trend
+        },
+        maintenance: {
+          totalCost: maintenanceCostAnalysis.totalCost,
+          avgCost: Math.round(maintenanceCostAnalysis.avgCost),
+          recordCount: maintenanceCostAnalysis.recordCount,
+          predictedNeeds: predictiveMaintenance.length
+        },
+        washes: {
+          totalWashes: filteredData.filteredScans.length,
+          topSites: washFrequencyBySite.slice(0, 5)
+        },
+        serviceDistribution: serviceTypeDistribution.slice(0, 5)
+      };
+
+      // Build prompt based on report type
+      let prompt = '';
+      const baseContext = `You are an expert fleet management analyst. Analyze the following data and provide actionable insights:\n\n${JSON.stringify(dataSummary, null, 2)}\n\n`;
+      
+      if (aiReportType === 'compliance_trends') {
+        prompt = baseContext + `Create a comprehensive compliance status report analyzing:
+1. Overall fleet compliance performance and trends
+2. Vehicles/sites requiring immediate attention
+3. Key risk factors affecting compliance
+4. Specific recommendations to improve compliance rates
+5. Expected outcomes if recommendations are implemented
+
+Format the response with clear sections, bullet points, and actionable items.`;
+      } else if (aiReportType === 'maintenance_analysis') {
+        prompt = baseContext + `Create a detailed maintenance cost analysis report covering:
+1. Maintenance spending patterns and trends
+2. Cost efficiency analysis across the fleet
+3. Upcoming maintenance needs based on predictive data
+4. Budget recommendations for next period
+5. Cost optimization opportunities
+
+Include specific numbers, percentages, and cost-saving recommendations.`;
+      } else if (aiReportType === 'wash_usage_trends') {
+        prompt = baseContext + `Create a wash usage and efficiency report analyzing:
+1. Wash frequency patterns across sites and vehicles
+2. Usage trends and seasonal variations
+3. Site performance comparison
+4. Optimization opportunities for wash programs
+5. Recommendations to improve wash compliance
+
+Highlight best and worst performers with specific metrics.`;
+      } else if (aiReportType === 'custom') {
+        prompt = baseContext + `Based on the fleet data provided, please address the following:\n\n${aiCustomPrompt}\n\nProvide detailed analysis with specific metrics, trends, and actionable recommendations.`;
+      }
+
+      const response = await base44.integrations.Core.InvokeLLM({
+        prompt: prompt,
+        add_context_from_internet: false
+      });
+
+      setAiGeneratedReport({
+        type: aiReportType,
+        content: response,
+        generatedAt: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error generating AI report:', error);
+      setAiGeneratedReport({
+        type: 'error',
+        content: 'Failed to generate AI report. Please try again.',
+        generatedAt: new Date().toISOString()
+      });
+    } finally {
+      setGeneratingAIReport(false);
+    }
+  };
+
   // Export Functions
   const exportToCSV = (data, filename) => {
     const headers = Object.keys(data[0] || {});
@@ -276,7 +372,7 @@ export default function ReportsDashboard({ vehicles, scans }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Fleet Reports & Analytics</h2>
-          <p className="text-slate-600 mt-1">Advanced analytics with predictive insights</p>
+          <p className="text-slate-600 mt-1">Advanced analytics with predictive insights and AI-powered reports</p>
         </div>
         
         <div className="flex items-center gap-3 flex-wrap">
@@ -304,6 +400,14 @@ export default function ReportsDashboard({ vehicles, scans }) {
             </SelectContent>
           </Select>
 
+          <Button
+            onClick={() => setShowAIReportBuilder(!showAIReportBuilder)}
+            className="bg-purple-600 hover:bg-purple-700 gap-2"
+          >
+            <Sparkles className="w-4 h-4" />
+            AI Report
+          </Button>
+
           {permissions.canExportData && (
             <>
               <Button 
@@ -326,6 +430,129 @@ export default function ReportsDashboard({ vehicles, scans }) {
           )}
         </div>
       </div>
+
+      {/* AI Report Builder */}
+      {showAIReportBuilder && (
+        <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              AI-Powered Report Generator
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-slate-700 mb-2 block">
+                Select Report Type
+              </label>
+              <Select value={aiReportType} onValueChange={setAiReportType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compliance_trends">
+                    Compliance Status & Trends Analysis
+                  </SelectItem>
+                  <SelectItem value="maintenance_analysis">
+                    Maintenance Cost Analysis & Forecast
+                  </SelectItem>
+                  <SelectItem value="wash_usage_trends">
+                    Wash Usage Trends & Optimization
+                  </SelectItem>
+                  <SelectItem value="custom">
+                    Custom Analysis (Specify Below)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {aiReportType === 'custom' && (
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-2 block">
+                  What would you like to analyze?
+                </label>
+                <Textarea
+                  placeholder="E.g., Compare maintenance costs between top 3 performing sites and identify cost drivers..."
+                  value={aiCustomPrompt}
+                  onChange={(e) => setAiCustomPrompt(e.target.value)}
+                  className="h-24"
+                />
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={generateAIReport}
+                disabled={generatingAIReport || (aiReportType === 'custom' && !aiCustomPrompt)}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                {generatingAIReport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate Report
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-slate-500">
+                Report will analyze data from {siteFilter === 'all' ? 'all sites' : siteFilter} for the last {dateFilter} days
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Generated Report Display */}
+      {aiGeneratedReport && (
+        <Card className="border-purple-300 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Brain className="w-5 h-5" />
+                AI-Generated Report
+              </CardTitle>
+              <Badge className="bg-white/20 text-white">
+                {moment(aiGeneratedReport.generatedAt).format('MMM D, YYYY h:mm A')}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="prose prose-slate max-w-none">
+              <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                {aiGeneratedReport.content}
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t flex items-center justify-between">
+              <p className="text-xs text-slate-500">
+                This report was generated using AI analysis of your fleet data. 
+                Always verify critical decisions with your team.
+              </p>
+              {permissions.canExportData && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const blob = new Blob([aiGeneratedReport.content], { type: 'text/plain' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ai-report-${moment(aiGeneratedReport.generatedAt).format('YYYY-MM-DD-HHmm')}.txt`;
+                    a.click();
+                  }}
+                  className="gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Report
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
