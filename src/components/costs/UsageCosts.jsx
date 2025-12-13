@@ -333,9 +333,9 @@ export default function UsageCosts({ selectedCustomer, selectedSite, dateRange }
 
   // Filter and paginate
   const filteredVehicles = costData.vehicles.filter(v =>
-    v.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.siteName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.vehicleName.toLowerCase().includes(searchQuery.toLowerCase())
+    (v.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.siteName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (v.vehicleName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
   const paginatedVehicles = filteredVehicles.slice(
