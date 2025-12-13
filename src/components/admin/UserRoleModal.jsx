@@ -75,7 +75,25 @@ export default function UserRoleModal({ open, onClose, user, vehicles, sites, on
                 <SelectItem value="admin">
                   <div className="flex flex-col">
                     <span className="font-semibold">Administrator</span>
-                    <span className="text-xs text-slate-500">Full system access</span>
+                    <span className="text-xs text-slate-500">Full system access, user management</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="manager">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">Manager</span>
+                    <span className="text-xs text-slate-500">Fleet operations, reports, data export</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="technician">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">Technician</span>
+                    <span className="text-xs text-slate-500">Maintenance management and vehicle viewing</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="viewer">
+                  <div className="flex flex-col">
+                    <span className="font-semibold">Viewer</span>
+                    <span className="text-xs text-slate-500">Read-only access to dashboards and reports</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="site_manager">
@@ -156,12 +174,36 @@ export default function UserRoleModal({ open, onClose, user, vehicles, sites, on
             </div>
           )}
 
-          {/* Admin Note */}
+          {/* Role Notes */}
           {role === 'admin' && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">
+                <strong>Administrator:</strong> Full system access including user management, 
+                settings, and all data. Use with caution.
+              </p>
+            </div>
+          )}
+          {role === 'manager' && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Administrator Role:</strong> This user will have full access to all features, 
-                sites, and vehicles. No assignment restrictions apply.
+                <strong>Manager:</strong> Can view and edit all fleet data, generate reports, 
+                and export data. Cannot manage users or system settings.
+              </p>
+            </div>
+          )}
+          {role === 'technician' && (
+            <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <strong>Technician:</strong> Focused on maintenance tasks. Can add, view, and edit 
+                maintenance records. View-only access to vehicle data.
+              </p>
+            </div>
+          )}
+          {role === 'viewer' && (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <p className="text-sm text-slate-800">
+                <strong>Viewer:</strong> Read-only access to dashboards and reports. 
+                Cannot edit any data or perform actions.
               </p>
             </div>
           )}

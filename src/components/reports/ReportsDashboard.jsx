@@ -400,13 +400,15 @@ Highlight best and worst performers with specific metrics.`;
             </SelectContent>
           </Select>
 
-          <Button
-            onClick={() => setShowAIReportBuilder(!showAIReportBuilder)}
-            className="bg-purple-600 hover:bg-purple-700 gap-2"
-          >
-            <Sparkles className="w-4 h-4" />
-            AI Report
-          </Button>
+          {permissions.canGenerateAIReports && (
+            <Button
+              onClick={() => setShowAIReportBuilder(!showAIReportBuilder)}
+              className="bg-purple-600 hover:bg-purple-700 gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              AI Report
+            </Button>
+          )}
 
           {permissions.canExportData && (
             <>

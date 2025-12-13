@@ -20,17 +20,38 @@ const ROLE_CONFIG = {
   admin: {
     label: 'Administrator',
     color: 'bg-red-500',
-    description: 'Full system access'
+    description: 'Full system access',
+    permissions: ['All features', 'User management', 'Data export', 'System settings']
+  },
+  manager: {
+    label: 'Manager',
+    color: 'bg-blue-500',
+    description: 'Manage fleet operations',
+    permissions: ['View all data', 'Edit vehicles', 'Reports', 'Data export']
+  },
+  technician: {
+    label: 'Technician',
+    color: 'bg-purple-500',
+    description: 'Maintenance management',
+    permissions: ['View maintenance', 'Add maintenance', 'Edit maintenance', 'View vehicles']
+  },
+  viewer: {
+    label: 'Viewer',
+    color: 'bg-slate-500',
+    description: 'Read-only access',
+    permissions: ['View dashboards', 'View reports', 'No editing']
   },
   site_manager: {
     label: 'Site Manager',
-    color: 'bg-blue-500',
-    description: 'Manage assigned sites'
+    color: 'bg-teal-500',
+    description: 'Manage assigned sites',
+    permissions: ['View assigned sites', 'Edit site vehicles', 'Site reports']
   },
   driver: {
     label: 'Driver',
     color: 'bg-green-500',
-    description: 'View assigned vehicles'
+    description: 'Vehicle operator',
+    permissions: ['View assigned vehicles', 'Report issues', 'Mobile access']
   }
 };
 
@@ -92,18 +113,26 @@ export default function RoleManagement({ vehicles, sites }) {
         <p className="text-slate-600 mt-1">Manage user roles and permissions</p>
       </div>
 
-      {/* Role Legend */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Role Legend with Permissions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(ROLE_CONFIG).map(([role, config]) => (
-          <Card key={role}>
+          <Card key={role} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 ${config.color} rounded-lg flex items-center justify-center`}>
+              <div className="flex items-start gap-3">
+                <div className={`w-10 h-10 ${config.color} rounded-lg flex items-center justify-center shrink-0`}>
                   <Shield className="w-5 h-5 text-white" />
                 </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-800">{config.label}</p>
-                  <p className="text-xs text-slate-600">{config.description}</p>
+                  <p className="text-xs text-slate-600 mb-2">{config.description}</p>
+                  <div className="space-y-1">
+                    {config.permissions.map((permission, idx) => (
+                      <div key={idx} className="flex items-center gap-1 text-xs text-slate-500">
+                        <div className="w-1 h-1 rounded-full bg-slate-400" />
+                        <span>{permission}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -133,6 +162,9 @@ export default function RoleManagement({ vehicles, sites }) {
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="admin">Administrators</SelectItem>
+                  <SelectItem value="manager">Managers</SelectItem>
+                  <SelectItem value="technician">Technicians</SelectItem>
+                  <SelectItem value="viewer">Viewers</SelectItem>
                   <SelectItem value="site_manager">Site Managers</SelectItem>
                   <SelectItem value="driver">Drivers</SelectItem>
                 </SelectContent>

@@ -16,21 +16,35 @@ export function usePermissions() {
   });
 
   const permissions = {
+    // Role checks
     isAdmin: user?.role === 'admin',
+    isManager: user?.role === 'manager',
+    isTechnician: user?.role === 'technician',
+    isViewer: user?.role === 'viewer',
     isSiteManager: user?.role === 'site_manager',
     isDriver: user?.role === 'driver',
     
-    // Module permissions - allow public viewing for all tabs
-    canViewCompliance: true,
-    canViewMaintenance: true,
+    // Module permissions
+    canViewCompliance: true, // Public access
+    canViewMaintenance: true, // Public access
     canManageSites: user?.role === 'admin',
-    canViewReports: true,
+    canViewReports: true, // Public access
     canManageUsers: user?.role === 'admin',
     
-    // Data permissions - read-only for public
-    canEditVehicles: user && (user?.role === 'admin' || user?.role === 'site_manager'),
+    // Data permissions - Edit
+    canEditVehicles: user && ['admin', 'manager', 'site_manager'].includes(user?.role),
+    canEditMaintenance: user && ['admin', 'manager', 'technician', 'site_manager'].includes(user?.role),
+    canEditSites: user?.role === 'admin',
+    
+    // Data permissions - Delete
     canDeleteRecords: user?.role === 'admin',
-    canExportData: user && (user?.role === 'admin' || user?.role === 'site_manager'),
+    
+    // Data permissions - Export
+    canExportData: user && ['admin', 'manager', 'site_manager'].includes(user?.role),
+    
+    // Advanced features
+    canGenerateAIReports: user && ['admin', 'manager'].includes(user?.role),
+    canViewCosts: user && ['admin', 'manager'].includes(user?.role),
     
     user,
     assignedSites: user?.assigned_sites || [],
@@ -58,11 +72,12 @@ export function PermissionGuard({ children, require, fallback }) {
 export function useFilteredData(vehicles, sites) {
   const permissions = usePermissions();
 
-  // Public view or admin - show all data
-  if (!permissions.user || permissions.isAdmin) {
+  // Public view, admin, manager - show all data
+  if (!permissions.user || ['admin', 'manager', 'viewer', 'technician'].includes(permissions.user?.role)) {
     return { filteredVehicles: vehicles, filteredSites: sites };
   }
 
+  // Site manager - show assigned sites only
   if (permissions.isSiteManager) {
     const filteredSites = sites.filter(s => 
       permissions.assignedSites.includes(s.id)
@@ -73,6 +88,7 @@ export function useFilteredData(vehicles, sites) {
     return { filteredVehicles, filteredSites };
   }
 
+  // Driver - show assigned vehicles only
   if (permissions.isDriver) {
     const filteredVehicles = vehicles.filter(v => 
       permissions.assignedVehicles.includes(v.id)
