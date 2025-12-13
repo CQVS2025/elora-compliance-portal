@@ -72,8 +72,9 @@ export default function RoleManagement({ vehicles, sites }) {
   });
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = 
+      (user.email?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (user.full_name?.toLowerCase() || '').includes(searchQuery.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     return matchesSearch && matchesRole;
   });
