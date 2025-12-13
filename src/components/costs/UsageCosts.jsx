@@ -19,12 +19,122 @@ const PRICING_RULES = {
   BORAL_QLD: { litres: 4, pricePerLitre: 3.65 } // QLD exception
 };
 
-// State mapping based on site names (temporary until Addresses.xlsx is uploaded)
+// Site to state mapping from Addresses.xlsx
+const SITE_STATE_MAPPING = {
+  // ACM - VIC
+  'ACM - Clyde': 'VIC',
+  'ACM - Epping': 'VIC',
+  'ACM - Rockbank': 'VIC',
+  // BORAL - QLD
+  'BORAL - QLD - Archerfield': 'QLD',
+  'BORAL - QLD - Beenleigh': 'QLD',
+  'BORAL - QLD - Benowa': 'QLD',
+  'BORAL - QLD - Browns Plains': 'QLD',
+  'BORAL - QLD - Burleigh': 'QLD',
+  'BORAL - QLD - Caloundra': 'QLD',
+  'BORAL - QLD - Capalaba': 'QLD',
+  'BORAL - QLD - Cleveland': 'QLD',
+  'BORAL - QLD - Everton Park': 'QLD',
+  'BORAL - QLD - Geebung': 'QLD',
+  'BORAL - QLD - Ipswich': 'QLD',
+  'BORAL - QLD - Kingston': 'QLD',
+  'BORAL - QLD - Labrador': 'QLD',
+  'BORAL - QLD - Morayfield': 'QLD',
+  'BORAL - QLD - Murarrie': 'QLD',
+  'BORAL - QLD - Narangba': 'QLD',
+  'BORAL - QLD - Redbank Plains': 'QLD',
+  'BORAL - QLD - Southport': 'QLD',
+  'BORAL - QLD - Wacol': 'QLD',
+  // CLEARY BROS - NSW
+  'CLEARY BROS - Albion Park': 'NSW',
+  'CLEARY BROS - Wollongong': 'NSW',
+  // EASY MIX - NSW
+  'EASY MIX - Berkley Vale': 'NSW',
+  // Environex - QLD
+  'Environex': 'QLD',
+  // GUNLAKE - NSW
+  'GUNLAKE - Banksmeadow': 'NSW',
+  'GUNLAKE - Glendenning': 'NSW',
+  'GUNLAKE - Prestons': 'NSW',
+  'GUNLAKE - Silverwater': 'NSW',
+  'GUNLAKE - Smeaton Grange': 'NSW',
+  // HEIDELBERG MATERIALS - VIC
+  'HEIDELBERG MATERIALS - Brooklyn': 'VIC',
+  'HEIDELBERG MATERIALS - Collingwood': 'VIC',
+  'HEIDELBERG MATERIALS - Croydon': 'VIC',
+  'HEIDELBERG MATERIALS - Dandenong': 'VIC',
+  'HEIDELBERG MATERIALS - Dromana': 'VIC',
+  'HEIDELBERG MATERIALS - Epping': 'VIC',
+  'HEIDELBERG MATERIALS - Frankston': 'VIC',
+  'HEIDELBERG MATERIALS - Geelong': 'VIC',
+  'HEIDELBERG MATERIALS - Lysterfield': 'VIC',
+  'HEIDELBERG MATERIALS - Melton': 'VIC',
+  'HEIDELBERG MATERIALS - Port Melbourne': 'VIC',
+  'HEIDELBERG MATERIALS - Somerton': 'VIC',
+  'HEIDELBERG MATERIALS - Sunbury': 'VIC',
+  'HEIDELBERG MATERIALS - Weriribee': 'VIC',
+  'HEIDELBERG MATERIALS - Westall': 'VIC',
+  'HEIDELBERG MATERIALS - Wollert': 'VIC',
+  // HEIDELBERG MATERIALS - NSW
+  'HEIDELBERG MATERIALS - NSW - Artarmon': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Banksmeadow': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Caringbah': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Greenacre': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Pendle Hill': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Prestons': 'NSW',
+  'HEIDELBERG MATERIALS - NSW - Thornleigh': 'NSW',
+  // HOLCIM - VIC
+  'HOLCIM - Bayswater': 'VIC',
+  'HOLCIM - Footscray': 'VIC',
+  'HOLCIM - Laverton': 'VIC',
+  'HOLCIM - Melbourne Airport': 'VIC',
+  'HOLCIM - Oaklands Junction': 'VIC',
+  'HOLCIM - Prestons': 'VIC',
+  // HOLCIM - NSW
+  'HOLCIM - Camellia': 'NSW',
+  'HOLCIM - Lidcombe': 'NSW',
+  // HUNTER READY MIX - NSW
+  'HUNTER READY MIX - Cessnock': 'NSW',
+  'HUNTER READY MIX - Gateshead': 'NSW',
+  'HUNTER READY MIX - Thornton': 'NSW',
+  // HYMIX - NSW
+  'HYMIX - Belmont': 'NSW',
+  'HYMIX - Berkley Vale': 'NSW',
+  'HYMIX - Kincumber': 'NSW',
+  'HYMIX - Rutherford': 'NSW',
+  'HYMIX - Steel River': 'NSW',
+  'HYMIX - Toronto': 'NSW',
+  // MAITLAND READY MIX - NSW
+  'MAITLAND READY MIX - Maitland': 'NSW',
+  // NUCON - QLD
+  'NUCON - Burleigh': 'QLD',
+  // REDIMIX
+  'REDIMIX - Rockhampton': 'QLD',
+  'REDIMIX - Tamworth': 'NSW',
+  // SUNMIX - QLD
+  'SUNMIX - Beaudesert': 'QLD',
+  'SUNMIX - Kingston': 'QLD',
+  'SUNMIX - Swanbank': 'QLD',
+  // WANGERS - QLD
+  'WANGERS - Pinkenba': 'QLD',
+  'WANGERS - Toowoomba': 'QLD'
+};
+
+// State mapping based on site names
 const getStateFromSite = (siteName) => {
   if (!siteName) return 'NSW';
+  
+  // Direct lookup from mapping
+  if (SITE_STATE_MAPPING[siteName]) {
+    return SITE_STATE_MAPPING[siteName];
+  }
+  
+  // Fallback to keyword matching
   const siteUpper = siteName.toUpperCase();
-  if (siteUpper.includes('QLD') || siteUpper.includes('BRISBANE')) return 'QLD';
-  if (siteUpper.includes('VIC') || siteUpper.includes('MELBOURNE')) return 'VIC';
+  if (siteUpper.includes('QLD') || siteUpper.includes('BRISBANE') || siteUpper.includes('QUEENSLAND')) return 'QLD';
+  if (siteUpper.includes('VIC') || siteUpper.includes('MELBOURNE') || siteUpper.includes('VICTORIA')) return 'VIC';
+  if (siteUpper.includes('NSW') || siteUpper.includes('SYDNEY')) return 'NSW';
+  
   return 'NSW'; // Default
 };
 
