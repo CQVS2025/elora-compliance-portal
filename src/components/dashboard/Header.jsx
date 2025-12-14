@@ -35,7 +35,7 @@ export default function Header({ onNotificationClick }) {
           >
             {/* ELORA Logo */}
             <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/5bcc0fc55_ChatGPTImageDec12202504_50_02PM.png"
+              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/632cca34d_FAVICON5.jpg"
               alt="ELORA Logo"
               className="h-[40px] w-auto"
             />
