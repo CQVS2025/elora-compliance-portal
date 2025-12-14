@@ -144,12 +144,9 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
           {urgentItems.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <motion.div
+              <div
                 key={idx}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className={`p-4 border-2 rounded-lg ${item.color} hover:shadow-md transition-shadow`}
+                className={`p-4 border-2 rounded-lg ${item.color} hover:shadow-md transition-shadow relative`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -161,10 +158,8 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                   </Badge>
                 </div>
                 <p className="text-sm mb-3">{item.description}</p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full group hover:bg-white/50"
+                <button 
+                  className="w-full px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-white/50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
                   onClick={() => {
                     if (item.onClick) {
                       item.onClick();
@@ -172,9 +167,9 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                   }}
                 >
                   {item.action}
-                  <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </motion.div>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             );
           })}
         </div>
