@@ -33,12 +33,10 @@ export default function Header({ onNotificationClick }) {
               border: '1px solid rgba(124,179,66,0.3)'
             }}
           >
-            {/* ELORA Logo */}
-            <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/632cca34d_FAVICON5.jpg"
-              alt="ELORA Logo"
-              className="h-[40px] w-auto"
-            />
+            {/* ELORA Text */}
+            <span className="text-white text-[24px] font-bold tracking-wide">
+              ELORA
+            </span>
             
             {/* Vertical Divider */}
             <div className="w-[1px] h-[32px]" style={{ background: 'rgba(124,179,66,0.3)' }} />
