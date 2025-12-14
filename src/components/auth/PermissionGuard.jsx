@@ -16,35 +16,35 @@ export function usePermissions() {
   });
 
   const permissions = {
-    // Role checks
-    isAdmin: user?.role === 'admin',
-    isManager: user?.role === 'manager',
-    isTechnician: user?.role === 'technician',
-    isViewer: user?.role === 'viewer',
-    isSiteManager: user?.role === 'site_manager',
-    isDriver: user?.role === 'driver',
+    // Role checks - All public
+    isAdmin: true,
+    isManager: true,
+    isTechnician: true,
+    isViewer: true,
+    isSiteManager: true,
+    isDriver: false,
     
-    // Module permissions
-    canViewCompliance: true, // Public access
-    canViewMaintenance: true, // Public access
-    canManageSites: user?.role === 'admin',
-    canViewReports: true, // Public access
-    canManageUsers: user?.role === 'admin',
+    // Module permissions - All public
+    canViewCompliance: true,
+    canViewMaintenance: true,
+    canManageSites: true,
+    canViewReports: true,
+    canManageUsers: true,
     
-    // Data permissions - Edit
-    canEditVehicles: user && ['admin', 'manager', 'site_manager'].includes(user?.role),
-    canEditMaintenance: user && ['admin', 'manager', 'technician', 'site_manager'].includes(user?.role),
-    canEditSites: user?.role === 'admin',
+    // Data permissions - Edit - All public
+    canEditVehicles: true,
+    canEditMaintenance: true,
+    canEditSites: true,
     
-    // Data permissions - Delete
-    canDeleteRecords: user?.role === 'admin',
+    // Data permissions - Delete - All public
+    canDeleteRecords: true,
     
-    // Data permissions - Export
-    canExportData: user && ['admin', 'manager', 'site_manager'].includes(user?.role),
+    // Data permissions - Export - All public
+    canExportData: true,
     
-    // Advanced features
-    canGenerateAIReports: user && ['admin', 'manager'].includes(user?.role),
-    canViewCosts: user && ['admin', 'manager'].includes(user?.role),
+    // Advanced features - All public
+    canGenerateAIReports: true,
+    canViewCosts: true,
     
     user,
     assignedSites: user?.assigned_sites || [],
