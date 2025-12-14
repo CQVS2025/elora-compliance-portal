@@ -56,6 +56,8 @@ import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
 import UsageCosts from '@/components/costs/UsageCosts';
 import MobileDashboard from './MobileDashboard';
+import RefillsManagement from '@/components/refills/RefillsManagement';
+import DeviceHealth from '@/components/devices/DeviceHealth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
 
@@ -324,10 +326,12 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className="grid w-full max-w-5xl grid-cols-6">
+          <TabsList className="grid w-full max-w-6xl grid-cols-8 gap-1">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="costs">Usage Costs</TabsTrigger>
+            <TabsTrigger value="refills">Refills</TabsTrigger>
+            <TabsTrigger value="devices">Device Health</TabsTrigger>
             <TabsTrigger value="sites">Sites</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
@@ -363,6 +367,18 @@ export default function Dashboard() {
               selectedSite={selectedSite}
               dateRange={dateRange}
             />
+          </TabsContent>
+
+          <TabsContent value="refills" className="mt-6">
+            <RefillsManagement
+              selectedCustomer={selectedCustomer}
+              selectedSite={selectedSite}
+              dateRange={dateRange}
+            />
+          </TabsContent>
+
+          <TabsContent value="devices" className="mt-6">
+            <DeviceHealth />
           </TabsContent>
 
           <TabsContent value="sites" className="mt-6">
