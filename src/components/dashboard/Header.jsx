@@ -68,16 +68,16 @@ export default function Header({ onNotificationClick }) {
         `}</style>
 
         {/* Center Section - Title */}
-        <div className="hidden md:flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
-          <h1 className="text-white text-[28px] font-bold tracking-[-0.5px]">
+        <div className="hidden lg:flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
+          <h1 className="text-white text-[26px] font-bold tracking-[-0.5px]">
             ELORA Fleet Compliance Portal
           </h1>
           <div className="h-0.5 w-[60px] mt-1" style={{ background: '#7CB342' }} />
         </div>
 
-        {/* Mobile Center - Short Title */}
-        <div className="md:hidden absolute left-1/2 transform -translate-x-1/2">
-          <h1 className="text-white text-xl font-bold">ELORA</h1>
+        {/* Mobile/Tablet Center - Short Title */}
+        <div className="lg:hidden absolute left-1/2 transform -translate-x-1/2">
+          <h1 className="text-white text-lg font-bold">Fleet Portal</h1>
         </div>
 
         {/* Right Section - User Actions */}
