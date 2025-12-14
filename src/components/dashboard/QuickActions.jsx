@@ -149,8 +149,7 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`p-4 border-2 rounded-lg ${item.color} hover:shadow-md transition-shadow cursor-pointer`}
-                onClick={item.onClick}
+                className={`p-4 border-2 rounded-lg ${item.color} hover:shadow-md transition-shadow`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -166,9 +165,10 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                   size="sm" 
                   variant="outline" 
                   className="w-full group hover:bg-white/50"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (item.onClick) item.onClick();
+                  onClick={() => {
+                    if (item.onClick) {
+                      item.onClick();
+                    }
                   }}
                 >
                   {item.action}
