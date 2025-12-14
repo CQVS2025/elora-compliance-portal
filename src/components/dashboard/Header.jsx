@@ -38,10 +38,6 @@ export default function Header({ onNotificationClick }) {
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/632cca34d_FAVICON5.jpg"
               alt="ELORA Logo"
               className="h-[40px] w-auto"
-              style={{ 
-                mixBlendMode: 'screen',
-                filter: 'brightness(1.1) contrast(1.05)'
-              }}
             />
             
             {/* Vertical Divider */}
