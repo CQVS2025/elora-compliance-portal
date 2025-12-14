@@ -20,13 +20,17 @@ import {
 import moment from 'moment';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-export default function DeviceHealth() {
+export default function DeviceHealth({ selectedCustomer, selectedSite }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: devices = [], isLoading } = useQuery({
-    queryKey: ['devices'],
+    queryKey: ['devices', selectedCustomer, selectedSite],
     queryFn: async () => {
-      const response = await base44.functions.invoke('elora_devices', { status: 'active' });
+      const params = { status: 'active' };
+      if (selectedCustomer && selectedCustomer !== 'all') params.customer_id = selectedCustomer;
+      if (selectedSite && selectedSite !== 'all') params.site_id = selectedSite;
+      
+      const response = await base44.functions.invoke('elora_devices', params);
       return response.data || [];
     }
   });
@@ -47,20 +51,13 @@ export default function DeviceHealth() {
       return hoursSince >= 24;
     }).length;
 
-    const lowTank = devices.filter(d => 
-      d.lastTankLevelMeters && d.tankLevelTriggerMeters && 
-      d.lastTankLevelMeters <= d.tankLevelTriggerMeters
-    ).length;
 
-    const avgTankLevel = devices.length > 0
-      ? devices.reduce((sum, d) => sum + (d.lastTankLevelMeters || 0), 0) / devices.length
-      : 0;
 
     const healthScore = devices.length > 0
       ? Math.round((online / devices.length) * 100)
       : 0;
 
-    return { online, offline, lowTank, avgTankLevel, healthScore, total: devices.length };
+    return { online, offline, healthScore, total: devices.length };
   }, [devices]);
 
   // Filter devices
@@ -118,16 +115,7 @@ export default function DeviceHealth() {
     return { label: 'Offline', color: 'bg-red-100 text-red-800', icon: XCircle };
   };
 
-  const getTankStatus = (device) => {
-    if (!device.lastTankLevelMeters || !device.tankLevelTriggerMeters) return null;
-    
-    const level = device.lastTankLevelMeters;
-    const trigger = device.tankLevelTriggerMeters;
-    
-    if (level <= trigger) return { label: 'Low', color: 'text-red-600', percent: (level / (trigger * 2)) * 100 };
-    if (level <= trigger * 1.5) return { label: 'Medium', color: 'text-yellow-600', percent: (level / (trigger * 2)) * 100 };
-    return { label: 'Good', color: 'text-green-600', percent: Math.min(100, (level / (trigger * 2)) * 100) };
-  };
+
 
   const COLORS = ['#7CB342', '#EF4444', '#F59E0B', '#3B82F6'];
 
@@ -142,7 +130,7 @@ export default function DeviceHealth() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -203,20 +191,7 @@ export default function DeviceHealth() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600">Low Tank</p>
-                <p className="text-3xl font-bold text-orange-600 mt-1">{stats.lowTank}</p>
-                <p className="text-xs text-slate-500 mt-2">Refill needed</p>
-              </div>
-              <div className="w-12 h-12 rounded-lg bg-orange-100 flex items-center justify-center">
-                <AlertTriangle className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
 
       {/* Charts */}
@@ -286,7 +261,6 @@ export default function DeviceHealth() {
           <div className="space-y-3">
             {filteredDevices.map((device, idx) => {
               const status = getDeviceStatus(device);
-              const tankStatus = getTankStatus(device);
               const StatusIcon = status.icon;
 
               return (
@@ -301,12 +275,6 @@ export default function DeviceHealth() {
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-slate-800">{device.computerName || device.deviceRef}</h3>
                           <Badge className={status.color}>{status.label}</Badge>
-                          {tankStatus && (
-                            <Badge variant="outline" className={tankStatus.color}>
-                              <Droplet className="w-3 h-3 mr-1" />
-                              Tank: {tankStatus.label}
-                            </Badge>
-                          )}
                         </div>
                         
                         <div className="flex items-center gap-4 text-sm text-slate-600">
@@ -319,16 +287,6 @@ export default function DeviceHealth() {
                             <span className="text-xs px-2 py-0.5 bg-slate-100 rounded">v{device.version}</span>
                           )}
                         </div>
-
-                        {tankStatus && (
-                          <div className="mt-2">
-                            <Progress value={tankStatus.percent} className="h-2" />
-                            <p className="text-xs text-slate-500 mt-1">
-                              Tank Level: {Number(device.lastTankLevelMeters || 0).toFixed(2)}m 
-                              {device.tankLevelTriggerMeters && ` (Trigger: ${Number(device.tankLevelTriggerMeters).toFixed(2)}m)`}
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </div>
 

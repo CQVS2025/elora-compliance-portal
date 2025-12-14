@@ -378,7 +378,10 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="devices" className="mt-6">
-            <DeviceHealth />
+            <DeviceHealth
+              selectedCustomer={selectedCustomer}
+              selectedSite={selectedSite}
+            />
           </TabsContent>
 
           <TabsContent value="sites" className="mt-6">
