@@ -135,7 +135,17 @@ export default function Dashboard() {
     const vehicleMap = new Map();
     const scansArray = [];
     
+    // Filter rows to only include the selected date range
+    const startMoment = moment(dateRange.start);
+    const endMoment = moment(dateRange.end);
+    
     dashboardData.rows.forEach(row => {
+      // Check if this row falls within the selected date range
+      const rowDate = moment(`${row.year}-${String(row.month).padStart(2, '0')}-01`);
+      if (!rowDate.isBetween(startMoment, endMoment, 'month', '[]')) {
+        return; // Skip rows outside the date range
+      }
+      
       const vehicleKey = row.vehicleRef;
       
       if (!vehicleMap.has(vehicleKey)) {
@@ -172,7 +182,7 @@ export default function Dashboard() {
       vehicles: Array.from(vehicleMap.values()),
       scans: scansArray
     };
-  }, [dashboardData]);
+  }, [dashboardData, dateRange]);
 
   const enrichedVehicles = processedData.vehicles;
   const scans = processedData.scans;
