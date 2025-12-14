@@ -159,12 +159,21 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                 </div>
                 <p className="text-sm mb-3">{item.description}</p>
                 <button 
-                  className="w-full px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-white/50 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                  onClick={() => {
+                  className="w-full px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-white/50 transition-colors flex items-center justify-center gap-2 cursor-pointer bg-white"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
                     if (item.onClick) {
                       item.onClick();
+                    } else if (item.tab) {
+                      const tabElement = document.querySelector(`[value="${item.tab}"]`);
+                      if (tabElement) {
+                        tabElement.click();
+                      }
                     }
                   }}
+                  type="button"
                 >
                   {item.action}
                   <ChevronRight className="w-4 h-4" />
