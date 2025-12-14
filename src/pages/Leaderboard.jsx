@@ -41,6 +41,20 @@ export default function Leaderboard() {
     queryFn: fetchScans,
   });
 
+  const calculateBadges = (driver) => {
+    const badges = [];
+    
+    if (driver.performanceScore >= 90) badges.push({ name: 'Elite Performer', icon: Crown, color: 'text-yellow-500' });
+    if (driver.performanceScore >= 80) badges.push({ name: 'Top Performer', icon: Trophy, color: 'text-purple-500' });
+    if (driver.totalWashes >= 50) badges.push({ name: 'Wash Master', icon: Zap, color: 'text-blue-500' });
+    if (driver.totalWashes >= 100) badges.push({ name: 'Century Club', icon: Award, color: 'text-emerald-500' });
+    if (driver.currentStreak >= 7) badges.push({ name: 'Week Warrior', icon: Flame, color: 'text-orange-500' });
+    if (driver.currentStreak >= 14) badges.push({ name: 'Consistency King', icon: Star, color: 'text-red-500' });
+    if (driver.maxStreak >= 30) badges.push({ name: 'Marathon Master', icon: Target, color: 'text-indigo-500' });
+    
+    return badges;
+  };
+
   const driverStats = useMemo(() => {
     // Group vehicles by driver (using vehicle name as proxy)
     const driverMap = new Map();
@@ -116,21 +130,7 @@ export default function Leaderboard() {
         rank: index + 1,
         badges: calculateBadges(driver)
       }));
-  }, [vehicles, scans]);
-
-  const calculateBadges = (driver) => {
-    const badges = [];
-    
-    if (driver.performanceScore >= 90) badges.push({ name: 'Elite Performer', icon: Crown, color: 'text-yellow-500' });
-    if (driver.performanceScore >= 80) badges.push({ name: 'Top Performer', icon: Trophy, color: 'text-purple-500' });
-    if (driver.totalWashes >= 50) badges.push({ name: 'Wash Master', icon: Zap, color: 'text-blue-500' });
-    if (driver.totalWashes >= 100) badges.push({ name: 'Century Club', icon: Award, color: 'text-emerald-500' });
-    if (driver.currentStreak >= 7) badges.push({ name: 'Week Warrior', icon: Flame, color: 'text-orange-500' });
-    if (driver.currentStreak >= 14) badges.push({ name: 'Consistency King', icon: Star, color: 'text-red-500' });
-    if (driver.maxStreak >= 30) badges.push({ name: 'Marathon Master', icon: Target, color: 'text-indigo-500' });
-    
-    return badges;
-  };
+  }, [vehicles, scans, calculateBadges]);
 
   const topPerformer = driverStats[0];
 
