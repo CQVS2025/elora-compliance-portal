@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trophy, Medal, Star, TrendingUp, Flame, Award, Target, Zap, Crown, ChevronLeft, Building2, MapPin } from 'lucide-react';
+import { Trophy, Medal, Star, TrendingUp, Flame, Award, Target, Zap, Crown, ChevronLeft, Building2, MapPin, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
 import { Progress } from "@/components/ui/progress";
@@ -231,12 +231,20 @@ export default function Leaderboard() {
                     <Medal className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="font-bold text-xl mb-1">{driverStats[1].name}</h3>
-                  {driverStats[1].siteName && (
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mb-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>{driverStats[1].siteName}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center gap-2 text-xs mb-1">
+                    {driverStats[1].customerName && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {driverStats[1].customerName}
+                      </span>
+                    )}
+                    {driverStats[1].siteName && (
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {driverStats[1].siteName}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-3xl font-black text-gray-600 mb-2">{driverStats[1].performanceScore}</p>
                   <Badge className="bg-gray-500 text-white mb-3">2nd Place</Badge>
                   <div className="space-y-1 text-sm text-slate-600">
@@ -260,12 +268,20 @@ export default function Leaderboard() {
                     <Crown className="w-12 h-12 text-white animate-pulse" />
                   </div>
                   <h3 className="font-bold text-2xl mb-1">{driverStats[0].name}</h3>
-                  {driverStats[0].siteName && (
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mb-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>{driverStats[0].siteName}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center gap-2 text-xs mb-1">
+                    {driverStats[0].customerName && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {driverStats[0].customerName}
+                      </span>
+                    )}
+                    {driverStats[0].siteName && (
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {driverStats[0].siteName}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-4xl font-black text-yellow-600 mb-2">{driverStats[0].performanceScore}</p>
                   <Badge className="bg-yellow-500 text-white mb-3 text-sm">🏆 Champion</Badge>
                   <div className="space-y-1 text-sm text-slate-600">
@@ -294,12 +310,20 @@ export default function Leaderboard() {
                     <Medal className="w-10 h-10 text-white" />
                   </div>
                   <h3 className="font-bold text-xl mb-1">{driverStats[2].name}</h3>
-                  {driverStats[2].siteName && (
-                    <div className="flex items-center justify-center gap-1 text-xs text-slate-500 mb-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>{driverStats[2].siteName}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-center gap-2 text-xs mb-1">
+                    {driverStats[2].customerName && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {driverStats[2].customerName}
+                      </span>
+                    )}
+                    {driverStats[2].siteName && (
+                      <span className="px-2 py-0.5 bg-slate-100 text-slate-700 rounded-full flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {driverStats[2].siteName}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-3xl font-black text-orange-600 mb-2">{driverStats[2].performanceScore}</p>
                   <Badge className="bg-orange-500 text-white mb-3">3rd Place</Badge>
                   <div className="space-y-1 text-sm text-slate-600">
@@ -338,6 +362,12 @@ export default function Leaderboard() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-lg text-slate-800">{driver.name}</h3>
+                    {driver.customerName && (
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 text-xs flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        {driver.customerName}
+                      </Badge>
+                    )}
                     {driver.siteName && (
                       <Badge variant="secondary" className="text-xs flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
