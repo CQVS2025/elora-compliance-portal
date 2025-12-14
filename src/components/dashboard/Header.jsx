@@ -24,11 +24,12 @@ export default function Header({ onNotificationClick }) {
     }}>
       <div className="h-full px-6 flex items-center justify-between">
         {/* Left Section - Enhanced Branding */}
-        <div className="flex items-center min-w-[280px]">
+        <div className="flex items-center">
           <div 
-            className="bg-white/10 rounded-2xl px-5 py-3 transition-all duration-300 hover:shadow-[0_0_24px_rgba(124,179,66,0.4)] hover:scale-[1.02] animate-[slideIn_0.6s_ease-out]"
+            className="flex items-center gap-4 px-5 py-2 rounded-xl transition-all duration-300 hover:shadow-[0_0_24px_rgba(124,179,66,0.4)] hover:scale-[1.02]"
             style={{
-              background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(51,65,85,0.8))',
+              height: '56px',
+              background: 'rgba(255,255,255,0.08)',
               border: '1px solid rgba(124,179,66,0.3)'
             }}
           >
@@ -36,40 +37,27 @@ export default function Header({ onNotificationClick }) {
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/5bcc0fc55_ChatGPTImageDec12202504_50_02PM.png"
               alt="ELORA Logo"
-              className="h-[56px] w-auto mb-2"
+              className="h-[40px] w-auto"
             />
             
-            {/* Divider Line */}
-            <div className="h-[1px] w-full bg-white/20 my-2" />
+            {/* Vertical Divider */}
+            <div className="w-[1px] h-[32px]" style={{ background: 'rgba(124,179,66,0.3)' }} />
             
-            {/* Powered by CQVS */}
-            <div className="flex items-center justify-center gap-1.5">
-              <span className="text-[13px] font-medium text-slate-300" style={{ letterSpacing: '0.5px' }}>
+            {/* Powered by CQVS - Stacked */}
+            <div className="flex flex-col justify-center">
+              <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider leading-none">
                 powered by
               </span>
-              <span className="text-[14px] font-bold text-[#7CB342]" style={{ letterSpacing: '0.8px' }}>
+              <span className="text-[16px] font-bold text-[#7CB342] leading-none mt-0.5" style={{ letterSpacing: '0.5px' }}>
                 CQVS
               </span>
             </div>
           </div>
         </div>
-        
-        <style>{`
-          @keyframes slideIn {
-            from {
-              opacity: 0;
-              transform: translateX(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-        `}</style>
 
         {/* Center Section - Title */}
         <div className="hidden lg:flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
-          <h1 className="text-white text-[26px] font-bold tracking-[-0.5px]">
+          <h1 className="text-white text-[28px] font-bold tracking-[-0.5px]">
             ELORA Fleet Compliance Portal
           </h1>
           <div className="h-0.5 w-[60px] mt-1" style={{ background: '#7CB342' }} />
@@ -77,7 +65,7 @@ export default function Header({ onNotificationClick }) {
 
         {/* Mobile/Tablet Center - Short Title */}
         <div className="lg:hidden absolute left-1/2 transform -translate-x-1/2">
-          <h1 className="text-white text-lg font-bold">Fleet Portal</h1>
+          <h1 className="text-white text-xl font-bold">ELORA</h1>
         </div>
 
         {/* Right Section - User Actions */}
