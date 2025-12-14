@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, CheckCircle, Droplet, Users, Loader2 } from 'lucide-react';
+import { Truck, CheckCircle, Droplet, Users, Loader2, Trophy, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
 import { base44 } from "@/api/base44Client";
+import { Link } from 'react-router-dom';
+import { createPageUrl } from './utils';
 
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
@@ -297,6 +299,28 @@ export default function Dashboard() {
             <StatsCard key={index} {...stat} index={index} />
           ))}
         </div>
+
+        {/* Leaderboard Quick Link */}
+        <Link to={createPageUrl('Leaderboard')}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer group"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                  <Trophy className="w-6 h-6" />
+                  Driver Leaderboard
+                </h3>
+                <p className="text-purple-100">
+                  See who's leading the pack this month! 🏆
+                </p>
+              </div>
+              <ChevronRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
+            </div>
+          </motion.div>
+        </Link>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
