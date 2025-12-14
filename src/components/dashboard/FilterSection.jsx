@@ -52,7 +52,7 @@ export default function FilterSection({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sites</SelectItem>
-            {sites.map((site) => (
+            {sites.filter(site => site.name !== 'All Sites').map((site) => (
               <SelectItem key={site.id} value={site.id}>
                 {site.name}
               </SelectItem>
