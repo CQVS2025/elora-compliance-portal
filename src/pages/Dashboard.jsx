@@ -123,50 +123,13 @@ export default function Dashboard() {
     }),
   });
 
-
-
-  // Generate chart data from dashboard API
-  const washTrendsData = useMemo(() => {
-    if (!dashboardData?.charts?.totalWashesByMonth?.length) {
-      // Fallback to scanning data
-      if (!scans.length) return [];
-      
-      const scansByDate = {};
-      scans.forEach(scan => {
-        const date = moment(scan.timestamp).format('MMM D');
-        scansByDate[date] = (scansByDate[date] || 0) + 1;
-      });
-
-      const days = [];
-      const start = moment(dateRange.start);
-      const end = moment(dateRange.end);
-      const diff = end.diff(start, 'days');
-      
-      for (let i = 0; i <= Math.min(diff, 30); i++) {
-        const date = moment(start).add(i, 'days');
-        const dateKey = date.format('MMM D');
-        days.push({
-          date: dateKey,
-          washes: scansByDate[dateKey] || 0,
-        });
-      }
-      return days;
-    }
-    
-    // Use API's pre-aggregated data
-    return dashboardData.charts.totalWashesByMonth.map(item => ({
-      date: `${item.month}/${item.year}`,
-      washes: item.totalWashes || 0
-    }));
-  }, [dashboardData, scans, dateRange]);
-
   // Reset site when customer changes
   useEffect(() => {
     setSelectedSite('all');
   }, [selectedCustomer]);
 
   // Process dashboard data
-  const { vehicles: enrichedVehicles, scans } = useMemo(() => {
+  const processedData = useMemo(() => {
     if (!dashboardData?.rows) return { vehicles: [], scans: [] };
     
     const vehicleMap = new Map();
@@ -211,8 +174,46 @@ export default function Dashboard() {
     };
   }, [dashboardData]);
 
+  const enrichedVehicles = processedData.vehicles;
+  const scans = processedData.scans;
+
   // Apply permission-based filtering
   const { filteredVehicles, filteredSites } = useFilteredData(enrichedVehicles, allSites);
+
+  // Generate chart data from dashboard API
+  const washTrendsData = useMemo(() => {
+    if (!dashboardData?.charts?.totalWashesByMonth?.length) {
+      // Fallback to scanning data
+      if (!scans.length) return [];
+      
+      const scansByDate = {};
+      scans.forEach(scan => {
+        const date = moment(scan.timestamp).format('MMM D');
+        scansByDate[date] = (scansByDate[date] || 0) + 1;
+      });
+
+      const days = [];
+      const start = moment(dateRange.start);
+      const end = moment(dateRange.end);
+      const diff = end.diff(start, 'days');
+      
+      for (let i = 0; i <= Math.min(diff, 30); i++) {
+        const date = moment(start).add(i, 'days');
+        const dateKey = date.format('MMM D');
+        days.push({
+          date: dateKey,
+          washes: scansByDate[dateKey] || 0,
+        });
+      }
+      return days;
+    }
+    
+    // Use API's pre-aggregated data
+    return dashboardData.charts.totalWashesByMonth.map(item => ({
+      date: `${item.month}/${item.year}`,
+      washes: item.totalWashes || 0
+    }));
+  }, [dashboardData, scans, dateRange]);
 
   // Calculate stats
   const stats = useMemo(() => {
