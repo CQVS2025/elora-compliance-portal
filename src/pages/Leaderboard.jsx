@@ -10,7 +10,7 @@ import moment from 'moment';
 import { Progress } from "@/components/ui/progress";
 import confetti from 'canvas-confetti';
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 async function fetchVehicles() {
   const response = await base44.functions.invoke('elora_vehicles', {});

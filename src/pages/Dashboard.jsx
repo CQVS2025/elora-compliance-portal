@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import moment from 'moment';
 import { base44 } from "@/api/base44Client";
 import { Link } from 'react-router-dom';
-import { createPageUrl } from './utils';
+import { createPageUrl } from '@/utils';
 
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
