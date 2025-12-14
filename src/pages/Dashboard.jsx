@@ -336,11 +336,10 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="compliance" className="w-full">
-          <TabsList className="grid w-full max-w-6xl grid-cols-8 gap-1">
+          <TabsList className="grid w-full max-w-6xl grid-cols-7 gap-1">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="costs">Usage Costs</TabsTrigger>
-            <TabsTrigger value="refills">Refills</TabsTrigger>
             <TabsTrigger value="devices">Device Health</TabsTrigger>
             <TabsTrigger value="sites">Sites</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -373,14 +372,6 @@ export default function Dashboard() {
 
           <TabsContent value="costs" className="mt-6">
             <UsageCosts
-              selectedCustomer={selectedCustomer}
-              selectedSite={selectedSite}
-              dateRange={dateRange}
-            />
-          </TabsContent>
-
-          <TabsContent value="refills" className="mt-6">
-            <RefillsManagement
               selectedCustomer={selectedCustomer}
               selectedSite={selectedSite}
               dateRange={dateRange}
