@@ -324,8 +324,8 @@ export default function DeviceHealth() {
                           <div className="mt-2">
                             <Progress value={tankStatus.percent} className="h-2" />
                             <p className="text-xs text-slate-500 mt-1">
-                              Tank Level: {device.lastTankLevelMeters?.toFixed(2)}m 
-                              {device.tankLevelTriggerMeters && ` (Trigger: ${device.tankLevelTriggerMeters}m)`}
+                              Tank Level: {Number(device.lastTankLevelMeters || 0).toFixed(2)}m 
+                              {device.tankLevelTriggerMeters && ` (Trigger: ${Number(device.tankLevelTriggerMeters).toFixed(2)}m)`}
                             </p>
                           </div>
                         )}
