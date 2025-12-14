@@ -159,18 +159,27 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                 </div>
                 <p className="text-sm mb-3">{item.description}</p>
                 <button 
-                  className="w-full px-4 py-2 text-sm border border-slate-300 rounded-md hover:bg-white/50 transition-colors flex items-center justify-center gap-2 cursor-pointer bg-white"
+                  className="w-full px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer bg-white shadow-sm hover:shadow-md active:scale-95 z-10"
+                  style={{ pointerEvents: 'auto' }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    if (item.onClick) {
-                      item.onClick();
-                    } else if (item.tab) {
-                      const tabElement = document.querySelector(`[value="${item.tab}"]`);
+                    console.log('Button clicked:', item.type);
+                    
+                    if (item.tab) {
+                      console.log('Switching to tab:', item.tab);
+                      const tabElement = document.querySelector(`button[value="${item.tab}"]`);
+                      console.log('Tab element found:', tabElement);
                       if (tabElement) {
                         tabElement.click();
                       }
+                    } else if (item.onClick) {
+                      console.log('Calling onClick handler');
+                      item.onClick();
                     }
                   }}
                   type="button"
