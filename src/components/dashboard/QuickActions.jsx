@@ -8,7 +8,7 @@ import { AlertTriangle, Wrench, TrendingDown, WifiOff, ChevronRight } from 'luci
 import moment from 'moment';
 import { motion } from 'framer-motion';
 
-export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicle }) {
+export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicle, onOpenDevices }) {
   const { data: maintenanceRecords = [] } = useQuery({
     queryKey: ['maintenance'],
     queryFn: async () => {
@@ -84,7 +84,7 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
         count: offlineDevices.length,
         description: `${offlineDevices.length} device${offlineDevices.length > 1 ? 's' : ''} not responding`,
         action: 'Check',
-        tab: 'devices'
+        onClick: onOpenDevices
       });
     }
 
@@ -110,7 +110,7 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
     }
 
     return items.slice(0, 4); // Show top 4 urgent items
-  }, [vehicles, maintenanceRecords, devices, onOpenMaintenance, onOpenVehicle]);
+  }, [vehicles, maintenanceRecords, devices, onOpenMaintenance, onOpenVehicle, onOpenDevices]);
 
   if (urgentItems.length === 0) {
     return (
@@ -159,26 +159,12 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
                 </div>
                 <p className="text-sm mb-3">{item.description}</p>
                 <button 
-                  className="w-full px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer bg-white shadow-sm hover:shadow-md active:scale-95 z-10"
-                  style={{ pointerEvents: 'auto' }}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                  }}
+                  className="w-full px-4 py-2 text-sm font-medium border border-slate-300 rounded-md hover:bg-white transition-all flex items-center justify-center gap-2 cursor-pointer bg-white shadow-sm hover:shadow-md active:scale-95"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    console.log('Button clicked:', item.type);
-                    
-                    if (item.tab) {
-                      console.log('Switching to tab:', item.tab);
-                      const tabElement = document.querySelector(`button[value="${item.tab}"]`);
-                      console.log('Tab element found:', tabElement);
-                      if (tabElement) {
-                        tabElement.click();
-                      }
-                    } else if (item.onClick) {
-                      console.log('Calling onClick handler');
+                    if (item.onClick) {
                       item.onClick();
                     }
                   }}

@@ -68,6 +68,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
   const [selectedVehicleForModal, setSelectedVehicleForModal] = useState(null);
+  const [activeTab, setActiveTab] = useState('compliance');
 
   // Detect mobile and redirect drivers to mobile view
   useEffect(() => {
@@ -320,10 +321,12 @@ export default function Dashboard() {
         <QuickActions 
           vehicles={filteredVehicles}
           onOpenMaintenance={() => {
-            const tabsElement = document.querySelector('[value="maintenance"]');
-            if (tabsElement) tabsElement.click();
+            setActiveTab('maintenance');
           }}
           onOpenVehicle={(vehicle) => setSelectedVehicleForModal(vehicle)}
+          onOpenDevices={() => {
+            setActiveTab('devices');
+          }}
         />
 
         {/* Analytics Row */}
@@ -359,7 +362,7 @@ export default function Dashboard() {
         </Link>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="compliance" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-6xl grid-cols-7 gap-1">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
