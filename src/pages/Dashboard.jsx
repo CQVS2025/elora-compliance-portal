@@ -7,6 +7,17 @@ import { base44 } from "@/api/base44Client";
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
+async function fetchDashboardData({ customerId, siteId, startDate, endDate } = {}) {
+  const params = {};
+  if (customerId && customerId !== 'all') params.customer_id = customerId;
+  if (siteId && siteId !== 'all') params.site_id = siteId;
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  
+  const response = await base44.functions.invoke('elora_dashboard', params);
+  return response.data;
+}
+
 async function fetchCustomers() {
   const response = await base44.functions.invoke('elora_customers');
   return response.data.map(c => ({
@@ -22,26 +33,6 @@ async function fetchSites() {
     name: s.siteName,
     customer_ref: s.customerRef
   }));
-}
-
-async function fetchVehicles({ customerId, siteId } = {}) {
-  const params = {};
-  if (customerId && customerId !== 'all') params.customer_id = customerId;
-  if (siteId && siteId !== 'all') params.site_id = siteId;
-  
-  const response = await base44.functions.invoke('elora_vehicles', params);
-  return response.data;
-}
-
-async function fetchScans({ customerId, siteId, startDate, endDate } = {}) {
-  const params = {};
-  if (customerId && customerId !== 'all') params.customer_id = customerId;
-  if (siteId && siteId !== 'all') params.site_id = siteId;
-  if (startDate) params.start_date = startDate;
-  if (endDate) params.end_date = endDate;
-  
-  const response = await base44.functions.invoke('elora_scans', params);
-  return response.data;
 }
 
 import Header from '@/components/dashboard/Header';
@@ -122,17 +113,9 @@ export default function Dashboard() {
     return rawSites.filter(site => site.id === selectedCustomer || site.customer_ref === selectedCustomer);
   }, [rawSites, selectedCustomer]);
 
-  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
-    queryKey: ['vehicles', selectedCustomer, selectedSite],
-    queryFn: () => fetchVehicles({
-      customerId: selectedCustomer,
-      siteId: selectedSite
-    }),
-  });
-
-  const { data: scans = [] } = useQuery({
-    queryKey: ['scans', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
-    queryFn: () => fetchScans({
+  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+    queryKey: ['dashboard', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
+    queryFn: () => fetchDashboardData({
       customerId: selectedCustomer,
       siteId: selectedSite,
       startDate: dateRange.start,
@@ -142,75 +125,91 @@ export default function Dashboard() {
 
 
 
-  // Generate chart data based on scans
+  // Generate chart data from dashboard API
   const washTrendsData = useMemo(() => {
-    if (!scans.length) return [];
-    
-    const scansByDate = {};
-    scans.forEach(scan => {
-      const date = moment(scan.timestamp).format('MMM D');
-      scansByDate[date] = (scansByDate[date] || 0) + 1;
-    });
-
-    const days = [];
-    const start = moment(dateRange.start);
-    const end = moment(dateRange.end);
-    const diff = end.diff(start, 'days');
-    
-    for (let i = 0; i <= Math.min(diff, 30); i++) {
-      const date = moment(start).add(i, 'days');
-      const dateKey = date.format('MMM D');
-      days.push({
-        date: dateKey,
-        washes: scansByDate[dateKey] || 0,
+    if (!dashboardData?.charts?.totalWashesByMonth?.length) {
+      // Fallback to scanning data
+      if (!scans.length) return [];
+      
+      const scansByDate = {};
+      scans.forEach(scan => {
+        const date = moment(scan.timestamp).format('MMM D');
+        scansByDate[date] = (scansByDate[date] || 0) + 1;
       });
+
+      const days = [];
+      const start = moment(dateRange.start);
+      const end = moment(dateRange.end);
+      const diff = end.diff(start, 'days');
+      
+      for (let i = 0; i <= Math.min(diff, 30); i++) {
+        const date = moment(start).add(i, 'days');
+        const dateKey = date.format('MMM D');
+        days.push({
+          date: dateKey,
+          washes: scansByDate[dateKey] || 0,
+        });
+      }
+      return days;
     }
-    return days;
-  }, [scans, dateRange]);
+    
+    // Use API's pre-aggregated data
+    return dashboardData.charts.totalWashesByMonth.map(item => ({
+      date: `${item.month}/${item.year}`,
+      washes: item.totalWashes || 0
+    }));
+  }, [dashboardData, scans, dateRange]);
 
   // Reset site when customer changes
   useEffect(() => {
     setSelectedSite('all');
   }, [selectedCustomer]);
 
-  // Create site lookup map
-  const sitesMap = useMemo(() => {
-    const map = {};
-    allSites.forEach(site => {
-      map[site.id] = site.name;
-    });
-    return map;
-  }, [allSites]);
-
-  // Calculate wash counts from scans
-  const washCounts = useMemo(() => {
-    const counts = {};
-    scans.forEach(scan => {
-      const vehicleRef = scan.vehicleRef;
-      if (vehicleRef) {
-        counts[vehicleRef] = (counts[vehicleRef] || 0) + 1;
+  // Process dashboard data
+  const { vehicles: enrichedVehicles, scans } = useMemo(() => {
+    if (!dashboardData?.rows) return { vehicles: [], scans: [] };
+    
+    const vehicleMap = new Map();
+    const scansArray = [];
+    
+    dashboardData.rows.forEach(row => {
+      const vehicleKey = row.vehicleRef;
+      
+      if (!vehicleMap.has(vehicleKey)) {
+        vehicleMap.set(vehicleKey, {
+          id: row.vehicleRef,
+          name: row.vehicleName,
+          rfid: row.vehicleRef,
+          site_id: row.siteRef,
+          site_name: row.siteName,
+          washes_completed: row.totalScans || 0,
+          target: row.washesPerWeek || 12,
+          last_scan: row.lastScan,
+        });
+      } else {
+        const existing = vehicleMap.get(vehicleKey);
+        existing.washes_completed += (row.totalScans || 0);
+        if (row.lastScan && (!existing.last_scan || row.lastScan > existing.last_scan)) {
+          existing.last_scan = row.lastScan;
+        }
+      }
+      
+      // Create scan records for compatibility
+      if (row.totalScans > 0) {
+        scansArray.push({
+          vehicleRef: row.vehicleRef,
+          siteRef: row.siteRef,
+          siteName: row.siteName,
+          timestamp: row.lastScan
+        });
       }
     });
-    return counts;
-  }, [scans]);
-
-  // Enrich vehicles with calculated washes
-  const enrichedVehicles = useMemo(() => {
-    return vehicles.map(vehicle => {
-      const washCount = washCounts[vehicle.vehicleRef] || 0;
-      
-      return {
-        id: vehicle.vehicleRef,
-        name: vehicle.vehicleName,
-        rfid: vehicle.vehicleRfid,
-        site_id: vehicle.siteId,
-        site_name: vehicle.siteName,
-        washes_completed: washCount,
-        target: vehicle.washesPerWeek || 12,
-        last_scan: vehicle.lastScanAt,
-      };
-    });
-  }, [vehicles, washCounts]);
+    
+    return {
+      vehicles: Array.from(vehicleMap.values()),
+      scans: scansArray
+    };
+  }, [dashboardData]);
 
   // Apply permission-based filtering
   const { filteredVehicles, filteredSites } = useFilteredData(enrichedVehicles, allSites);
@@ -231,7 +230,7 @@ export default function Dashboard() {
     };
   }, [filteredVehicles]);
 
-  const isLoading = customersLoading || sitesLoading || vehiclesLoading;
+  const isLoading = customersLoading || sitesLoading || dashboardLoading;
 
   // Redirect drivers to mobile view on mobile devices
   if (isMobile && permissions.isDriver) {
