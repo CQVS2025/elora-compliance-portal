@@ -47,8 +47,10 @@ import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
 import UsageCosts from '@/components/costs/UsageCosts';
 import MobileDashboard from './MobileDashboard';
-import RefillsManagement from '@/components/refills/RefillsManagement';
 import DeviceHealth from '@/components/devices/DeviceHealth';
+import CostForecast from '@/components/analytics/CostForecast';
+import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
+import QuickActions from '@/components/dashboard/QuickActions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
 
@@ -64,6 +66,8 @@ export default function Dashboard() {
   });
   const [activePeriod, setActivePeriod] = useState('Month');
   const [searchQuery, setSearchQuery] = useState('');
+  const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
+  const [selectedVehicleForModal, setSelectedVehicleForModal] = useState(null);
 
   // Detect mobile and redirect drivers to mobile view
   useEffect(() => {
@@ -310,6 +314,26 @@ export default function Dashboard() {
           {statsConfig.map((stat, index) => (
             <StatsCard key={index} {...stat} index={index} />
           ))}
+        </div>
+
+        {/* Quick Actions Widget */}
+        <QuickActions 
+          vehicles={filteredVehicles}
+          onOpenMaintenance={() => {
+            const tabsElement = document.querySelector('[value="maintenance"]');
+            if (tabsElement) tabsElement.click();
+          }}
+          onOpenVehicle={(vehicle) => setSelectedVehicleForModal(vehicle)}
+        />
+
+        {/* Analytics Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CostForecast 
+            scans={scans}
+            selectedCustomer={selectedCustomer}
+            selectedSite={selectedSite}
+          />
+          <WashPatternAnalytics scans={scans} />
         </div>
 
         {/* Leaderboard Quick Link */}
