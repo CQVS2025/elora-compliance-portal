@@ -23,18 +23,49 @@ export default function Header({ onNotificationClick }) {
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
     }}>
       <div className="h-full px-6 flex items-center justify-between">
-        {/* Left Section - Branding */}
-        <div className="flex flex-col">
+        {/* Left Section - Enhanced Branding */}
+        <div className="flex items-center min-w-[280px]">
           <div 
-            className="bg-white/8 rounded-xl px-4 py-2 transition-all duration-300 hover:shadow-[0_0_20px_rgba(124,179,66,0.3)]"
+            className="bg-white/10 rounded-2xl px-5 py-3 transition-all duration-300 hover:shadow-[0_0_24px_rgba(124,179,66,0.4)] hover:scale-[1.02] animate-[slideIn_0.6s_ease-out]"
+            style={{
+              background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(51,65,85,0.8))',
+              border: '1px solid rgba(124,179,66,0.3)'
+            }}
           >
+            {/* ELORA Logo */}
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/693b6e9a55c91aa6cc445b23/5bcc0fc55_ChatGPTImageDec12202504_50_02PM.png"
               alt="ELORA Logo"
-              className="h-12 w-auto"
+              className="h-[56px] w-auto mb-2"
             />
+            
+            {/* Divider Line */}
+            <div className="h-[1px] w-full bg-white/20 my-2" />
+            
+            {/* Powered by CQVS */}
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-[13px] font-medium text-slate-300" style={{ letterSpacing: '0.5px' }}>
+                powered by
+              </span>
+              <span className="text-[14px] font-bold text-[#7CB342]" style={{ letterSpacing: '0.8px' }}>
+                CQVS
+              </span>
+            </div>
           </div>
         </div>
+        
+        <style>{`
+          @keyframes slideIn {
+            from {
+              opacity: 0;
+              transform: translateX(-20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0);
+            }
+          }
+        `}</style>
 
         {/* Center Section - Title */}
         <div className="hidden md:flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
