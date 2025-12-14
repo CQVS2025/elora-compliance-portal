@@ -301,7 +301,7 @@ export default function Dashboard() {
         </div>
 
         {/* Leaderboard Quick Link */}
-        <Link to={createPageUrl('Leaderboard')}>
+        <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -12,18 +12,21 @@ import confetti from 'canvas-confetti';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
-async function fetchVehicles() {
-  const response = await base44.functions.invoke('elora_vehicles', {});
+async function fetchVehicles({ customerId, siteId } = {}) {
+  const params = {};
+  if (customerId && customerId !== 'all') params.customer_id = customerId;
+  if (siteId && siteId !== 'all') params.site_id = siteId;
+  const response = await base44.functions.invoke('elora_vehicles', params);
   return response.data;
 }
 
-async function fetchScans() {
+async function fetchScans({ customerId, siteId } = {}) {
   const startDate = moment().startOf('month').format('YYYY-MM-DD');
   const endDate = moment().format('YYYY-MM-DD');
-  const response = await base44.functions.invoke('elora_scans', {
-    start_date: startDate,
-    end_date: endDate
-  });
+  const params = { start_date: startDate, end_date: endDate };
+  if (customerId && customerId !== 'all') params.customer_id = customerId;
+  if (siteId && siteId !== 'all') params.site_id = siteId;
+  const response = await base44.functions.invoke('elora_scans', params);
   return response.data;
 }
 
@@ -31,14 +34,19 @@ export default function Leaderboard() {
   const [timeframe, setTimeframe] = useState('month');
   const [celebratedTop, setCelebratedTop] = useState(false);
 
+  // Get filters from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const customerFilter = urlParams.get('customer') || 'all';
+  const siteFilter = urlParams.get('site') || 'all';
+
   const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: fetchVehicles,
+    queryKey: ['vehicles', customerFilter, siteFilter],
+    queryFn: () => fetchVehicles({ customerId: customerFilter, siteId: siteFilter }),
   });
 
   const { data: scans = [], isLoading: scansLoading } = useQuery({
-    queryKey: ['scans', timeframe],
-    queryFn: fetchScans,
+    queryKey: ['scans', timeframe, customerFilter, siteFilter],
+    queryFn: () => fetchScans({ customerId: customerFilter, siteId: siteFilter }),
   });
 
   const calculateBadges = (driver) => {
@@ -194,6 +202,11 @@ export default function Leaderboard() {
             <div className="text-right">
               <p className="text-sm text-purple-200">Current Period</p>
               <p className="text-2xl font-bold">{moment().format('MMMM YYYY')}</p>
+              {(customerFilter !== 'all' || siteFilter !== 'all') && (
+                <p className="text-sm text-purple-200 mt-1">
+                  Filtered: {customerFilter !== 'all' ? customerFilter : ''}{siteFilter !== 'all' ? ` • ${siteFilter}` : ''}
+                </p>
+              )}
             </div>
           </div>
         </div>
