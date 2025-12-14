@@ -23,17 +23,28 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 export default function DeviceHealth({ selectedCustomer, selectedSite }) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: devices = [], isLoading } = useQuery({
-    queryKey: ['devices', selectedCustomer, selectedSite],
+  const { data: allDevices = [], isLoading } = useQuery({
+    queryKey: ['devices'],
     queryFn: async () => {
-      const params = { status: 'active' };
-      if (selectedCustomer && selectedCustomer !== 'all') params.customer_id = selectedCustomer;
-      if (selectedSite && selectedSite !== 'all') params.site_id = selectedSite;
-      
-      const response = await base44.functions.invoke('elora_devices', params);
+      const response = await base44.functions.invoke('elora_devices', { status: 'active' });
       return response.data || [];
     }
   });
+
+  // Filter devices based on selected customer and site
+  const devices = useMemo(() => {
+    let filtered = allDevices;
+    
+    if (selectedCustomer && selectedCustomer !== 'all') {
+      filtered = filtered.filter(d => d.customerRef === selectedCustomer);
+    }
+    
+    if (selectedSite && selectedSite !== 'all') {
+      filtered = filtered.filter(d => d.siteRef === selectedSite);
+    }
+    
+    return filtered;
+  }, [allDevices, selectedCustomer, selectedSite]);
 
   // Calculate device health stats
   const stats = useMemo(() => {
