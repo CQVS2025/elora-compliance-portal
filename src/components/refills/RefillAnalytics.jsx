@@ -290,55 +290,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
         </Card>
       )}
 
-      {/* Cost Per Wash Analysis */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-[#7CB342]" />
-            Cost Efficiency Rankings
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={analysis.costEfficiency}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="site" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} label={{ value: 'Cost per Wash ($)', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }} />
-                <Tooltip formatter={(value) => `$${value}`} />
-                <Bar dataKey="costPerWash" fill="#7CB342" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {analysis.costEfficiency.slice(0, 5).map((site, idx) => (
-                <div key={idx} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-slate-800">{site.site}</h4>
-                    <Badge className="bg-[#7CB342] text-white">
-                      #{idx + 1}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-slate-600">Cost/Wash</p>
-                      <p className="font-semibold text-[#7CB342]">${site.costPerWash}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600">Total Washes</p>
-                      <p className="font-semibold">{site.totalWashes}</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-600">Total Cost</p>
-                      <p className="font-semibold">${site.totalCost.toFixed(0)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
