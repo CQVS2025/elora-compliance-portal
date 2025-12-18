@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
   params.append('pageSize', '1000');
 
   try {
-    const response = await fetch(`https://api.centralised-vehicle-management.software/api/refills?${params}`, {
+    const response = await fetch(`https://www.elora.com.au/api/refills?${params}`, {
       headers: {
         'x-api-key': ELORA_API_KEY
       }
