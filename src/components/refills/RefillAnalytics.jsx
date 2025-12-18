@@ -119,114 +119,136 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       
       if (siteRefills.length < 1) return;
 
-      // Calculate actual consumption from refill data
-      const consumptionData = [];
+      const lastRefill = siteRefills[siteRefills.length - 1];
+      const lastRefillDate = moment(lastRefill.date);
+      
+      // Calculate site-specific litres per scan from historical refill data
+      const historicalConsumptionData = [];
       for (let i = 1; i < siteRefills.length; i++) {
         const prevRefill = siteRefills[i - 1];
         const currentRefill = siteRefills[i];
         
-        const daysBetween = moment(currentRefill.date).diff(moment(prevRefill.date), 'days');
+        const periodStart = moment(prevRefill.date);
+        const periodEnd = moment(currentRefill.date);
         
         // Actual consumption = (previous newTotalLitres - current startLitres)
         const consumed = (prevRefill.newTotalLitres || 0) - (currentRefill.startLitres || 0);
         
-        if (daysBetween > 0 && consumed > 0) {
-          consumptionData.push({
-            days: daysBetween,
+        // Count scans in this period
+        const scansInPeriod = siteScans.filter(s => 
+          moment(s.timestamp).isBetween(periodStart, periodEnd, null, '[]')
+        ).length;
+        
+        if (consumed > 0 && scansInPeriod > 0) {
+          historicalConsumptionData.push({
             consumed: consumed,
-            dailyRate: consumed / daysBetween
+            scans: scansInPeriod,
+            litresPerScan: consumed / scansInPeriod,
+            days: periodEnd.diff(periodStart, 'days')
           });
         }
       }
 
-      // If we have actual consumption data, use it
-      let dailyConsumption = 0;
-      let avgRefillInterval = 0;
+      // Calculate site-specific litres per scan
+      let litresPerScan = 5; // Default fallback
       let confidence = 100;
       
-      if (consumptionData.length > 0) {
-        // Calculate weighted average daily consumption (recent data weighted more)
-        const weights = consumptionData.map((_, idx) => idx + 1); // More recent = higher weight
+      if (historicalConsumptionData.length > 0) {
+        // Use weighted average (recent data more important)
+        const weights = historicalConsumptionData.map((_, idx) => idx + 1);
         const totalWeight = weights.reduce((a, b) => a + b, 0);
         
-        dailyConsumption = consumptionData.reduce((sum, data, idx) => 
-          sum + (data.dailyRate * weights[idx]), 0
+        litresPerScan = historicalConsumptionData.reduce((sum, data, idx) => 
+          sum + (data.litresPerScan * weights[idx]), 0
         ) / totalWeight;
         
-        avgRefillInterval = consumptionData.reduce((sum, d) => sum + d.days, 0) / consumptionData.length;
+        // Higher confidence if litres per scan is consistent
+        const avgLPS = historicalConsumptionData.reduce((sum, d) => sum + d.litresPerScan, 0) / historicalConsumptionData.length;
+        const variance = historicalConsumptionData.reduce((sum, d) => 
+          sum + Math.pow(d.litresPerScan - avgLPS, 2), 0
+        ) / historicalConsumptionData.length;
+        const coefficientOfVariation = Math.sqrt(variance) / avgLPS * 100;
         
-        // Calculate consumption variance for confidence
-        const avgRate = consumptionData.reduce((sum, d) => sum + d.dailyRate, 0) / consumptionData.length;
-        const variance = consumptionData.reduce((sum, d) => 
-          sum + Math.pow(d.dailyRate - avgRate, 2), 0
-        ) / consumptionData.length;
-        const coefficientOfVariation = Math.sqrt(variance) / avgRate * 100;
-        
-        if (coefficientOfVariation > 50) confidence -= 30;
-        else if (coefficientOfVariation > 30) confidence -= 20;
-        else if (coefficientOfVariation > 15) confidence -= 10;
+        if (coefficientOfVariation > 40) confidence -= 20;
+        else if (coefficientOfVariation > 25) confidence -= 10;
       } else {
-        // Fallback: estimate from wash scans if no consumption history
-        const recentScans = siteScans.filter(s => 
-          moment(s.timestamp).isAfter(moment().subtract(30, 'days'))
-        );
-        const ESTIMATED_LITRES_PER_WASH = 5;
-        dailyConsumption = (recentScans.length / 30) * ESTIMATED_LITRES_PER_WASH;
-        confidence -= 30; // Lower confidence for estimated data
-        
-        // Estimate interval from refill dates
-        if (siteRefills.length >= 2) {
-          const intervals = [];
-          for (let i = 1; i < siteRefills.length; i++) {
-            intervals.push(moment(siteRefills[i].date).diff(moment(siteRefills[i-1].date), 'days'));
-          }
-          avgRefillInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-        }
+        confidence -= 30; // Using default estimate
       }
-
-      // Consumption trend (last 2 periods vs previous)
+      
+      // Count scans since last refill
+      const scansSinceLastRefill = siteScans.filter(s => 
+        moment(s.timestamp).isAfter(lastRefillDate)
+      ).length;
+      
+      // Calculate current stock based on actual usage
+      const stockAfterLastRefill = lastRefill.newTotalLitres || 0;
+      const consumedSinceRefill = scansSinceLastRefill * litresPerScan;
+      const currentStock = Math.max(0, stockAfterLastRefill - consumedSinceRefill);
+      
+      // Calculate daily consumption from recent scan activity
+      const last7DaysScans = siteScans.filter(s => 
+        moment(s.timestamp).isAfter(moment().subtract(7, 'days'))
+      ).length;
+      const last30DaysScans = siteScans.filter(s => 
+        moment(s.timestamp).isAfter(moment().subtract(30, 'days'))
+      ).length;
+      
+      const dailyScans7 = last7DaysScans / 7;
+      const dailyScans30 = last30DaysScans / 30;
+      
+      // Use weighted average (recent more important)
+      const dailyScans = last7DaysScans > 0 ? 
+        (dailyScans7 * 0.6 + dailyScans30 * 0.4) : dailyScans30;
+      
+      const dailyConsumption = dailyScans * litresPerScan;
+      
+      // Consumption trend
       let consumptionTrend = 'stable';
-      if (consumptionData.length >= 3) {
-        const recentRate = (consumptionData[consumptionData.length - 1].dailyRate + 
-                           consumptionData[consumptionData.length - 2].dailyRate) / 2;
-        const olderRate = consumptionData.slice(0, -2).reduce((sum, d) => 
-          sum + d.dailyRate, 0) / (consumptionData.length - 2);
-        
-        if (recentRate > olderRate * 1.15) consumptionTrend = 'increasing';
-        else if (recentRate < olderRate * 0.85) consumptionTrend = 'decreasing';
-      }
-
-      // Apply trend adjustment
+      if (dailyScans7 > dailyScans30 * 1.15) consumptionTrend = 'increasing';
+      else if (dailyScans7 < dailyScans30 * 0.85) consumptionTrend = 'decreasing';
+      
+      // Apply trend adjustment for prediction
       const trendMultiplier = consumptionTrend === 'increasing' ? 1.1 : 
                              consumptionTrend === 'decreasing' ? 0.9 : 1.0;
       const adjustedDailyConsumption = dailyConsumption * trendMultiplier;
       
-      // Predict days until refill threshold
-      const REFILL_THRESHOLD = 200; // Safety threshold
-      const currentStock = siteData.currentStock || 0;
-      const daysUntilRefill = (currentStock - REFILL_THRESHOLD) / adjustedDailyConsumption;
+      // Predict days until refill needed
+      const REFILL_THRESHOLD = 200;
+      let daysUntilRefill = 0;
       
-      // Alternative prediction: based on historical interval
-      const daysSinceLastRefill = moment().diff(moment(siteData.lastRefillDate), 'days');
-      const historicalPrediction = avgRefillInterval > 0 ? avgRefillInterval - daysSinceLastRefill : daysUntilRefill;
+      if (adjustedDailyConsumption > 0) {
+        daysUntilRefill = (currentStock - REFILL_THRESHOLD) / adjustedDailyConsumption;
+      } else if (siteRefills.length >= 2) {
+        // Fallback: use historical refill interval for sites with no recent scans
+        const intervals = [];
+        for (let i = 1; i < siteRefills.length; i++) {
+          intervals.push(moment(siteRefills[i].date).diff(moment(siteRefills[i-1].date), 'days'));
+        }
+        const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        const daysSinceLastRefill = moment().diff(lastRefillDate, 'days');
+        daysUntilRefill = avgInterval - daysSinceLastRefill;
+        confidence -= 25; // Lower confidence for historical estimate
+      }
       
-      // Blended prediction (favor consumption-based if we have good data)
-      const blendWeight = consumptionData.length >= 3 ? 0.8 : 0.5;
-      const blendedDaysUntilRefill = (daysUntilRefill * blendWeight + historicalPrediction * (1 - blendWeight));
+      // Adjust confidence
+      if (siteRefills.length < 3) confidence -= 20;
+      else if (siteRefills.length < 5) confidence -= 10;
       
-      // Adjust confidence based on data quality
-      if (siteRefills.length < 3) confidence -= 25;
-      else if (siteRefills.length < 5) confidence -= 15;
-      else if (siteRefills.length < 8) confidence -= 5;
-      
+      if (last7DaysScans < 3) confidence -= 15; // Low recent activity
       if (consumptionTrend !== 'stable') confidence -= 10;
-      if (currentStock === 0) confidence -= 20; // No stock data
       
       confidence = Math.max(40, Math.min(100, confidence));
       
-      // Historical volume analysis
+      // Historical analysis
       const refillVolumes = siteRefills.map(r => r.deliveredLitres || 0);
       const avgRefillVolume = refillVolumes.reduce((a, b) => a + b, 0) / refillVolumes.length;
+      
+      const refillIntervals = [];
+      for (let i = 1; i < siteRefills.length; i++) {
+        refillIntervals.push(moment(siteRefills[i].date).diff(moment(siteRefills[i-1].date), 'days'));
+      }
+      const avgRefillInterval = refillIntervals.length > 0 ? 
+        refillIntervals.reduce((a, b) => a + b, 0) / refillIntervals.length : 0;
       
       // Calculate cost metrics
       const totalWashes = siteScans.length;
@@ -234,31 +256,34 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
 
       // Determine urgency
       let urgency = 'good';
-      if (blendedDaysUntilRefill < 3) urgency = 'critical';
-      else if (blendedDaysUntilRefill < 7) urgency = 'warning';
-      else if (blendedDaysUntilRefill < 14) urgency = 'attention';
+      if (daysUntilRefill < 3 || currentStock < REFILL_THRESHOLD) urgency = 'critical';
+      else if (daysUntilRefill < 7) urgency = 'warning';
+      else if (daysUntilRefill < 14) urgency = 'attention';
 
       predictions.push({
         site: siteName,
         customer: siteData.customer,
-        currentStock: currentStock,
-        dailyConsumption: adjustedDailyConsumption.toFixed(1),
-        daysUntilRefill: Math.max(0, blendedDaysUntilRefill).toFixed(0),
-        predictedRefillDate: moment().add(Math.max(0, blendedDaysUntilRefill), 'days').format('MMM DD, YYYY'),
+        currentStock: Math.round(currentStock),
+        stockAfterLastRefill: stockAfterLastRefill,
+        scansSinceLastRefill: scansSinceLastRefill,
+        litresPerScan: litresPerScan.toFixed(2),
+        dailyConsumption: dailyConsumption.toFixed(1),
+        adjustedDailyConsumption: adjustedDailyConsumption.toFixed(1),
+        daysUntilRefill: Math.max(0, Math.round(daysUntilRefill)),
+        predictedRefillDate: moment().add(Math.max(0, daysUntilRefill), 'days').format('MMM DD, YYYY'),
         urgency,
         confidence: Math.round(confidence),
         consumptionTrend,
-        avgRefillInterval: avgRefillInterval.toFixed(0),
+        avgRefillInterval: avgRefillInterval > 0 ? avgRefillInterval.toFixed(0) : 'N/A',
         avgRefillVolume: avgRefillVolume.toFixed(0),
         totalWashes: totalWashes,
         totalCost: siteData.totalCost,
         costPerWash: costPerWash.toFixed(2),
-        lastRefillDate: siteData.lastRefillDate.format('MMM DD, YYYY'),
+        lastRefillDate: lastRefillDate.format('MMM DD, YYYY'),
         avgWashesPerRefill: totalWashes > 0 ? (totalWashes / siteData.refills.length).toFixed(0) : '0',
         refillCount: siteData.refills.length,
-        dataQuality: consumptionData.length >= 5 ? 'excellent' : 
-                     consumptionData.length >= 3 ? 'good' : 
-                     consumptionData.length >= 1 ? 'fair' : 'limited'
+        dataQuality: historicalConsumptionData.length >= 3 && last7DaysScans >= 5 ? 'excellent' : 
+                     historicalConsumptionData.length >= 2 || last7DaysScans >= 3 ? 'good' : 'limited'
       });
     });
 
