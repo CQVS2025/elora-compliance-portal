@@ -688,7 +688,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                       <div>
                         <p className="text-slate-600">Usage Since Refill</p>
                         <p className="font-semibold">{pred.scansSinceLastRefill} scans</p>
-                        <p className="text-xs text-slate-500">{pred.litresPerScan}L per scan</p>
+                        <p className="text-xs text-slate-500">{(pred.stockAfterLastRefill - pred.currentStock).toFixed(1)}L consumed</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Daily Consumption</p>
