@@ -116,99 +116,110 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       const siteScans = scansBySite[siteName] || [];
       const siteRefills = siteData.refills.sort((a, b) => moment(a.date).valueOf() - moment(b.date).valueOf());
       
-      if (siteScans.length === 0 || siteRefills.length < 1) return;
+      if (siteRefills.length < 1) return;
 
-      const lastRefill = siteRefills[siteRefills.length - 1];
-      const daysSinceLastRefill = moment().diff(moment(lastRefill.date), 'days');
-
-      // Calculate actual consumption rate from refill data
-      let actualDailyConsumption = 0;
-      
-      if (siteRefills.length >= 2) {
-        // Calculate consumption between refills
-        const consumptionRates = [];
-        for (let i = 1; i < siteRefills.length; i++) {
-          const prevRefill = siteRefills[i - 1];
-          const currRefill = siteRefills[i];
-          const daysElapsed = moment(currRefill.date).diff(moment(prevRefill.date), 'days');
-          
-          if (daysElapsed > 0) {
-            // Consumption = starting stock + delivered - ending stock
-            // But ending stock of prev = starting stock of curr
-            const consumed = (prevRefill.newTotalLitres || 0) - (currRefill.startLitres || 0);
-            const dailyRate = consumed / daysElapsed;
-            if (dailyRate > 0) {
-              consumptionRates.push(dailyRate);
-            }
-          }
-        }
+      // Calculate actual consumption from refill data
+      const consumptionData = [];
+      for (let i = 1; i < siteRefills.length; i++) {
+        const prevRefill = siteRefills[i - 1];
+        const currentRefill = siteRefills[i];
         
-        if (consumptionRates.length > 0) {
-          // Weighted average - more recent data is more important
-          const weights = consumptionRates.map((_, idx) => Math.pow(1.2, idx));
-          const totalWeight = weights.reduce((a, b) => a + b, 0);
-          actualDailyConsumption = consumptionRates.reduce((sum, rate, idx) => 
-            sum + (rate * weights[idx]), 0) / totalWeight;
+        const daysBetween = moment(currentRefill.date).diff(moment(prevRefill.date), 'days');
+        
+        // Actual consumption = (previous newTotalLitres - current startLitres)
+        const consumed = (prevRefill.newTotalLitres || 0) - (currentRefill.startLitres || 0);
+        
+        if (daysBetween > 0 && consumed > 0) {
+          consumptionData.push({
+            days: daysBetween,
+            consumed: consumed,
+            dailyRate: consumed / daysBetween
+          });
         }
       }
-      
-      // Fallback: Calculate from wash scans if refill-based calculation insufficient
-      const LITRES_PER_WASH = 5;
-      const last7Days = siteScans.filter(s => moment(s.timestamp).isAfter(moment().subtract(7, 'days')));
-      const last30Days = siteScans.filter(s => moment(s.timestamp).isAfter(moment().subtract(30, 'days')));
-      
-      const scanBasedDaily7 = (last7Days.length / 7) * LITRES_PER_WASH;
-      const scanBasedDaily30 = (last30Days.length / 30) * LITRES_PER_WASH;
-      
-      // If we have both, blend them; otherwise use what we have
-      let dailyConsumption;
-      if (actualDailyConsumption > 0 && scanBasedDaily30 > 0) {
-        dailyConsumption = (actualDailyConsumption * 0.6 + scanBasedDaily30 * 0.4);
-      } else if (actualDailyConsumption > 0) {
-        dailyConsumption = actualDailyConsumption;
-      } else {
-        dailyConsumption = scanBasedDaily30 || scanBasedDaily7;
-      }
-      
-      if (dailyConsumption <= 0) return; // Skip if no consumption detected
 
-      // Calculate ACTUAL current stock
-      const stockAfterLastRefill = lastRefill.newTotalLitres || 0;
-      const consumedSinceLastRefill = dailyConsumption * daysSinceLastRefill;
-      const currentStock = Math.max(0, stockAfterLastRefill - consumedSinceLastRefill);
+      // If we have actual consumption data, use it
+      let dailyConsumption = 0;
+      let avgRefillInterval = 0;
+      let confidence = 100;
       
-      // Trend analysis
-      const consumptionTrend = scanBasedDaily7 > scanBasedDaily30 * 1.15 ? 'increasing' : 
-                               scanBasedDaily7 < scanBasedDaily30 * 0.85 ? 'decreasing' : 'stable';
-      
-      // Adjust for trend
-      const trendMultiplier = consumptionTrend === 'increasing' ? 1.15 : 
-                             consumptionTrend === 'decreasing' ? 0.85 : 1.0;
+      if (consumptionData.length > 0) {
+        // Calculate weighted average daily consumption (recent data weighted more)
+        const weights = consumptionData.map((_, idx) => idx + 1); // More recent = higher weight
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        
+        dailyConsumption = consumptionData.reduce((sum, data, idx) => 
+          sum + (data.dailyRate * weights[idx]), 0
+        ) / totalWeight;
+        
+        avgRefillInterval = consumptionData.reduce((sum, d) => sum + d.days, 0) / consumptionData.length;
+        
+        // Calculate consumption variance for confidence
+        const avgRate = consumptionData.reduce((sum, d) => sum + d.dailyRate, 0) / consumptionData.length;
+        const variance = consumptionData.reduce((sum, d) => 
+          sum + Math.pow(d.dailyRate - avgRate, 2), 0
+        ) / consumptionData.length;
+        const coefficientOfVariation = Math.sqrt(variance) / avgRate * 100;
+        
+        if (coefficientOfVariation > 50) confidence -= 30;
+        else if (coefficientOfVariation > 30) confidence -= 20;
+        else if (coefficientOfVariation > 15) confidence -= 10;
+      } else {
+        // Fallback: estimate from wash scans if no consumption history
+        const recentScans = siteScans.filter(s => 
+          moment(s.timestamp).isAfter(moment().subtract(30, 'days'))
+        );
+        const ESTIMATED_LITRES_PER_WASH = 5;
+        dailyConsumption = (recentScans.length / 30) * ESTIMATED_LITRES_PER_WASH;
+        confidence -= 30; // Lower confidence for estimated data
+        
+        // Estimate interval from refill dates
+        if (siteRefills.length >= 2) {
+          const intervals = [];
+          for (let i = 1; i < siteRefills.length; i++) {
+            intervals.push(moment(siteRefills[i].date).diff(moment(siteRefills[i-1].date), 'days'));
+          }
+          avgRefillInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+        }
+      }
+
+      // Consumption trend (last 2 periods vs previous)
+      let consumptionTrend = 'stable';
+      if (consumptionData.length >= 3) {
+        const recentRate = (consumptionData[consumptionData.length - 1].dailyRate + 
+                           consumptionData[consumptionData.length - 2].dailyRate) / 2;
+        const olderRate = consumptionData.slice(0, -2).reduce((sum, d) => 
+          sum + d.dailyRate, 0) / (consumptionData.length - 2);
+        
+        if (recentRate > olderRate * 1.15) consumptionTrend = 'increasing';
+        else if (recentRate < olderRate * 0.85) consumptionTrend = 'decreasing';
+      }
+
+      // Apply trend adjustment
+      const trendMultiplier = consumptionTrend === 'increasing' ? 1.1 : 
+                             consumptionTrend === 'decreasing' ? 0.9 : 1.0;
       const adjustedDailyConsumption = dailyConsumption * trendMultiplier;
       
-      // Calculate days until refill needed
-      const REFILL_THRESHOLD = 200;
-      const daysUntilRefill = Math.max(0, (currentStock - REFILL_THRESHOLD) / adjustedDailyConsumption);
+      // Predict days until refill threshold
+      const REFILL_THRESHOLD = 200; // Safety threshold
+      const currentStock = siteData.currentStock || 0;
+      const daysUntilRefill = (currentStock - REFILL_THRESHOLD) / adjustedDailyConsumption;
       
-      // Calculate confidence based on data quality
-      let confidence = 85; // Start at 85%
+      // Alternative prediction: based on historical interval
+      const daysSinceLastRefill = moment().diff(moment(siteData.lastRefillDate), 'days');
+      const historicalPrediction = avgRefillInterval > 0 ? avgRefillInterval - daysSinceLastRefill : daysUntilRefill;
       
-      // More refill data = higher confidence
-      if (siteRefills.length >= 10) confidence += 10;
-      else if (siteRefills.length >= 5) confidence += 5;
-      else if (siteRefills.length < 3) confidence -= 20;
+      // Blended prediction (favor consumption-based if we have good data)
+      const blendWeight = consumptionData.length >= 3 ? 0.8 : 0.5;
+      const blendedDaysUntilRefill = (daysUntilRefill * blendWeight + historicalPrediction * (1 - blendWeight));
       
-      // Recent scan data improves confidence
-      if (last7Days.length >= 10) confidence += 5;
-      else if (last7Days.length < 3) confidence -= 15;
+      // Adjust confidence based on data quality
+      if (siteRefills.length < 3) confidence -= 25;
+      else if (siteRefills.length < 5) confidence -= 15;
+      else if (siteRefills.length < 8) confidence -= 5;
       
-      // Stable consumption = higher confidence
-      if (consumptionTrend === 'stable') confidence += 5;
-      else confidence -= 10;
-      
-      // Penalize if last refill was long ago
-      if (daysSinceLastRefill > 60) confidence -= 20;
-      else if (daysSinceLastRefill > 30) confidence -= 10;
+      if (consumptionTrend !== 'stable') confidence -= 10;
+      if (currentStock === 0) confidence -= 20; // No stock data
       
       confidence = Math.max(40, Math.min(100, confidence));
       
@@ -216,53 +227,36 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       const refillVolumes = siteRefills.map(r => r.deliveredLitres || 0);
       const avgRefillVolume = refillVolumes.reduce((a, b) => a + b, 0) / refillVolumes.length;
       
-      // Calculate average days between refills
-      let avgRefillInterval = 0;
-      if (siteRefills.length >= 2) {
-        const intervals = [];
-        for (let i = 1; i < siteRefills.length; i++) {
-          const days = moment(siteRefills[i].date).diff(moment(siteRefills[i-1].date), 'days');
-          intervals.push(days);
-        }
-        avgRefillInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-      }
-      
-      // Calculate cost per wash
+      // Calculate cost metrics
       const totalWashes = siteScans.length;
       const costPerWash = totalWashes > 0 ? siteData.totalCost / totalWashes : 0;
 
-      // Determine urgency based on days until refill
+      // Determine urgency
       let urgency = 'good';
-      if (daysUntilRefill < 3) urgency = 'critical';
-      else if (daysUntilRefill < 7) urgency = 'warning';
-      else if (daysUntilRefill < 14) urgency = 'attention';
-      
-      // Also flag critical if stock is already below threshold
-      if (currentStock < REFILL_THRESHOLD) urgency = 'critical';
+      if (blendedDaysUntilRefill < 3) urgency = 'critical';
+      else if (blendedDaysUntilRefill < 7) urgency = 'warning';
+      else if (blendedDaysUntilRefill < 14) urgency = 'attention';
 
       predictions.push({
         site: siteName,
-        currentStock: Math.round(currentStock),
-        stockAfterLastRefill: lastRefill.newTotalLitres || 0,
-        daysSinceLastRefill,
-        dailyConsumption: dailyConsumption.toFixed(1),
-        adjustedDailyConsumption: adjustedDailyConsumption.toFixed(1),
-        daysUntilRefill: Math.round(daysUntilRefill),
-        predictedRefillDate: moment().add(daysUntilRefill, 'days').format('MMM DD, YYYY'),
+        currentStock: currentStock,
+        dailyConsumption: adjustedDailyConsumption.toFixed(1),
+        daysUntilRefill: Math.max(0, blendedDaysUntilRefill).toFixed(0),
+        predictedRefillDate: moment().add(Math.max(0, blendedDaysUntilRefill), 'days').format('MMM DD, YYYY'),
         urgency,
         confidence: Math.round(confidence),
         consumptionTrend,
-        avgRefillInterval: avgRefillInterval > 0 ? avgRefillInterval.toFixed(0) : 'N/A',
+        avgRefillInterval: avgRefillInterval.toFixed(0),
         avgRefillVolume: avgRefillVolume.toFixed(0),
         totalWashes: totalWashes,
         totalCost: siteData.totalCost,
         costPerWash: costPerWash.toFixed(2),
-        lastRefillDate: moment(lastRefill.date).format('MMM DD, YYYY'),
-        lastRefillVolume: lastRefill.deliveredLitres || 0,
-        avgWashesPerRefill: totalWashes > 0 && siteRefills.length > 0 ? (totalWashes / siteRefills.length).toFixed(0) : '0',
-        refillCount: siteRefills.length,
-        dataQuality: siteRefills.length >= 10 && last7Days.length >= 10 ? 'excellent' : 
-                     siteRefills.length >= 5 && last7Days.length >= 5 ? 'good' : 'limited'
+        lastRefillDate: siteData.lastRefillDate.format('MMM DD, YYYY'),
+        avgWashesPerRefill: totalWashes > 0 ? (totalWashes / siteData.refills.length).toFixed(0) : '0',
+        refillCount: siteData.refills.length,
+        dataQuality: consumptionData.length >= 5 ? 'excellent' : 
+                     consumptionData.length >= 3 ? 'good' : 
+                     consumptionData.length >= 1 ? 'fair' : 'limited'
       });
     });
 
@@ -540,27 +534,23 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                       <div>
                         <p className="text-slate-600">Current Stock</p>
                         <p className="font-semibold">{pred.currentStock}L</p>
-                        <p className="text-xs text-slate-500">{pred.stockAfterLastRefill}L @ last refill</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Daily Consumption</p>
+                        <p className="text-slate-600">Daily Usage</p>
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold">{pred.adjustedDailyConsumption}L/day</p>
+                          <p className="font-semibold">{pred.dailyConsumption}L/day</p>
                           {pred.consumptionTrend === 'increasing' && <TrendingUp className="w-3 h-3 text-red-600" />}
                           {pred.consumptionTrend === 'decreasing' && <TrendingDown className="w-3 h-3 text-green-600" />}
                           {pred.consumptionTrend === 'stable' && <Minus className="w-3 h-3 text-slate-600" />}
                         </div>
-                        <p className="text-xs text-slate-500 capitalize">{pred.consumptionTrend} trend</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Refill Needed In</p>
                         <p className="font-semibold">{pred.daysUntilRefill} days</p>
-                        <p className="text-xs text-slate-500">{pred.daysSinceLastRefill} days since last</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Predicted Date</p>
                         <p className="font-semibold">{pred.predictedRefillDate}</p>
-                        <p className="text-xs text-slate-500">Last: {pred.lastRefillDate}</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Confidence</p>
@@ -577,31 +567,32 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                           </div>
                           <span className="font-semibold text-xs">{pred.confidence}%</span>
                         </div>
-                        <p className="text-xs text-slate-500 capitalize">{pred.dataQuality} data</p>
                       </div>
                     </div>
                     
                     {/* Additional insights */}
-                    <div className="mt-3 pt-3 border-t border-current/20 grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
+                    <div className="mt-3 pt-3 border-t border-current/20 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                       <div>
-                        <p className="text-slate-600">Last Refill Volume</p>
-                        <p className="font-medium">{pred.lastRefillVolume}L</p>
+                        <p className="text-slate-600">Avg Refill Interval</p>
+                        <p className="font-medium">{pred.avgRefillInterval} days</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Avg Refill Volume</p>
                         <p className="font-medium">{pred.avgRefillVolume}L</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Avg Refill Interval</p>
-                        <p className="font-medium">{pred.avgRefillInterval} days</p>
-                      </div>
-                      <div>
                         <p className="text-slate-600">Total Refills</p>
                         <p className="font-medium">{pred.refillCount}</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Consumed Since Last</p>
-                        <p className="font-medium">{pred.stockAfterLastRefill - pred.currentStock}L</p>
+                        <p className="text-slate-600">Data Quality</p>
+                        <Badge className={
+                          pred.dataQuality === 'excellent' ? 'bg-green-100 text-green-800' :
+                          pred.dataQuality === 'good' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }>
+                          {pred.dataQuality}
+                        </Badge>
                       </div>
                     </div>
                   </div>
