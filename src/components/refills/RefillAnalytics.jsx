@@ -734,39 +734,6 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
         </CardContent>
       </Card>
 
-      {/* Smart Scheduling */}
-      {analysis.scheduleGroups.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-[#7CB342]" />
-              Smart Route Optimization
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-600 mb-4">
-              Batch these sites together to optimize delivery routes:
-            </p>
-            <div className="space-y-3">
-              {analysis.scheduleGroups.map((group, idx) => (
-                <div key={idx} className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-4 h-4 text-blue-600" />
-                    <p className="font-semibold text-blue-900">Week of {group.week}</p>
-                    <Badge className="bg-blue-600 text-white">
-                      {group.sites.length} sites
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-blue-800">
-                    {group.sites.join(', ')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Data Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Consumption Trends Over Time */}
