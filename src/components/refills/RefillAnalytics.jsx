@@ -261,7 +261,6 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       else if (daysUntilRefill < 14) urgency = 'attention';
 
       const daysSinceLastRefill = moment().diff(lastRefillDate, 'days');
-      const costPerLitre = siteData.totalLitres > 0 ? (siteData.totalCost / siteData.totalLitres).toFixed(2) : '0';
 
       predictions.push({
         site: siteName,
@@ -282,7 +281,6 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
         totalWashes: totalWashes,
         totalCost: siteData.totalCost,
         costPerWash: costPerWash.toFixed(2),
-        costPerLitre: costPerLitre,
         lastRefillDate: lastRefillDate.format('MMM DD, YYYY'),
         daysSinceLastRefill: daysSinceLastRefill,
         avgWashesPerRefill: totalWashes > 0 ? (totalWashes / siteData.refills.length).toFixed(0) : '0',
@@ -629,8 +627,8 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                         <p className="font-medium">{pred.daysSinceLastRefill} days</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Cost Per Litre</p>
-                        <p className="font-medium">${pred.costPerLitre}</p>
+                        <p className="text-slate-600">Last Refill</p>
+                        <p className="font-medium">{pred.lastRefillDate}</p>
                       </div>
                     </div>
                   </div>
