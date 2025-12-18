@@ -25,7 +25,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  Legend,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import moment from 'moment';
 
 export default function RefillAnalytics({ refills, scans, sites, selectedCustomer, selectedSite }) {
@@ -315,18 +331,97 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       }
     });
 
-    // Cost efficiency ranking
-    const costEfficiency = [...predictions]
-      .filter(p => p.totalWashes > 10)
-      .sort((a, b) => parseFloat(a.costPerWash) - parseFloat(b.costPerWash));
+    // Consumption trends over time (last 90 days)
+    const consumptionTrends = [];
+    const last90Days = moment().subtract(90, 'days');
+    const dailyConsumption = {};
+    
+    scans.forEach(scan => {
+      const scanDate = moment(scan.timestamp);
+      if (scanDate.isAfter(last90Days)) {
+        const dateKey = scanDate.format('YYYY-MM-DD');
+        if (!dailyConsumption[dateKey]) {
+          dailyConsumption[dateKey] = 0;
+        }
+        dailyConsumption[dateKey]++;
+      }
+    });
+    
+    for (let i = 0; i <= 90; i++) {
+      const date = moment().subtract(90 - i, 'days');
+      const dateKey = date.format('YYYY-MM-DD');
+      consumptionTrends.push({
+        date: date.format('MMM DD'),
+        fullDate: dateKey,
+        scans: dailyConsumption[dateKey] || 0,
+        litres: (dailyConsumption[dateKey] || 0) * 5 // Avg litres per scan
+      });
+    }
+
+    // Historical refill volumes by site
+    const refillVolumesBySite = [];
+    Object.entries(refillsBySite).forEach(([siteName, siteData]) => {
+      refillVolumesBySite.push({
+        site: siteName.length > 15 ? siteName.substring(0, 15) + '...' : siteName,
+        fullName: siteName,
+        totalLitres: siteData.totalLitres,
+        totalCost: siteData.totalCost,
+        refillCount: siteData.refills.length,
+        avgVolume: siteData.totalLitres / siteData.refills.length
+      });
+    });
+    refillVolumesBySite.sort((a, b) => b.totalLitres - a.totalLitres);
+
+    // Monthly refill trends
+    const monthlyRefills = {};
+    filteredRefills.forEach(refill => {
+      const monthKey = moment(refill.date).format('MMM YYYY');
+      if (!monthlyRefills[monthKey]) {
+        monthlyRefills[monthKey] = {
+          month: monthKey,
+          count: 0,
+          totalLitres: 0,
+          totalCost: 0
+        };
+      }
+      monthlyRefills[monthKey].count++;
+      monthlyRefills[monthKey].totalLitres += refill.deliveredLitres || 0;
+      monthlyRefills[monthKey].totalCost += refill.totalExGst || 0;
+    });
+    const monthlyTrends = Object.values(monthlyRefills).slice(-12);
+
+    // Usage efficiency by site
+    const usageEfficiency = predictions
+      .filter(p => p.totalWashes > 0)
+      .map(p => ({
+        site: p.site.length > 15 ? p.site.substring(0, 15) + '...' : p.site,
+        fullName: p.site,
+        litresPerScan: parseFloat(p.litresPerScan),
+        scans: p.totalWashes,
+        efficiency: parseFloat(p.litresPerScan)
+      }))
+      .sort((a, b) => a.efficiency - b.efficiency)
+      .slice(0, 10);
+
+    // Stock level distribution
+    const stockLevels = predictions.map(p => ({
+      site: p.site.length > 12 ? p.site.substring(0, 12) + '...' : p.site,
+      fullName: p.site,
+      stock: p.currentStock,
+      status: p.urgency
+    })).sort((a, b) => a.stock - b.stock);
 
     return {
       predictions,
       scheduleGroups,
-      costEfficiency: costEfficiency.slice(0, 5),
       totalSites: predictions.length,
       criticalSites: predictions.filter(p => p.urgency === 'critical').length,
-      warningSites: predictions.filter(p => p.urgency === 'warning').length
+      warningSites: predictions.filter(p => p.urgency === 'warning').length,
+      consumptionTrends,
+      refillVolumesBySite: refillVolumesBySite.slice(0, 10),
+      monthlyTrends,
+      usageEfficiency,
+      stockLevels
     };
   }, [filteredRefills, scans, sites]);
 
@@ -672,6 +767,220 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
         </Card>
       )}
 
+      {/* Data Visualizations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Consumption Trends Over Time */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-[#7CB342]" />
+              Daily Consumption Trends (90 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={analysis.consumptionTrends}>
+                <defs>
+                  <linearGradient id="colorLitres" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#7CB342" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#7CB342" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }}
+                  interval={15}
+                />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="litres" 
+                  stroke="#7CB342" 
+                  fillOpacity={1} 
+                  fill="url(#colorLitres)"
+                  name="Litres Consumed"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Monthly Refill Trends */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-[#7CB342]" />
+              Monthly Refill Trends
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={analysis.monthlyTrends}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                />
+                <Legend />
+                <Line 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="totalLitres" 
+                  stroke="#7CB342" 
+                  strokeWidth={2}
+                  name="Total Litres"
+                  dot={{ r: 4 }}
+                />
+                <Line 
+                  yAxisId="right"
+                  type="monotone" 
+                  dataKey="count" 
+                  stroke="#3B82F6" 
+                  strokeWidth={2}
+                  name="Refill Count"
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top 10 Sites by Volume */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-[#7CB342]" />
+              Top Sites by Total Volume
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analysis.refillVolumesBySite} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis dataKey="site" type="category" width={120} tick={{ fontSize: 11 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value, name) => {
+                    if (name === 'totalLitres') return [`${value.toLocaleString()}L`, 'Total Litres'];
+                    return [value, name];
+                  }}
+                />
+                <Bar dataKey="totalLitres" fill="#7CB342" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Usage Efficiency by Site */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-[#7CB342]" />
+              Usage Efficiency (Litres per Scan)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analysis.usageEfficiency} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis dataKey="site" type="category" width={120} tick={{ fontSize: 11 }} />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value) => [`${value}L/scan`, 'Efficiency']}
+                />
+                <Bar dataKey="litresPerScan" radius={[0, 8, 8, 0]}>
+                  {analysis.usageEfficiency.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.litresPerScan > 6 ? '#EF4444' : entry.litresPerScan > 5 ? '#F59E0B' : '#7CB342'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="mt-4 flex gap-4 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-[#7CB342]" />
+                <span className="text-slate-600">Efficient (≤5L)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-[#F59E0B]" />
+                <span className="text-slate-600">Moderate (5-6L)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
+                <span className="text-slate-600">High (>6L)</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Stock Levels Across Sites */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Droplet className="w-5 h-5 text-[#7CB342]" />
+            Current Stock Levels by Site
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={analysis.stockLevels}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis 
+                dataKey="site" 
+                tick={{ fontSize: 11, angle: -45 }}
+                height={100}
+                textAnchor="end"
+              />
+              <YAxis tick={{ fontSize: 12 }} label={{ value: 'Litres', angle: -90, position: 'insideLeft' }} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px'
+                }}
+                formatter={(value) => [`${value}L`, 'Current Stock']}
+              />
+              <Bar dataKey="stock" radius={[8, 8, 0, 0]}>
+                {analysis.stockLevels.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={
+                      entry.status === 'critical' ? '#EF4444' : 
+                      entry.status === 'warning' ? '#F59E0B' : 
+                      entry.status === 'attention' ? '#FCD34D' : 
+                      '#7CB342'
+                    } 
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
     </div>
   );
