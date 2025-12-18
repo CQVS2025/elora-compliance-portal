@@ -18,11 +18,8 @@ Deno.serve(async (req) => {
   params.append('pageSize', '1000');
 
   try {
-    const response = await fetch(`https://www.elora.com.au/api/refills?${params}`, {
-      headers: {
-        'x-api-key': ELORA_API_KEY
-      }
-    });
+    params.append('api_key', ELORA_API_KEY);
+    const response = await fetch(`https://www.elora.com.au/api/refills?${params}`);
 
     if (!response.ok) {
       const error = await response.text();
