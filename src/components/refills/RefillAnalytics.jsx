@@ -215,27 +215,42 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       const consumedSinceRefill = scansSinceLastRefill * litresPerScan;
       const currentStock = Math.max(0, stockAfterLastRefill - consumedSinceRefill);
       
-      // Calculate daily consumption from recent scan activity
-      const last7DaysScans = siteScans.filter(s => 
-        moment(s.timestamp).isAfter(moment().subtract(7, 'days'))
-      ).length;
-      const last30DaysScans = siteScans.filter(s => 
-        moment(s.timestamp).isAfter(moment().subtract(30, 'days'))
-      ).length;
+      // Calculate daily consumption from actual refill history (more accurate)
+      let dailyConsumption = 0;
+      if (siteRefills.length >= 2) {
+        // Use the most recent refill interval for accuracy
+        const recentRefill = siteRefills[siteRefills.length - 1];
+        const previousRefill = siteRefills[siteRefills.length - 2];
+        
+        const daysInPeriod = moment(recentRefill.date).diff(moment(previousRefill.date), 'days');
+        const litresConsumed = (previousRefill.newTotalLitres || 0) - (recentRefill.startLitres || 0);
+        
+        if (daysInPeriod > 0 && litresConsumed > 0) {
+          dailyConsumption = litresConsumed / daysInPeriod;
+        }
+      }
       
-      const dailyScans7 = last7DaysScans / 7;
-      const dailyScans30 = last30DaysScans / 30;
+      // Fallback: if we don't have 2 refills, estimate from current consumption
+      if (dailyConsumption === 0) {
+        const daysSinceLastRefill = moment().diff(lastRefillDate, 'days');
+        if (daysSinceLastRefill > 0) {
+          dailyConsumption = (stockAfterLastRefill - currentStock) / daysSinceLastRefill;
+        }
+      }
       
-      // Use weighted average (recent more important)
-      const dailyScans = last7DaysScans > 0 ? 
-        (dailyScans7 * 0.6 + dailyScans30 * 0.4) : dailyScans30;
-      
-      const dailyConsumption = dailyScans * litresPerScan;
-      
-      // Consumption trend
+      // Calculate consumption trend from refill intervals
       let consumptionTrend = 'stable';
-      if (dailyScans7 > dailyScans30 * 1.15) consumptionTrend = 'increasing';
-      else if (dailyScans7 < dailyScans30 * 0.85) consumptionTrend = 'decreasing';
+      if (siteRefills.length >= 3) {
+        const recent = moment(siteRefills[siteRefills.length - 1].date).diff(
+          moment(siteRefills[siteRefills.length - 2].date), 'days'
+        );
+        const previous = moment(siteRefills[siteRefills.length - 2].date).diff(
+          moment(siteRefills[siteRefills.length - 3].date), 'days'
+        );
+        
+        if (recent < previous * 0.85) consumptionTrend = 'increasing'; // Shorter intervals = more consumption
+        else if (recent > previous * 1.15) consumptionTrend = 'decreasing'; // Longer intervals = less consumption
+      }
       
       // Apply trend adjustment for prediction
       const trendMultiplier = consumptionTrend === 'increasing' ? 1.1 : 
