@@ -564,23 +564,27 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                       <div>
                         <p className="text-slate-600">Current Stock</p>
                         <p className="font-semibold">{pred.currentStock}L</p>
+                        <p className="text-xs text-slate-500">{pred.stockAfterLastRefill}L @ last refill</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Daily Usage</p>
+                        <p className="text-slate-600">Usage Since Refill</p>
+                        <p className="font-semibold">{pred.scansSinceLastRefill} scans</p>
+                        <p className="text-xs text-slate-500">{pred.litresPerScan}L per scan</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-600">Daily Consumption</p>
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold">{pred.dailyConsumption}L/day</p>
+                          <p className="font-semibold">{pred.adjustedDailyConsumption}L/day</p>
                           {pred.consumptionTrend === 'increasing' && <TrendingUp className="w-3 h-3 text-red-600" />}
                           {pred.consumptionTrend === 'decreasing' && <TrendingDown className="w-3 h-3 text-green-600" />}
                           {pred.consumptionTrend === 'stable' && <Minus className="w-3 h-3 text-slate-600" />}
                         </div>
+                        <p className="text-xs text-slate-500 capitalize">{pred.consumptionTrend} trend</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Refill Needed In</p>
                         <p className="font-semibold">{pred.daysUntilRefill} days</p>
-                      </div>
-                      <div>
-                        <p className="text-slate-600">Predicted Date</p>
-                        <p className="font-semibold">{pred.predictedRefillDate}</p>
+                        <p className="text-xs text-slate-500">{pred.predictedRefillDate}</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Confidence</p>
@@ -597,32 +601,31 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                           </div>
                           <span className="font-semibold text-xs">{pred.confidence}%</span>
                         </div>
+                        <p className="text-xs text-slate-500 capitalize">{pred.dataQuality} data</p>
                       </div>
                     </div>
                     
                     {/* Additional insights */}
-                    <div className="mt-3 pt-3 border-t border-current/20 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                    <div className="mt-3 pt-3 border-t border-current/20 grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
                       <div>
-                        <p className="text-slate-600">Avg Refill Interval</p>
-                        <p className="font-medium">{pred.avgRefillInterval} days</p>
+                        <p className="text-slate-600">Consumed Since Refill</p>
+                        <p className="font-medium">{pred.stockAfterLastRefill - pred.currentStock}L</p>
                       </div>
                       <div>
                         <p className="text-slate-600">Avg Refill Volume</p>
                         <p className="font-medium">{pred.avgRefillVolume}L</p>
                       </div>
                       <div>
+                        <p className="text-slate-600">Avg Refill Interval</p>
+                        <p className="font-medium">{pred.avgRefillInterval} days</p>
+                      </div>
+                      <div>
                         <p className="text-slate-600">Total Refills</p>
                         <p className="font-medium">{pred.refillCount}</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Data Quality</p>
-                        <Badge className={
-                          pred.dataQuality === 'excellent' ? 'bg-green-100 text-green-800' :
-                          pred.dataQuality === 'good' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }>
-                          {pred.dataQuality}
-                        </Badge>
+                        <p className="text-slate-600">Last Refill</p>
+                        <p className="font-medium">{pred.lastRefillDate}</p>
                       </div>
                     </div>
                   </div>
