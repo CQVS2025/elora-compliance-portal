@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { 
   AlertTriangle, 
   Droplet, 
@@ -9,18 +10,70 @@ import {
   DollarSign, 
   Calendar,
   MapPin,
-  Zap
+  Zap,
+  Filter,
+  X
 } from 'lucide-react';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import moment from 'moment';
 
 export default function RefillAnalytics({ refills, scans, sites, selectedCustomer, selectedSite }) {
+  const [productFilter, setProductFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState(moment().subtract(30, 'days').format('YYYY-MM-DD'));
+  const [dateTo, setDateTo] = useState(moment().format('YYYY-MM-DD'));
+  const [customerFilter, setCustomerFilter] = useState('all');
+  const [siteFilter, setSiteFilter] = useState('all');
+  // Get unique values for filters
+  const uniqueCustomers = useMemo(() => {
+    const customers = new Set(refills?.map(r => r.customer) || []);
+    return ['all', ...Array.from(customers).sort()];
+  }, [refills]);
+
+  const uniqueSites = useMemo(() => {
+    const sites = new Set(refills?.map(r => r.site) || []);
+    return ['all', ...Array.from(sites).sort()];
+  }, [refills]);
+
+  const uniqueProducts = useMemo(() => {
+    const products = new Set(refills?.map(r => r.productName) || []);
+    return ['all', ...Array.from(products).sort()];
+  }, [refills]);
+
+  const uniqueStatuses = useMemo(() => {
+    const statuses = new Set(refills?.map(r => r.status) || []);
+    return ['all', ...Array.from(statuses).sort()];
+  }, [refills]);
+
+  // Apply filters to refills
+  const filteredRefills = useMemo(() => {
+    if (!refills?.length) return [];
+    
+    return refills.filter(refill => {
+      const refillDate = moment(refill.date);
+      const matchesDate = refillDate.isBetween(dateFrom, dateTo, 'day', '[]');
+      const matchesCustomer = customerFilter === 'all' || refill.customer === customerFilter;
+      const matchesSite = siteFilter === 'all' || refill.site === siteFilter;
+      const matchesProduct = productFilter === 'all' || refill.productName === productFilter;
+      const matchesStatus = statusFilter === 'all' || refill.status === statusFilter;
+      
+      return matchesDate && matchesCustomer && matchesSite && matchesProduct && matchesStatus;
+    });
+  }, [refills, dateFrom, dateTo, customerFilter, siteFilter, productFilter, statusFilter]);
+
   const analysis = useMemo(() => {
-    if (!refills?.length || !scans?.length) return null;
+    if (!filteredRefills?.length || !scans?.length) return null;
 
     // Group refills by site
     const refillsBySite = {};
-    refills.forEach(refill => {
+    filteredRefills.forEach(refill => {
       const siteKey = refill.site;
       if (!refillsBySite[siteKey]) {
         refillsBySite[siteKey] = {
@@ -136,7 +189,21 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       criticalSites: predictions.filter(p => p.urgency === 'critical').length,
       warningSites: predictions.filter(p => p.urgency === 'warning').length
     };
-  }, [refills, scans, sites]);
+  }, [filteredRefills, scans, sites]);
+
+  const handleClearFilters = () => {
+    setProductFilter('all');
+    setStatusFilter('all');
+    setCustomerFilter('all');
+    setSiteFilter('all');
+    setDateFrom(moment().subtract(30, 'days').format('YYYY-MM-DD'));
+    setDateTo(moment().format('YYYY-MM-DD'));
+  };
+
+  const hasActiveFilters = productFilter !== 'all' || statusFilter !== 'all' || 
+    customerFilter !== 'all' || siteFilter !== 'all' ||
+    dateFrom !== moment().subtract(30, 'days').format('YYYY-MM-DD') ||
+    dateTo !== moment().format('YYYY-MM-DD');
 
   if (!analysis) {
     return (
@@ -165,6 +232,129 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
 
   return (
     <div className="space-y-6">
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-[#7CB342]" />
+              Refill Filters
+            </CardTitle>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="gap-2"
+              >
+                <X className="w-4 h-4" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {/* Date Range */}
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">From Date</label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">To Date</label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {/* Customer Filter */}
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Customer</label>
+              <Select value={customerFilter} onValueChange={setCustomerFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Customers" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueCustomers.map(customer => (
+                    <SelectItem key={customer} value={customer}>
+                      {customer === 'all' ? 'All Customers' : customer}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Site Filter */}
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Site</label>
+              <Select value={siteFilter} onValueChange={setSiteFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Sites" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueSites.map(site => (
+                    <SelectItem key={site} value={site}>
+                      {site === 'all' ? 'All Sites' : site}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Product Filter */}
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Product</label>
+              <Select value={productFilter} onValueChange={setProductFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Products" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueProducts.map(product => (
+                    <SelectItem key={product} value={product}>
+                      {product === 'all' ? 'All Products' : product}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="text-xs text-slate-600 mb-1 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  {uniqueStatuses.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {status === 'all' ? 'All Statuses' : status}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Active Filters Badge */}
+          {hasActiveFilters && (
+            <div className="mt-4 flex items-center gap-2 text-sm text-slate-600">
+              <Badge className="bg-[#7CB342] text-white">
+                {filteredRefills.length} of {refills?.length || 0} deliveries shown
+              </Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
