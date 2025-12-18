@@ -91,9 +91,14 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
   const analysis = useMemo(() => {
     if (!filteredRefills?.length || !scans?.length) return null;
 
-    // Group refills by site
+    // Group refills by site - only count delivered or confirmed refills
     const refillsBySite = {};
     filteredRefills.forEach(refill => {
+      // Skip scheduled refills - they haven't happened yet
+      if (refill.status === 'scheduled') {
+        return;
+      }
+
       const siteKey = refill.site;
       if (!refillsBySite[siteKey]) {
         refillsBySite[siteKey] = {
@@ -109,7 +114,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       refillsBySite[siteKey].refills.push(refill);
       refillsBySite[siteKey].totalLitres += refill.deliveredLitres || 0;
       refillsBySite[siteKey].totalCost += refill.totalExGst || 0;
-      
+
       const refillDate = moment(refill.date);
       if (!refillsBySite[siteKey].lastRefillDate || refillDate.isAfter(refillsBySite[siteKey].lastRefillDate)) {
         refillsBySite[siteKey].lastRefillDate = refillDate;
@@ -372,9 +377,14 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
     });
     refillVolumesBySite.sort((a, b) => b.totalLitres - a.totalLitres);
 
-    // Monthly refill trends
+    // Monthly refill trends - only count delivered or confirmed refills
     const monthlyRefills = {};
     filteredRefills.forEach(refill => {
+      // Skip scheduled refills - they haven't happened yet
+      if (refill.status === 'scheduled') {
+        return;
+      }
+      
       const monthKey = moment(refill.date).format('MMM YYYY');
       if (!monthlyRefills[monthKey]) {
         monthlyRefills[monthKey] = {
