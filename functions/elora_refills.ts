@@ -1,46 +1,39 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+
+const ELORA_API_KEY = Deno.env.get("ELORA_API_KEY");
+
 Deno.serve(async (req) => {
+  if (!ELORA_API_KEY) {
+    return Response.json({ error: "ELORA_API_KEY not configured" }, { status: 500 });
+  }
+
+  const { fromDate, toDate, customerRef, siteRef } = await req.json();
+
+  // Build query params
+  const params = new URLSearchParams();
+  if (fromDate) params.append('fromDate', fromDate);
+  if (toDate) params.append('toDate', toDate);
+  if (customerRef && customerRef !== 'all') params.append('customerRef', customerRef);
+  if (siteRef && siteRef !== 'all') params.append('siteRef', siteRef);
+  params.append('pageSize', '1000');
+
   try {
-    const apiKey = Deno.env.get('ELORA_API_KEY');
-    
-    if (!apiKey) {
-      return Response.json({ error: 'API key not configured' }, { status: 500 });
-    }
-
-    const body = await req.json().catch(() => ({}));
-    const customerRef = body.customer_id;
-    const siteRef = body.site_id;
-    const fromDate = body.from_date;
-    const toDate = body.to_date;
-
-    const params = new URLSearchParams();
-    if (customerRef && customerRef !== 'all') params.append('customer', customerRef);
-    if (siteRef && siteRef !== 'all') params.append('site', siteRef);
-    if (fromDate) params.append('fromDate', fromDate);
-    if (toDate) params.append('toDate', toDate);
-
-    const response = await fetch(`https://www.elora.com.au/api/refills?${params.toString()}`, {
+    const response = await fetch(`https://api.centralised-vehicle-management.software/api/refills?${params}`, {
       headers: {
-        'x-api-key': apiKey
+        'x-api-key': ELORA_API_KEY
       }
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Elora API error (${response.status}):`, errorText);
-      return Response.json({ 
-        error: `Elora API error: ${response.status}`,
-        details: errorText 
-      }, { status: response.status });
+      const error = await response.text();
+      console.error('Elora API Error:', error);
+      return Response.json({ error: 'Failed to fetch refills data' }, { status: response.status });
     }
 
-    const json = await response.json();
-    return Response.json(Array.isArray(json) ? json : []);
-    
+    const data = await response.json();
+    return Response.json(data);
   } catch (error) {
-    console.error('Server error:', error);
-    return Response.json({ 
-      error: error.message,
-      stack: error.stack 
-    }, { status: 500 });
+    console.error('Error fetching refills:', error);
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });
