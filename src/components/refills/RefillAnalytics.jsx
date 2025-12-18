@@ -143,8 +143,8 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       const lastRefill = siteRefills[siteRefills.length - 1];
       const lastRefillDate = moment(lastRefill.date);
 
-      // Check for overdue scheduled refills for this site
-      const scheduledRefills = filteredRefills.filter(r => 
+      // Check for overdue scheduled refills for this site - use original refills array to avoid date filter interference
+      const scheduledRefills = (refills || []).filter(r => 
         r.site === siteName && r.status === 'scheduled'
       );
       const overdueScheduled = scheduledRefills.filter(r => 
@@ -284,9 +284,10 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       const totalWashes = siteScans.length;
       const costPerWash = totalWashes > 0 ? siteData.totalCost / totalWashes : 0;
 
-      // Determine urgency
+      // Determine urgency - overdue scheduled refills are always critical
       let urgency = 'good';
-      if (daysUntilRefill < 3 || currentStock < REFILL_THRESHOLD) urgency = 'critical';
+      if (hasOverdueScheduled) urgency = 'critical';
+      else if (daysUntilRefill < 3 || currentStock < REFILL_THRESHOLD) urgency = 'critical';
       else if (daysUntilRefill < 7) urgency = 'warning';
       else if (daysUntilRefill < 14) urgency = 'attention';
 
@@ -739,17 +740,17 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                         <p className="font-medium">{pred.avgRefillInterval} days</p>
                       </div>
                       <div>
-                        <p className="text-slate-600">Days Since Refill</p>
+                        <p className="text-slate-600">Days Since Last Refill</p>
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{pred.daysSinceLastRefill} days</p>
                           {pred.hasOverdueScheduled && (
-                            <Badge className="bg-red-600 text-white text-xs">
+                            <Badge className="bg-red-600 text-white text-xs px-1 py-0">
                               OVERDUE
                             </Badge>
                           )}
                         </div>
                         {pred.hasOverdueScheduled && (
-                          <p className="text-xs text-red-600 font-medium">
+                          <p className="text-xs text-red-600 font-semibold mt-0.5">
                             {pred.overdueScheduledCount} scheduled refill{pred.overdueScheduledCount > 1 ? 's' : ''} overdue
                           </p>
                         )}
