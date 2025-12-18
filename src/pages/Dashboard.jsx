@@ -51,6 +51,7 @@ import DeviceHealth from '@/components/devices/DeviceHealth';
 import CostForecast from '@/components/analytics/CostForecast';
 import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
 import QuickActions from '@/components/dashboard/QuickActions';
+import RefillAnalytics from '@/components/refills/RefillAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
 
@@ -126,6 +127,19 @@ export default function Dashboard() {
       startDate: dateRange.start,
       endDate: dateRange.end
     }),
+  });
+
+  const { data: refills = [], isLoading: refillsLoading } = useQuery({
+    queryKey: ['refills', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
+    queryFn: async () => {
+      const response = await base44.functions.invoke('elora_refills', {
+        fromDate: dateRange.start,
+        toDate: dateRange.end,
+        customerRef: selectedCustomer,
+        siteRef: selectedSite
+      });
+      return response.data || [];
+    },
   });
 
   // Reset site when customer changes
@@ -339,6 +353,15 @@ export default function Dashboard() {
           <WashPatternAnalytics scans={scans} />
         </div>
 
+        {/* Refill Intelligence */}
+        <RefillAnalytics 
+          refills={refills}
+          scans={scans}
+          sites={allSites}
+          selectedCustomer={selectedCustomer}
+          selectedSite={selectedSite}
+        />
+
         {/* Leaderboard Quick Link */}
         <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
           <motion.div
@@ -363,10 +386,11 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-6xl grid-cols-7 gap-1">
+          <TabsList className="grid w-full max-w-6xl grid-cols-8 gap-1">
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="costs">Usage Costs</TabsTrigger>
+            <TabsTrigger value="refills">Refills</TabsTrigger>
             <TabsTrigger value="devices">Device Health</TabsTrigger>
             <TabsTrigger value="sites">Sites</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -402,6 +426,16 @@ export default function Dashboard() {
               selectedCustomer={selectedCustomer}
               selectedSite={selectedSite}
               dateRange={dateRange}
+            />
+          </TabsContent>
+
+          <TabsContent value="refills" className="mt-6">
+            <RefillAnalytics 
+              refills={refills}
+              scans={scans}
+              sites={allSites}
+              selectedCustomer={selectedCustomer}
+              selectedSite={selectedSite}
             />
           </TabsContent>
 
