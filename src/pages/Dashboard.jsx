@@ -353,15 +353,6 @@ export default function Dashboard() {
           <WashPatternAnalytics scans={scans} />
         </div>
 
-        {/* Refill Intelligence */}
-        <RefillAnalytics 
-          refills={refills}
-          scans={scans}
-          sites={allSites}
-          selectedCustomer={selectedCustomer}
-          selectedSite={selectedSite}
-        />
-
         {/* Leaderboard Quick Link */}
         <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
           <motion.div
