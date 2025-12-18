@@ -82,6 +82,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
       if (!refillsBySite[siteKey]) {
         refillsBySite[siteKey] = {
           site: siteKey,
+          customer: refill.customer,
           refills: [],
           totalLitres: 0,
           totalCost: 0,
@@ -239,6 +240,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
 
       predictions.push({
         site: siteName,
+        customer: siteData.customer,
         currentStock: currentStock,
         dailyConsumption: adjustedDailyConsumption.toFixed(1),
         daysUntilRefill: Math.max(0, blendedDaysUntilRefill).toFixed(0),
@@ -525,7 +527,10 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="w-4 h-4" />
-                      <h4 className="font-semibold">{pred.site}</h4>
+                      <div className="flex flex-col">
+                        <h4 className="font-semibold">{pred.site}</h4>
+                        <p className="text-xs text-slate-600">{pred.customer}</p>
+                      </div>
                       <Badge className={getUrgencyColor(pred.urgency)}>
                         {pred.urgency.toUpperCase()}
                       </Badge>
