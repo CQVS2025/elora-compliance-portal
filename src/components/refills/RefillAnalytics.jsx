@@ -275,9 +275,14 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
         confidence -= 25; // Lower confidence for historical estimate
       }
       
-      // Adjust confidence
+      // Adjust confidence based on data availability
       if (siteRefills.length < 3) confidence -= 20;
       else if (siteRefills.length < 5) confidence -= 10;
+      
+      // Calculate recent scan activity
+      const last7DaysScans = siteScans.filter(s => 
+        moment(s.timestamp).isAfter(moment().subtract(7, 'days'))
+      ).length;
       
       if (last7DaysScans < 3) confidence -= 15; // Low recent activity
       if (consumptionTrend !== 'stable') confidence -= 10;
