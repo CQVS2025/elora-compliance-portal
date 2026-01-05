@@ -29,7 +29,7 @@ export default function FilterSection({
       <div className="flex flex-wrap items-center gap-4">
         {/* Customer Dropdown */}
         <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-          <SelectTrigger className="w-[180px] border-slate-200 focus:ring-[#7CB342] focus:ring-offset-0">
+          <SelectTrigger className="w-[180px] border-slate-200" style={{ '--tw-ring-color': 'var(--client-primary)' }}>
             <SelectValue placeholder="Select Customer" />
           </SelectTrigger>
           <SelectContent>
@@ -47,7 +47,7 @@ export default function FilterSection({
           value={selectedSite} 
           onValueChange={setSelectedSite}
         >
-          <SelectTrigger className="w-[180px] border-slate-200 focus:ring-[#7CB342]">
+          <SelectTrigger className="w-[180px] border-slate-200" style={{ '--tw-ring-color': 'var(--client-primary)' }}>
             <SelectValue placeholder="Select Site" />
           </SelectTrigger>
           <SelectContent>
@@ -88,9 +88,12 @@ export default function FilterSection({
               onClick={() => setActivePeriod(period)}
               className={`rounded-none px-4 transition-all duration-300 ${
                 activePeriod === period
-                  ? 'bg-[#7CB342] text-white hover:bg-[#689F38] hover:text-white'
+                  ? 'text-white'
                   : 'bg-white text-slate-600 hover:bg-slate-50'
               }`}
+              style={activePeriod === period ? { 
+                backgroundColor: 'var(--client-primary)',
+              } : {}}
             >
               {period}
             </Button>
