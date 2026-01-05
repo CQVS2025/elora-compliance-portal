@@ -3,6 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
 import { AlertTriangle } from 'lucide-react';
 
+// Domain-based access configuration - CUSTOMIZE HERE
+const DOMAIN_CONFIG = {
+  'elora.com.au': {
+    showAllData: true,
+    defaultCustomer: 'all', // or specific customer ID/name
+    defaultSite: 'all',
+    hiddenTabs: [], // e.g., ['users', 'sites'] to hide tabs
+    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+  },
+  'heidelberg.com.au': {
+    showAllData: true,
+    defaultCustomer: 'all',
+    defaultSite: 'all',
+    hiddenTabs: [],
+    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+  }
+  // Add more domains as needed
+};
+
+export function getDomainConfig(email) {
+  if (!email) return null;
+  const domain = email.split('@')[1];
+  return DOMAIN_CONFIG[domain] || null;
+}
+
 export function usePermissions() {
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
@@ -72,8 +97,9 @@ export function PermissionGuard({ children, require, fallback }) {
 export function useFilteredData(vehicles, sites) {
   const permissions = usePermissions();
 
-  // elora.com.au users see all data
-  if (permissions.user?.email?.endsWith('@elora.com.au')) {
+  // Check domain-based configuration
+  const domainConfig = getDomainConfig(permissions.user?.email);
+  if (domainConfig?.showAllData) {
     return { filteredVehicles: vehicles, filteredSites: sites };
   }
 
