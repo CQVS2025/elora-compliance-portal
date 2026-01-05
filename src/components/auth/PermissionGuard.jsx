@@ -11,7 +11,7 @@ const USER_SPECIFIC_CONFIG = {
     showAllData: false, // Only show data for restricted customer
     defaultSite: 'all',
     hiddenTabs: ['costs', 'refills', 'devices', 'sites'],
-    visibleTabs: ['compliance', 'maintenance', 'reports', 'users']
+    visibleTabs: ['compliance', 'maintenance', 'reports']
   }
   // Add more user-specific restrictions as needed
 };
