@@ -174,24 +174,51 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-[#0F172A]">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => handleSort(col.key)}
-                  className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-slate-700 transition-colors"
-                >
-                  {col.label}
-                  <SortIcon field={col.key} />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <AnimatePresence>
-              {paginatedVehicles.map((vehicle, index) => {
+        {paginatedVehicles.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center">
+              <Truck className="w-12 h-12 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">
+              {searchQuery ? 'No vehicles found' : 'Welcome! Get started with your fleet'}
+            </h3>
+            <p className="text-slate-600 text-center max-w-md mb-6">
+              {searchQuery
+                ? `No vehicles match "${searchQuery}". Try a different search term.`
+                : 'Add your first vehicle to start tracking compliance and wash history.'
+              }
+            </p>
+            {!searchQuery && permissions.canEditVehicles && (
+              <div className="space-y-3 text-sm text-slate-600 bg-slate-50 rounded-lg p-4 max-w-md">
+                <p className="font-semibold text-slate-800">Quick Start Guide:</p>
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>Import your vehicles with RFID tags</li>
+                  <li>Assign vehicles to sites</li>
+                  <li>Set compliance targets</li>
+                  <li>Start tracking washes automatically</li>
+                </ol>
+              </div>
+            )}
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="bg-[#0F172A]">
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider cursor-pointer hover:bg-slate-700 transition-colors"
+                  >
+                    {col.label}
+                    <SortIcon field={col.key} />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {paginatedVehicles.map((vehicle, index) => {
                 const isCompliant = vehicle.washes_completed >= vehicle.target;
                 const progress = Math.min(100, Math.round((vehicle.washes_completed / vehicle.target) * 100));
                 const isExpanded = expandedVehicleId === vehicle.id;
@@ -370,10 +397,11 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                     )}
                   </React.Fragment>
                 );
-              })}
-            </AnimatePresence>
-          </tbody>
-        </table>
+                })}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Pagination */}

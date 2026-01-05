@@ -45,6 +45,7 @@ import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
+import MultiTenantConfig from '@/components/admin/MultiTenantConfig';
 import UsageCosts from '@/components/costs/UsageCosts';
 import MobileDashboard from './MobileDashboard';
 import DeviceHealth from '@/components/devices/DeviceHealth';
@@ -376,6 +377,7 @@ export default function Dashboard() {
           activePeriod={activePeriod}
           setActivePeriod={setActivePeriod}
           lockCustomerFilter={userConfig?.lockCustomerFilter}
+          restrictedCustomerName={userConfig?.restrictedCustomer}
         />
 
         {/* Stats Cards */}
@@ -484,7 +486,20 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">
-            <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
+            <div className="space-y-6">
+              <Tabs defaultValue="roles" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="roles">User Roles</TabsTrigger>
+                  <TabsTrigger value="multitenant">Multi-Tenant Config</TabsTrigger>
+                </TabsList>
+                <TabsContent value="roles" className="mt-6">
+                  <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
+                </TabsContent>
+                <TabsContent value="multitenant" className="mt-6">
+                  <MultiTenantConfig />
+                </TabsContent>
+              </Tabs>
+            </div>
           </TabsContent>
           </Tabs>
 

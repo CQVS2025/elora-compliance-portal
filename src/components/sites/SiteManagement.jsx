@@ -247,11 +247,34 @@ export default function SiteManagement({ customers, vehicles }) {
       </div>
 
       {filteredSites.length === 0 && (
-        <div className="text-center py-12">
-          <Building2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-600">
-            {searchQuery ? 'No sites found matching your search' : 'No sites yet. Add your first site to get started.'}
+        <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-slate-100">
+          <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center">
+            <Building2 className="w-12 h-12 text-slate-400" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mb-2">
+            {searchQuery ? 'No sites found' : 'Welcome! Add your first site'}
+          </h3>
+          <p className="text-slate-600 text-center max-w-md mb-6">
+            {searchQuery
+              ? `No sites match "${searchQuery}". Try a different search term.`
+              : 'Add your first wash station location to start managing your fleet operations.'
+            }
           </p>
+          {!searchQuery && (
+            <div className="space-y-3 text-sm text-slate-600 bg-slate-50 rounded-lg p-4 max-w-md">
+              <p className="font-semibold text-slate-800">Site Setup Guide:</p>
+              <ol className="list-decimal list-inside space-y-2">
+                <li>Create a site for each wash station location</li>
+                <li>Add contact information and address details</li>
+                <li>Assign vehicles to the appropriate site</li>
+                <li>Track wash activity by location</li>
+              </ol>
+              <Button onClick={handleAddNew} className="w-full mt-4 bg-[#7CB342] hover:bg-[#689F38]">
+                <Plus className="w-4 h-4 mr-2" />
+                Add First Site
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
