@@ -137,14 +137,14 @@ export default function Header({ onNotificationClick }) {
 
               <DropdownMenuItem
                 className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors"
-                onClick={() => navigate('/Profile')}
+                onSelect={() => navigate('/Profile')}
               >
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors"
-                onClick={() => navigate('/Settings')}
+                onSelect={() => navigate('/Settings')}
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
@@ -152,7 +152,7 @@ export default function Header({ onNotificationClick }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer py-3 px-4 text-red-600 hover:bg-red-50 transition-colors"
-                onClick={handleLogout}
+                onSelect={handleLogout}
               >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
