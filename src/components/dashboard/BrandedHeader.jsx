@@ -90,9 +90,16 @@ export default function BrandedHeader({ onNotificationClick }) {
                 className="h-[50px] max-h-[50px] object-contain md:h-[40px]"
               />
             ) : null}
-            <h1 className="text-white font-bold text-2xl md:text-xl">
-              {branding.company_name}
-            </h1>
+            <div className="flex flex-col">
+              <h1 className="text-white font-bold text-2xl md:text-xl leading-tight">
+                {branding.company_name}
+              </h1>
+              {branding.company_name === 'ELORA' && !branding.logo_url && (
+                <p className="text-xs font-semibold uppercase" style={{ color: '#7CB342' }}>
+                  Powered by CQVS
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Center Section - Portal Title (Desktop Only) */}
