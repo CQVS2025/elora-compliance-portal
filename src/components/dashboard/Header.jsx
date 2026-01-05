@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Bell, ChevronDown, Settings, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
@@ -8,11 +7,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { useAuth } from '@/lib/AuthContext';
 
 export default function Header({ onNotificationClick }) {
-  const navigate = useNavigate();
-  const { logout, user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const notifications = [
@@ -20,20 +16,6 @@ export default function Header({ onNotificationClick }) {
     { id: 2, message: "New vehicle PLX 3156 added", time: "5 hours ago", type: "info" },
     { id: 3, message: "Monthly report ready", time: "1 day ago", type: "success" }
   ];
-
-  const handleLogout = () => {
-    logout(true);
-  };
-
-  const getInitials = (name) => {
-    if (!name) return '??';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
-
-  const getDisplayName = () => {
-    if (!user) return 'Account';
-    return user.name || user.email?.split('@')[0] || 'User';
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full h-[72px]" style={{ 
@@ -122,38 +104,23 @@ export default function Header({ onNotificationClick }) {
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
                   style={{ background: 'linear-gradient(135deg, #7CB342 0%, #9CCC65 100%)' }}
                 >
-                  {getInitials(getDisplayName())}
+                  JH
                 </div>
-                <span className="text-white font-medium text-sm hidden lg:block">{getDisplayName()}</span>
+                <span className="text-white font-medium text-sm hidden lg:block">Jenny Harper</span>
                 <ChevronDown className="w-4 h-4 text-white/70" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 rounded-xl shadow-xl">
-              {/* User Info Header */}
-              <div className="px-4 py-3 border-b">
-                <p className="font-semibold text-slate-800">{getDisplayName()}</p>
-                <p className="text-sm text-slate-600">{user?.email || ''}</p>
-              </div>
-
-              <DropdownMenuItem
-                className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors"
-                onClick={() => navigate('/Profile')}
-              >
+            <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl">
+              <DropdownMenuItem className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors">
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors"
-                onClick={() => navigate('/Settings')}
-              >
+              <DropdownMenuItem className="cursor-pointer py-3 px-4 hover:bg-[#F1F5F9] transition-colors">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="cursor-pointer py-3 px-4 text-red-600 hover:bg-red-50 transition-colors"
-                onClick={handleLogout}
-              >
+              <DropdownMenuItem className="cursor-pointer py-3 px-4 text-red-600 hover:bg-red-50 transition-colors">
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </DropdownMenuItem>
