@@ -38,6 +38,22 @@ const AuthenticatedApp = () => {
       // Redirect to login automatically
       navigateToLogin();
       return null;
+    } else if (authError.type === 'config_error' || authError.type === 'timeout' || authError.type === 'unknown') {
+      // Show configuration or connection error
+      return (
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-red-600 mb-4">Configuration Error</h2>
+            <p className="text-gray-700 mb-4">{authError.message}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
     }
   }
 

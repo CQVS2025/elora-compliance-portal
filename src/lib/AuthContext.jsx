@@ -21,7 +21,22 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoadingPublicSettings(true);
       setAuthError(null);
-      
+
+      // Validate required environment variables
+      if (!appParams.appId || !appParams.serverUrl) {
+        console.error('Missing required environment variables:', {
+          appId: appParams.appId,
+          serverUrl: appParams.serverUrl
+        });
+        setAuthError({
+          type: 'config_error',
+          message: 'Missing required configuration. Please check VITE_BASE44_APP_ID and VITE_BASE44_BACKEND_URL environment variables.'
+        });
+        setIsLoadingPublicSettings(false);
+        setIsLoadingAuth(false);
+        return;
+      }
+
       // First, check app public settings (with token if available)
       // This will tell us if auth is required, user not registered, etc.
       const appClient = createAxiosClient({
@@ -32,11 +47,18 @@ export const AuthProvider = ({ children }) => {
         token: appParams.token, // Include token if available
         interceptResponses: true
       });
-      
+
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        // Add timeout to prevent hanging indefinitely
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        );
+
+        const publicSettingsPromise = appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        const publicSettings = await Promise.race([publicSettingsPromise, timeoutPromise]);
+
         setAppPublicSettings(publicSettings);
-        
+
         // If we got the app public settings successfully, check if user is authenticated
         if (appParams.token) {
           await checkUserAuth();
@@ -47,7 +69,7 @@ export const AuthProvider = ({ children }) => {
         setIsLoadingPublicSettings(false);
       } catch (appError) {
         console.error('App state check failed:', appError);
-        
+
         // Handle app-level errors
         if (appError.status === 403 && appError.data?.extra_data?.reason) {
           const reason = appError.data.extra_data.reason;
@@ -67,6 +89,11 @@ export const AuthProvider = ({ children }) => {
               message: appError.message
             });
           }
+        } else if (appError.message === 'Request timeout') {
+          setAuthError({
+            type: 'timeout',
+            message: 'Connection timeout. Please check your network connection and server URL.'
+          });
         } else {
           setAuthError({
             type: 'unknown',
