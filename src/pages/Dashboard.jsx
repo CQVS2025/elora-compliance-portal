@@ -61,17 +61,6 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
-  
-  // Auto-filter based on email domain
-  useEffect(() => {
-    if (permissions.user?.email) {
-      const emailDomain = permissions.user.email.split('@')[1];
-      if (emailDomain === 'elora.com.au') {
-        // Heidelberg Materials customer - will be set after customers load
-        setSelectedCustomer('heidelberg-materials');
-      }
-    }
-  }, [permissions.user]);
   const [dateRange, setDateRange] = useState({
     start: moment().startOf('month').format('YYYY-MM-DD'),
     end: moment().format('YYYY-MM-DD')
@@ -118,21 +107,6 @@ export default function Dashboard() {
     queryKey: ['customers'],
     queryFn: fetchCustomers,
   });
-  
-  // Auto-set Heidelberg Materials customer when customers load for elora.com.au users
-  useEffect(() => {
-    if (customers.length > 0 && permissions.user?.email) {
-      const emailDomain = permissions.user.email.split('@')[1];
-      if (emailDomain === 'elora.com.au') {
-        const heidelbergCustomer = customers.find(c => 
-          c.name.toLowerCase().includes('heidelberg')
-        );
-        if (heidelbergCustomer) {
-          setSelectedCustomer(heidelbergCustomer.id);
-        }
-      }
-    }
-  }, [customers, permissions.user]);
 
   const { data: rawSites = [], isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
