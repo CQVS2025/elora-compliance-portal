@@ -41,7 +41,6 @@ import StatsCard from '@/components/dashboard/StatsCard';
 import VehicleTable from '@/components/dashboard/VehicleTable';
 import WashAnalytics from '@/components/dashboard/WashAnalytics';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
-import MaintenanceSection from '@/components/maintenance/MaintenanceSection';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
 import RoleManagement from '@/components/admin/RoleManagement';
@@ -70,7 +69,6 @@ export default function Dashboard() {
   const availableTabs = useMemo(() => {
     const allTabs = [
       { value: 'compliance', label: 'Compliance' },
-      { value: 'maintenance', label: 'Maintenance' },
       { value: 'costs', label: 'Usage Costs' },
       { value: 'refills', label: 'Refills' },
       { value: 'devices', label: 'Device Health' },
@@ -475,10 +473,6 @@ export default function Dashboard() {
               />
               <VehiclePerformanceChart vehicles={filteredVehicles} />
             </div>
-          </TabsContent>
-
-          <TabsContent value="maintenance" className="mt-6">
-            <MaintenanceSection vehicles={filteredVehicles} />
           </TabsContent>
 
           <TabsContent value="costs" className="mt-6">
