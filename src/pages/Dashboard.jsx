@@ -64,6 +64,30 @@ export default function Dashboard() {
 
   // Get user-specific configuration
   const userConfig = getUserSpecificConfig(permissions.user?.email);
+
+  // Define and filter available tabs based on user permissions
+  const availableTabs = useMemo(() => {
+    const allTabs = [
+      { value: 'compliance', label: 'Compliance' },
+      { value: 'maintenance', label: 'Maintenance' },
+      { value: 'costs', label: 'Usage Costs' },
+      { value: 'refills', label: 'Refills' },
+      { value: 'devices', label: 'Device Health' },
+      { value: 'sites', label: 'Sites' },
+      { value: 'reports', label: 'Reports' },
+      { value: 'users', label: 'Users' }
+    ];
+
+    // Filter tabs based on user configuration
+    if (userConfig?.visibleTabs) {
+      return allTabs.filter(tab => userConfig.visibleTabs.includes(tab.value));
+    } else if (userConfig?.hiddenTabs) {
+      return allTabs.filter(tab => !userConfig.hiddenTabs.includes(tab.value));
+    }
+
+    return allTabs;
+  }, [userConfig]);
+
   const [dateRange, setDateRange] = useState({
     start: moment().startOf('month').format('YYYY-MM-DD'),
     end: moment().format('YYYY-MM-DD')
@@ -85,6 +109,13 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Ensure user can only access tabs they have permission for
+  useEffect(() => {
+    const allowedTabValues = availableTabs.map(tab => tab.value);
+    if (!allowedTabValues.includes(activeTab) && allowedTabValues.length > 0) {
+      setActiveTab(allowedTabValues[0]);
+    }
+  }, [availableTabs, activeTab]);
 
   // Update date range when period changes
   useEffect(() => {
@@ -387,15 +418,12 @@ export default function Dashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-6xl grid-cols-8 gap-1">
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="costs">Usage Costs</TabsTrigger>
-            <TabsTrigger value="refills">Refills</TabsTrigger>
-            <TabsTrigger value="devices">Device Health</TabsTrigger>
-            <TabsTrigger value="sites">Sites</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsList className="grid w-full max-w-6xl gap-1" style={{ gridTemplateColumns: `repeat(${availableTabs.length}, minmax(0, 1fr))` }}>
+            {availableTabs.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="compliance" className="space-y-6">

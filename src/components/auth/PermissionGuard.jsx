@@ -10,8 +10,8 @@ const USER_SPECIFIC_CONFIG = {
     lockCustomerFilter: true, // Prevent changing customer filter
     showAllData: false, // Only show data for restricted customer
     defaultSite: 'all',
-    hiddenTabs: [],
-    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+    hiddenTabs: ['costs', 'refills', 'devices', 'sites'],
+    visibleTabs: ['compliance', 'maintenance', 'reports', 'users']
   }
   // Add more user-specific restrictions as needed
 };
