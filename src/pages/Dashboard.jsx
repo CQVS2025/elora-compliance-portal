@@ -61,6 +61,17 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
+  
+  // Auto-filter based on email domain
+  useEffect(() => {
+    if (permissions.user?.email) {
+      const emailDomain = permissions.user.email.split('@')[1];
+      if (emailDomain === 'elora.com.au') {
+        // Heidelberg Materials customer - will be set after customers load
+        setSelectedCustomer('heidelberg-materials');
+      }
+    }
+  }, [permissions.user]);
   const [dateRange, setDateRange] = useState({
     start: moment().startOf('month').format('YYYY-MM-DD'),
     end: moment().format('YYYY-MM-DD')
