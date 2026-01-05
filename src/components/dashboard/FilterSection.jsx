@@ -21,6 +21,7 @@ export default function FilterSection({
   setDateRange,
   activePeriod,
   setActivePeriod,
+  lockCustomerFilter = false,
 }) {
   const periods = ['Today', 'Week', 'Month'];
 
@@ -28,8 +29,16 @@ export default function FilterSection({
     <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
       <div className="flex flex-wrap items-center gap-4">
         {/* Customer Dropdown */}
-        <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
-          <SelectTrigger className="w-[180px] border-slate-200" style={{ '--tw-ring-color': 'var(--client-primary)' }}>
+        <Select
+          value={selectedCustomer}
+          onValueChange={setSelectedCustomer}
+          disabled={lockCustomerFilter}
+        >
+          <SelectTrigger
+            className="w-[180px] border-slate-200"
+            style={{ '--tw-ring-color': 'var(--client-primary)' }}
+            disabled={lockCustomerFilter}
+          >
             <SelectValue placeholder="Select Customer" />
           </SelectTrigger>
           <SelectContent>

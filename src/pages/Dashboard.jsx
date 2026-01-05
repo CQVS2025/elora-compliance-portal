@@ -53,7 +53,7 @@ import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
 import QuickActions from '@/components/dashboard/QuickActions';
 import RefillAnalytics from '@/components/refills/RefillAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePermissions, useFilteredData, PermissionGuard } from '@/components/auth/PermissionGuard';
+import { usePermissions, useFilteredData, PermissionGuard, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
 
 export default function Dashboard() {
@@ -61,6 +61,9 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
+
+  // Get user-specific configuration
+  const userConfig = getUserSpecificConfig(permissions.user?.email);
   const [dateRange, setDateRange] = useState({
     start: moment().startOf('month').format('YYYY-MM-DD'),
     end: moment().format('YYYY-MM-DD')
@@ -107,6 +110,25 @@ export default function Dashboard() {
     queryKey: ['customers'],
     queryFn: fetchCustomers,
   });
+
+  // Filter customers based on user-specific restrictions
+  const filteredCustomers = useMemo(() => {
+    if (!userConfig?.restrictedCustomer) return customers;
+
+    // Find customer by name match (case-insensitive, partial match)
+    const restrictedCustomer = customers.find(c =>
+      c.name && c.name.toUpperCase().includes(userConfig.restrictedCustomer.toUpperCase())
+    );
+
+    return restrictedCustomer ? [restrictedCustomer] : customers;
+  }, [customers, userConfig]);
+
+  // Auto-select restricted customer when customers are loaded
+  useEffect(() => {
+    if (userConfig?.restrictedCustomer && filteredCustomers.length === 1) {
+      setSelectedCustomer(filteredCustomers[0].id);
+    }
+  }, [filteredCustomers, userConfig]);
 
   const { data: rawSites = [], isLoading: sitesLoading } = useQuery({
     queryKey: ['sites'],
@@ -312,7 +334,7 @@ export default function Dashboard() {
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 space-y-6">
         {/* Filters */}
         <FilterSection
-          customers={customers}
+          customers={filteredCustomers}
           sites={allSites}
           selectedCustomer={selectedCustomer}
           setSelectedCustomer={setSelectedCustomer}
@@ -322,6 +344,7 @@ export default function Dashboard() {
           setDateRange={setDateRange}
           activePeriod={activePeriod}
           setActivePeriod={setActivePeriod}
+          lockCustomerFilter={userConfig?.lockCustomerFilter}
         />
 
         {/* Stats Cards */}
