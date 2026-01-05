@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, Lock, AlertCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function FilterSection({
   customers,
@@ -22,34 +28,67 @@ export default function FilterSection({
   activePeriod,
   setActivePeriod,
   lockCustomerFilter = false,
+  restrictedCustomerName = null,
 }) {
   const periods = ['Today', 'Week', 'Month'];
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-      <div className="flex flex-wrap items-center gap-4">
+    <div className="space-y-4">
+      {/* Restricted User Banner */}
+      {lockCustomerFilter && restrictedCustomerName && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-amber-900 mb-1">
+              Restricted Access - Viewing {restrictedCustomerName} Only
+            </h3>
+            <p className="text-sm text-amber-700">
+              Your account has restricted access. You can only view data for {restrictedCustomerName}.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <div className="flex flex-wrap items-center gap-4">
         {/* Customer Dropdown */}
-        <Select
-          value={selectedCustomer}
-          onValueChange={setSelectedCustomer}
-          disabled={lockCustomerFilter}
-        >
-          <SelectTrigger
-            className="w-[180px] border-slate-200"
-            style={{ '--tw-ring-color': 'var(--client-primary)' }}
-            disabled={lockCustomerFilter}
-          >
-            <SelectValue placeholder="Select Customer" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Customers</SelectItem>
-            {customers.map((customer) => (
-              <SelectItem key={customer.id} value={customer.id}>
-                {customer.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="relative">
+                <Select
+                  value={selectedCustomer}
+                  onValueChange={setSelectedCustomer}
+                  disabled={lockCustomerFilter}
+                >
+                  <SelectTrigger
+                    className="w-[180px] border-slate-200"
+                    style={{ '--tw-ring-color': 'var(--client-primary)' }}
+                    disabled={lockCustomerFilter}
+                  >
+                    <SelectValue placeholder="Select Customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Customers</SelectItem>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {lockCustomerFilter && (
+                  <Lock className="w-4 h-4 text-amber-600 absolute right-9 top-1/2 -translate-y-1/2 pointer-events-none" />
+                )}
+              </div>
+            </TooltipTrigger>
+            {lockCustomerFilter && (
+              <TooltipContent>
+                <p>Customer filter is locked for your account</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
 
         {/* Site Dropdown */}
         <Select 
@@ -109,6 +148,7 @@ export default function FilterSection({
           ))}
         </div>
       </div>
+    </div>
     </div>
   );
 }
