@@ -95,8 +95,8 @@ export default function BrandedHeader({ onNotificationClick }) {
               <h1 className="text-white font-bold text-2xl md:text-xl leading-tight">
                 {branding.company_name}
               </h1>
-              {branding.company_name === 'ELORA' && !branding.logo_url && (
-                <p className="text-xs font-semibold uppercase" style={{ color: '#7CB342' }}>
+              {emailDomain === 'cqvs.com.au' && (
+                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#7CB342' }}>
                   Powered by CQVS
                 </p>
               )}
