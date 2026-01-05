@@ -78,65 +78,128 @@ export default function BrandedHeader({ onNotificationClick }) {
 
   return (
     <>
-      {/* Branded Header Bar */}
-      <header 
-        className="sticky top-0 z-50 w-full"
-        style={{ backgroundColor: branding.primary_color }}
+      {/* Modern Branded Header */}
+      <header
+        className="sticky top-0 z-50 w-full backdrop-blur-md"
+        style={{
+          background: `linear-gradient(135deg, ${branding.primary_color}F5 0%, ${branding.primary_color}E8 100%)`,
+          boxShadow: '0 4px 24px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)'
+        }}
       >
-        <div className="h-[72px] px-6 flex items-center justify-between">
-          {/* Left Section - Client Branding */}
-          <div className="flex items-center gap-3">
-            <div className="bg-slate-800/80 px-4 py-2 rounded-lg">
-              <h1 className="text-white font-bold text-xl leading-tight">
-                {branding.company_name}
-              </h1>
-              {emailDomain === 'cqvs.com.au' && (
-                <p className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color: '#7CB342' }}>
-                  POWERED BY CQVS
-                </p>
+        <div className="h-[80px] px-8 flex items-center justify-between relative">
+          {/* Left Section - Enhanced Branding */}
+          <div className="flex items-center gap-4">
+            {/* Logo Container with Modern Glass Effect */}
+            <div
+              className="group relative flex items-center gap-4 px-6 py-3 rounded-2xl transition-all duration-500 hover:scale-[1.02]"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,0.25)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 1px rgba(255,255,255,0.3)'
+              }}
+            >
+              {/* Subtle gradient overlay on hover */}
+              <div
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background: `linear-gradient(135deg, ${branding.secondary_color}30 0%, transparent 100%)`
+                }}
+              />
+
+              {/* Company Name */}
+              <div className="relative z-10">
+                <h1 className="text-white font-bold text-2xl tracking-tight leading-tight drop-shadow-lg">
+                  {branding.company_name}
+                </h1>
+                {emailDomain === 'cqvs.com.au' && (
+                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] mt-0.5 text-white/70">
+                    Powered by CQVS
+                  </p>
+                )}
+              </div>
+
+              {/* Logo */}
+              {branding.logo_url && (
+                <>
+                  <div
+                    className="w-px h-10 mx-2"
+                    style={{ background: 'linear-gradient(180deg, transparent, rgba(255,255,255,0.3), transparent)' }}
+                  />
+                  <img
+                    src={branding.logo_url}
+                    alt={branding.company_name}
+                    className="h-[44px] object-contain drop-shadow-lg transition-transform duration-300 group-hover:scale-105"
+                  />
+                </>
               )}
             </div>
-            {branding.logo_url && (
-              <img 
-                src={branding.logo_url} 
-                alt={branding.company_name}
-                className="h-[40px] object-contain"
-              />
-            )}
           </div>
 
           {/* Center Section - Portal Title (Desktop Only) */}
-          <div className="hidden lg:block absolute left-1/2 transform -translate-x-1/2">
-            <h2 className="text-white text-lg font-semibold opacity-90">
+          <div className="hidden lg:flex flex-col items-center absolute left-1/2 transform -translate-x-1/2">
+            <h2 className="text-white text-2xl font-bold tracking-tight drop-shadow-md">
               Fleet Compliance Portal
             </h2>
+            <div
+              className="h-1 w-16 mt-2 rounded-full"
+              style={{
+                background: `linear-gradient(90deg, transparent, ${branding.secondary_color}, transparent)`,
+                boxShadow: `0 0 8px ${branding.secondary_color}80`
+              }}
+            />
           </div>
 
           {/* Right Section - User Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="relative p-2 text-white/70 hover:text-white transition-colors">
+                <button
+                  className="relative p-3 rounded-xl text-white/80 hover:text-white transition-all duration-300 hover:scale-110"
+                  style={{
+                    background: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                >
                   <Bell className="w-5 h-5" />
                   {notifications.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center">
+                    <span
+                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center animate-pulse"
+                      style={{
+                        background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                        boxShadow: '0 4px 12px rgba(239,68,68,0.5), 0 0 0 4px rgba(239,68,68,0.1)'
+                      }}
+                    >
                       {notifications.length}
                     </span>
                   )}
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80 p-0 rounded-xl shadow-xl">
-                <div className="px-4 py-3 border-b bg-slate-50">
-                  <h3 className="font-semibold text-sm">Notifications</h3>
+              <DropdownMenuContent
+                align="end"
+                className="w-80 p-0 rounded-2xl shadow-2xl border-0 overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+                }}
+              >
+                <div className="px-5 py-4 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-slate-100">
+                  <h3 className="font-bold text-base text-slate-800">Notifications</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">{notifications.length} unread</p>
                 </div>
-                {notifications.map((notif) => (
-                  <div 
-                    key={notif.id} 
-                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-0"
+                {notifications.map((notif, index) => (
+                  <div
+                    key={notif.id}
+                    className="px-5 py-4 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white cursor-pointer border-b last:border-0 border-slate-100 transition-all duration-200"
                   >
-                    <p className="text-sm font-medium text-slate-800">{notif.message}</p>
-                    <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 mt-1.5 flex-shrink-0 shadow-sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900">{notif.message}</p>
+                        <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </DropdownMenuContent>
@@ -145,45 +208,77 @@ export default function BrandedHeader({ onNotificationClick }) {
             {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+                <button
+                  className="group flex items-center gap-3 pl-3 pr-4 py-2 rounded-xl transition-all duration-300 hover:scale-[1.02]"
+                  style={{
+                    background: 'rgba(255,255,255,0.15)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.25)',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
+                  }}
+                >
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm"
-                    style={{ backgroundColor: branding.secondary_color }}
+                    className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-base shadow-lg ring-2 ring-white/30 transition-transform duration-300 group-hover:scale-105"
+                    style={{
+                      background: `linear-gradient(135deg, ${branding.secondary_color} 0%, ${branding.secondary_color}CC 100%)`,
+                      boxShadow: `0 4px 16px ${branding.secondary_color}40`
+                    }}
                   >
                     {initials}
                   </div>
-                  <span className="text-white font-medium text-sm hidden lg:block">
-                    {user?.full_name || 'User'}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-white/70" />
+                  <div className="hidden lg:block text-left">
+                    <span className="text-white font-semibold text-sm block leading-tight drop-shadow">
+                      {user?.full_name || 'User'}
+                    </span>
+                    <span className="text-white/70 text-xs">Account</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-white/90 transition-transform duration-300 group-hover:rotate-180" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-xl">
-                <DropdownMenuItem className="cursor-pointer py-3 px-4">
-                  <User className="w-4 h-4 mr-2" />
-                  Profile
+              <DropdownMenuContent
+                align="end"
+                className="w-56 p-2 rounded-2xl shadow-2xl border-0"
+                style={{
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+                }}
+              >
+                <div className="px-3 py-3 mb-1">
+                  <p className="text-sm font-bold text-slate-900">{user?.full_name || 'User'}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{user?.email}</p>
+                </div>
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2" />
+                <DropdownMenuItem className="cursor-pointer py-3 px-4 rounded-xl hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-50 transition-all">
+                  <User className="w-4 h-4 mr-3 text-slate-600" />
+                  <span className="font-medium text-slate-700">Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer py-3 px-4">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
+                <DropdownMenuItem className="cursor-pointer py-3 px-4 rounded-xl hover:bg-gradient-to-r hover:from-slate-100 hover:to-slate-50 transition-all">
+                  <Settings className="w-4 h-4 mr-3 text-slate-600" />
+                  <span className="font-medium text-slate-700">Settings</span>
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="cursor-pointer py-3 px-4 text-red-600 hover:bg-red-50"
+                <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent my-2" />
+                <DropdownMenuItem
+                  className="cursor-pointer py-3 px-4 rounded-xl text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 transition-all font-semibold"
                   onClick={() => base44.auth.logout()}
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="w-4 h-4 mr-3" />
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
-        
-        {/* Accent Line */}
+
+        {/* Modern Accent Line with Gradient */}
         <div
-          className="h-[3px] w-full"
-          style={{ backgroundColor: branding.secondary_color }}
+          className="h-1 w-full"
+          style={{
+            background: `linear-gradient(90deg,
+              ${branding.secondary_color}00 0%,
+              ${branding.secondary_color} 20%,
+              ${branding.secondary_color} 80%,
+              ${branding.secondary_color}00 100%)`,
+            boxShadow: `0 0 12px ${branding.secondary_color}60`
+          }}
         />
       </header>
     </>
