@@ -6,11 +6,10 @@ import { AlertTriangle } from 'lucide-react';
 // Domain-based access configuration - CUSTOMIZE HERE
 const DOMAIN_CONFIG = {
   'elora.com.au': {
-    showAllData: false,
-    filterByCustomer: 'Heidelberg Materials', // Only show this customer's data
-    defaultCustomer: 'all',
+    showAllData: true,
+    defaultCustomer: 'all', // or specific customer ID/name
     defaultSite: 'all',
-    hiddenTabs: [],
+    hiddenTabs: [], // e.g., ['users', 'sites'] to hide tabs
     visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
   },
   'heidelberg.com.au': {
@@ -100,17 +99,6 @@ export function useFilteredData(vehicles, sites) {
 
   // Check domain-based configuration
   const domainConfig = getDomainConfig(permissions.user?.email);
-  if (domainConfig?.filterByCustomer) {
-    const customerName = domainConfig.filterByCustomer;
-    const filteredVehicles = vehicles?.filter(v => 
-      v.customer_name === customerName || v.customerName === customerName
-    ) || [];
-    const filteredSites = sites?.filter(s => 
-      s.customer_name === customerName || s.customerName === customerName
-    ) || [];
-    return { filteredVehicles, filteredSites };
-  }
-  
   if (domainConfig?.showAllData) {
     return { filteredVehicles: vehicles, filteredSites: sites };
   }
