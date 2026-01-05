@@ -52,7 +52,7 @@ export function getEffectiveConfig(email) {
 }
 
 export function usePermissions() {
-  const { data: user } = useQuery({
+  const { data: user, isLoading: userLoading, error: userError } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
@@ -60,7 +60,8 @@ export function usePermissions() {
       } catch {
         return null;
       }
-    }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const permissions = {
@@ -71,32 +72,34 @@ export function usePermissions() {
     isViewer: true,
     isSiteManager: true,
     isDriver: false,
-    
+
     // Module permissions - All public
     canViewCompliance: true,
     canViewMaintenance: true,
     canManageSites: true,
     canViewReports: true,
     canManageUsers: true,
-    
+
     // Data permissions - Edit - All public
     canEditVehicles: true,
     canEditMaintenance: true,
     canEditSites: true,
-    
+
     // Data permissions - Delete - All public
     canDeleteRecords: true,
-    
+
     // Data permissions - Export - All public
     canExportData: true,
-    
+
     // Advanced features - All public
     canGenerateAIReports: true,
     canViewCosts: true,
-    
+
     user,
     assignedSites: user?.assigned_sites || [],
-    assignedVehicles: user?.assigned_vehicles || []
+    assignedVehicles: user?.assigned_vehicles || [],
+    isLoading: userLoading,
+    error: userError
   };
 
   return permissions;

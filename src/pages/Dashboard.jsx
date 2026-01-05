@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, CheckCircle, Droplet, Users, Loader2, Trophy, ChevronRight } from 'lucide-react';
+import { Truck, CheckCircle, Droplet, Users, Loader2, Trophy, ChevronRight, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
 import { base44 } from "@/api/base44Client";
@@ -138,9 +138,10 @@ export default function Dashboard() {
     }
   }, [activePeriod]);
 
-  const { data: customers = [], isLoading: customersLoading } = useQuery({
+  const { data: customers = [], isLoading: customersLoading, error: customersError } = useQuery({
     queryKey: ['customers'],
     queryFn: fetchCustomers,
+    retry: 2,
   });
 
   // Filter customers based on user-specific restrictions
@@ -162,9 +163,10 @@ export default function Dashboard() {
     }
   }, [filteredCustomers, userConfig]);
 
-  const { data: rawSites = [], isLoading: sitesLoading } = useQuery({
+  const { data: rawSites = [], isLoading: sitesLoading, error: sitesError } = useQuery({
     queryKey: ['sites'],
     queryFn: () => fetchSites(),
+    retry: 2,
   });
 
   // Filter sites by selected customer on the client side
@@ -173,7 +175,7 @@ export default function Dashboard() {
     return rawSites.filter(site => site.id === selectedCustomer || site.customer_ref === selectedCustomer);
   }, [rawSites, selectedCustomer]);
 
-  const { data: dashboardData, isLoading: dashboardLoading } = useQuery({
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
     queryKey: ['dashboard', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
     queryFn: () => fetchDashboardData({
       customerId: selectedCustomer,
@@ -181,9 +183,10 @@ export default function Dashboard() {
       startDate: dateRange.start,
       endDate: dateRange.end
     }),
+    retry: 2,
   });
 
-  const { data: refills = [], isLoading: refillsLoading } = useQuery({
+  const { data: refills = [], isLoading: refillsLoading, error: refillsError } = useQuery({
     queryKey: ['refills', selectedCustomer, selectedSite, dateRange.start, dateRange.end],
     queryFn: async () => {
       const response = await base44.functions.invoke('elora_refills', {
@@ -194,6 +197,7 @@ export default function Dashboard() {
       });
       return response.data || [];
     },
+    retry: 2,
   });
 
   // Reset site when customer changes
@@ -203,11 +207,11 @@ export default function Dashboard() {
 
   // Process dashboard data
   const processedData = useMemo(() => {
-    if (!dashboardData?.rows) return { vehicles: [], scans: [] };
-    
+    if (!dashboardData?.rows || !Array.isArray(dashboardData.rows)) return { vehicles: [], scans: [] };
+
     const vehicleMap = new Map();
     const scansArray = [];
-    
+
     // Filter rows to only include the selected date range
     const startMoment = moment(dateRange.start);
     const endMoment = moment(dateRange.end);
@@ -267,7 +271,7 @@ export default function Dashboard() {
   const washTrendsData = useMemo(() => {
     if (!dashboardData?.charts?.totalWashesByMonth?.length) {
       // Fallback to scanning data
-      if (!scans.length) return [];
+      if (!scans || !Array.isArray(scans) || scans.length === 0) return [];
       
       const scansByDate = {};
       scans.forEach(scan => {
@@ -300,21 +304,23 @@ export default function Dashboard() {
 
   // Calculate stats
   const stats = useMemo(() => {
-    const compliantCount = filteredVehicles.filter(v => v.washes_completed >= v.target).length;
-    const totalWashes = filteredVehicles.reduce((sum, v) => sum + (v.washes_completed || 0), 0);
-    const activeDriversCount = filteredVehicles.filter(v => v.washes_completed > 0).length;
-    
+    const vehicles = Array.isArray(filteredVehicles) ? filteredVehicles : [];
+    const compliantCount = vehicles.filter(v => v && v.washes_completed >= v.target).length;
+    const totalWashes = vehicles.reduce((sum, v) => sum + (v?.washes_completed || 0), 0);
+    const activeDriversCount = vehicles.filter(v => v && v.washes_completed > 0).length;
+
     return {
-      totalVehicles: filteredVehicles.length,
-      complianceRate: filteredVehicles.length > 0 
-        ? Math.round((compliantCount / filteredVehicles.length) * 100) 
+      totalVehicles: vehicles.length,
+      complianceRate: vehicles.length > 0
+        ? Math.round((compliantCount / vehicles.length) * 100)
         : 0,
       monthlyWashes: totalWashes,
       activeDrivers: activeDriversCount,
     };
   }, [filteredVehicles]);
 
-  const isLoading = customersLoading || sitesLoading || dashboardLoading;
+  const isLoading = permissions.isLoading || customersLoading || sitesLoading || dashboardLoading;
+  const hasError = customersError || sitesError || dashboardError;
 
   // Redirect drivers to mobile view on mobile devices
   if (isMobile && permissions.isDriver) {
@@ -327,6 +333,29 @@ export default function Dashboard() {
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-[#7CB342] animate-spin mx-auto mb-4" />
           <p className="text-slate-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-slate-800 mb-2">Failed to Load Dashboard</h2>
+          <p className="text-slate-600 mb-4">
+            {customersError ? 'Failed to load customers. ' : ''}
+            {sitesError ? 'Failed to load sites. ' : ''}
+            {dashboardError ? 'Failed to load dashboard data. ' : ''}
+            Please try refreshing the page.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#7CB342] hover:bg-[#6BA032] text-white font-medium py-2 px-6 rounded-lg transition-colors"
+          >
+            Refresh Page
+          </button>
         </div>
       </div>
     );
