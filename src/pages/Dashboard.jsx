@@ -354,17 +354,7 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Quick Actions Widget */}
-        <QuickActions 
-          vehicles={filteredVehicles}
-          onOpenMaintenance={() => {
-            setActiveTab('maintenance');
-          }}
-          onOpenVehicle={(vehicle) => setSelectedVehicleForModal(vehicle)}
-          onOpenDevices={() => {
-            setActiveTab('devices');
-          }}
-        />
+
 
         {/* Analytics Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
