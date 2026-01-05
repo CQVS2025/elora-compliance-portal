@@ -72,6 +72,11 @@ export function PermissionGuard({ children, require, fallback }) {
 export function useFilteredData(vehicles, sites) {
   const permissions = usePermissions();
 
+  // elora.com.au users see all data
+  if (permissions.user?.email?.endsWith('@elora.com.au')) {
+    return { filteredVehicles: vehicles, filteredSites: sites };
+  }
+
   // Public view, admin, manager - show all data
   if (!permissions.user || ['admin', 'manager', 'viewer', 'technician'].includes(permissions.user?.role)) {
     return { filteredVehicles: vehicles, filteredSites: sites };
