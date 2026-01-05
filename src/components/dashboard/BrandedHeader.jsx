@@ -33,6 +33,7 @@ export default function BrandedHeader({ onNotificationClick }) {
 
   const user = data?.user;
   const clientBranding = data?.branding;
+  const emailDomain = user?.email?.split('@')[1];
 
   // Default fallback branding
   const branding = useMemo(() => {
