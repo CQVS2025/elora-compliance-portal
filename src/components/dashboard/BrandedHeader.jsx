@@ -28,7 +28,9 @@ async function fetchUserAndBranding() {
 export default function BrandedHeader({ onNotificationClick }) {
   const { data, isLoading } = useQuery({
     queryKey: ['userAndBranding'],
-    queryFn: fetchUserAndBranding
+    queryFn: fetchUserAndBranding,
+    staleTime: 0,
+    cacheTime: 0
   });
 
   const user = data?.user;
