@@ -3,6 +3,19 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
 import { AlertTriangle } from 'lucide-react';
 
+// User-specific access configuration - takes precedence over domain config
+const USER_SPECIFIC_CONFIG = {
+  'jonny@elora.com.au': {
+    restrictedCustomer: 'HEIDELBERG MATERIALS', // Customer name to match
+    lockCustomerFilter: true, // Prevent changing customer filter
+    showAllData: false, // Only show data for restricted customer
+    defaultSite: 'all',
+    hiddenTabs: [],
+    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+  }
+  // Add more user-specific restrictions as needed
+};
+
 // Domain-based access configuration - CUSTOMIZE HERE
 const DOMAIN_CONFIG = {
   'elora.com.au': {
@@ -22,10 +35,20 @@ const DOMAIN_CONFIG = {
   // Add more domains as needed
 };
 
+export function getUserSpecificConfig(email) {
+  if (!email) return null;
+  return USER_SPECIFIC_CONFIG[email] || null;
+}
+
 export function getDomainConfig(email) {
   if (!email) return null;
   const domain = email.split('@')[1];
   return DOMAIN_CONFIG[domain] || null;
+}
+
+export function getEffectiveConfig(email) {
+  // User-specific config takes precedence over domain config
+  return getUserSpecificConfig(email) || getDomainConfig(email) || null;
 }
 
 export function usePermissions() {
