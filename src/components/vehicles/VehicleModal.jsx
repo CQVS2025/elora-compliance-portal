@@ -6,8 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function VehicleModal({ open, onClose, vehicle, sites, onSuccess }) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     rfid: '',
@@ -67,7 +69,11 @@ export default function VehicleModal({ open, onClose, vehicle, sites, onSuccess 
       onClose();
     } catch (error) {
       console.error('Error saving vehicle:', error);
-      alert('Failed to save vehicle');
+      toast({
+        title: "Error",
+        description: "Failed to save vehicle. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

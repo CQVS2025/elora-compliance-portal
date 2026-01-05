@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 const SERVICE_TYPES = [
   { value: 'oil_change', label: 'Oil Change' },
@@ -21,6 +22,7 @@ const SERVICE_TYPES = [
 ];
 
 export default function MaintenanceModal({ open, onClose, vehicle, maintenance, onSuccess, allVehicles = [] }) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     service_date: '',
     service_type: 'oil_change',
@@ -69,7 +71,11 @@ export default function MaintenanceModal({ open, onClose, vehicle, maintenance, 
 
     try {
       if (!selectedVehicle) {
-        alert('Please select a vehicle');
+        toast({
+          title: "Validation Error",
+          description: "Please select a vehicle",
+          variant: "destructive",
+        });
         setLoading(false);
         return;
       }
@@ -93,7 +99,11 @@ export default function MaintenanceModal({ open, onClose, vehicle, maintenance, 
       onClose();
     } catch (error) {
       console.error('Error saving maintenance:', error);
-      alert('Failed to save maintenance record');
+      toast({
+        title: "Error",
+        description: "Failed to save maintenance record. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

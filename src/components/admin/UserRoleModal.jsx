@@ -6,8 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Shield } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function UserRoleModal({ open, onClose, user, vehicles, sites, onSuccess }) {
+  const { toast } = useToast();
   const [role, setRole] = useState('driver');
   const [assignedSites, setAssignedSites] = useState([]);
   const [assignedVehicles, setAssignedVehicles] = useState([]);
@@ -35,7 +37,11 @@ export default function UserRoleModal({ open, onClose, user, vehicles, sites, on
       onSuccess();
     } catch (error) {
       console.error('Error updating user:', error);
-      alert('Failed to update user role');
+      toast({
+        title: "Error",
+        description: "Failed to update user role. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

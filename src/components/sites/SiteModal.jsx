@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { base44 } from "@/api/base44Client";
 import { Loader2 } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SiteModal({ open, onClose, site, customers, onSuccess }) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     customer_id: '',
@@ -88,7 +90,11 @@ export default function SiteModal({ open, onClose, site, customers, onSuccess })
       onClose();
     } catch (error) {
       console.error('Error saving site:', error);
-      alert('Failed to save site');
+      toast({
+        title: "Error",
+        description: "Failed to save site. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

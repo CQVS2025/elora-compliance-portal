@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MaintenanceModal from './MaintenanceModal';
 import moment from 'moment';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function MaintenanceSection({ vehicles }) {
+  const { toast } = useToast();
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -75,7 +77,11 @@ export default function MaintenanceSection({ vehicles }) {
 
   const handleAddMaintenance = () => {
     if (vehicles.length === 0) {
-      alert('No vehicles available. Please add vehicles first.');
+      toast({
+        title: "No Vehicles Available",
+        description: "Please add vehicles first before adding maintenance records.",
+        variant: "destructive",
+      });
       return;
     }
     setSelectedVehicle(vehicles[0]);

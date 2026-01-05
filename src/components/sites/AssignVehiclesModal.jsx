@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { base44 } from "@/api/base44Client";
 import { Loader2, Search, Truck } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 export default function AssignVehiclesModal({ open, onClose, site, vehicles, onSuccess }) {
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,11 @@ export default function AssignVehiclesModal({ open, onClose, site, vehicles, onS
       onClose();
     } catch (error) {
       console.error('Error assigning vehicles:', error);
-      alert('Failed to assign vehicles');
+      toast({
+        title: "Error",
+        description: "Failed to assign vehicles. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

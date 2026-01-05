@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { base44 } from "@/api/base44Client";
 import { Loader2, Camera, X } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from "@/components/ui/use-toast";
 
 const ISSUE_TYPES = [
   { value: 'mechanical', label: 'Mechanical Problem' },
@@ -25,6 +26,7 @@ const SEVERITY_LEVELS = [
 ];
 
 export default function MobileIssueReport({ open, onClose, vehicles, preselectedVehicle }) {
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -91,7 +93,11 @@ export default function MobileIssueReport({ open, onClose, vehicles, preselected
       onClose();
     } catch (error) {
       console.error('Error reporting issue:', error);
-      alert('Failed to report issue');
+      toast({
+        title: "Error",
+        description: "Failed to report issue. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
