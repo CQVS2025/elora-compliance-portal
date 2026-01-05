@@ -83,24 +83,24 @@ export default function BrandedHeader({ onNotificationClick }) {
       >
         <div className="h-[72px] px-6 flex items-center justify-between">
           {/* Left Section - Client Branding */}
-          <div className="flex items-center gap-4">
-            {branding.logo_url ? (
-              <img 
-                src={branding.logo_url} 
-                alt={branding.company_name}
-                className="h-[50px] max-h-[50px] object-contain md:h-[40px]"
-              />
-            ) : null}
-            <div className="flex flex-col">
-              <h1 className="text-white font-bold text-2xl md:text-xl leading-tight">
+          <div className="flex items-center gap-3">
+            <div className="bg-slate-800/80 px-4 py-2 rounded-lg">
+              <h1 className="text-white font-bold text-xl leading-tight">
                 {branding.company_name}
               </h1>
               {emailDomain === 'cqvs.com.au' && (
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: '#7CB342' }}>
-                  Powered by CQVS
+                <p className="text-[10px] font-bold uppercase tracking-wider mt-0.5" style={{ color: '#7CB342' }}>
+                  POWERED BY CQVS
                 </p>
               )}
             </div>
+            {branding.logo_url && (
+              <img 
+                src={branding.logo_url} 
+                alt={branding.company_name}
+                className="h-[40px] object-contain"
+              />
+            )}
           </div>
 
           {/* Center Section - Portal Title (Desktop Only) */}
