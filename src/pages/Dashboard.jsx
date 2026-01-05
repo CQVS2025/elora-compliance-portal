@@ -501,12 +501,11 @@ export default function Dashboard() {
               </Tabs>
             </div>
           </TabsContent>
-          </Tabs>
+        </Tabs>
 
-          {/* Wash Pattern Analytics */}
-          <WashPatternAnalytics scans={scans} />
-          </main>
-
+        {/* Wash Pattern Analytics */}
+        <WashPatternAnalytics scans={scans} />
+      </main>
 
     </div>
   );
