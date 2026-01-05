@@ -356,15 +356,12 @@ export default function Dashboard() {
 
 
 
-        {/* Analytics Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CostForecast 
-            scans={scans}
-            selectedCustomer={selectedCustomer}
-            selectedSite={selectedSite}
-          />
-          <WashPatternAnalytics scans={scans} />
-        </div>
+        {/* Cost Forecast */}
+        <CostForecast 
+          scans={scans}
+          selectedCustomer={selectedCustomer}
+          selectedSite={selectedSite}
+        />
 
         {/* Leaderboard Quick Link */}
         <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
@@ -462,7 +459,10 @@ export default function Dashboard() {
             <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
           </TabsContent>
           </Tabs>
-      </main>
+
+          {/* Wash Pattern Analytics */}
+          <WashPatternAnalytics scans={scans} />
+          </main>
 
 
     </div>
