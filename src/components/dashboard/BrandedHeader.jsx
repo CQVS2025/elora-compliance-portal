@@ -9,16 +9,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
+import NotificationCenter from '@/components/notifications/NotificationCenter';
 
 async function fetchUserAndBranding() {
   const user = await base44.auth.me();
   const emailDomain = user.email.split('@')[1];
-  
+
   // Fetch branding for this domain
-  const branding = await base44.entities.Client_Branding.filter({ 
-    client_email_domain: emailDomain 
+  const branding = await base44.entities.Client_Branding.filter({
+    client_email_domain: emailDomain
   });
-  
+
   return {
     user,
     branding: branding.length > 0 ? branding[0] : null
@@ -50,19 +51,25 @@ export default function BrandedHeader({ onNotificationClick }) {
     };
   }, [clientBranding]);
 
-  // Inject CSS variables for theming
+  // Inject CSS variables for theming AND update page title/favicon dynamically
   useEffect(() => {
     if (branding) {
+      // Set CSS theme colors
       document.documentElement.style.setProperty('--client-primary', branding.primary_color);
       document.documentElement.style.setProperty('--client-secondary', branding.secondary_color);
+
+      // Update page title dynamically
+      document.title = `${branding.company_name} - Fleet Compliance Portal`;
+
+      // Update favicon dynamically if logo exists
+      if (branding.logo_url) {
+        const favicon = document.querySelector("link[rel*='icon']");
+        if (favicon) {
+          favicon.href = branding.logo_url;
+        }
+      }
     }
   }, [branding]);
-
-  const notifications = [
-    { id: 1, message: "BATCHER is non-compliant", time: "2 hours ago", type: "warning" },
-    { id: 2, message: "New vehicle PLX 3156 added", time: "5 hours ago", type: "info" },
-    { id: 3, message: "Monthly report ready", time: "1 day ago", type: "success" }
-  ];
 
   const initials = user?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || 'U';
 
@@ -152,58 +159,8 @@ export default function BrandedHeader({ onNotificationClick }) {
 
           {/* Right Section - User Actions */}
           <div className="flex items-center gap-2">
-            {/* Notifications */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="relative p-3 rounded-xl text-white/80 hover:text-white transition-all duration-300 hover:scale-110"
-                  style={{
-                    background: 'rgba(255,255,255,0.1)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                  }}
-                >
-                  <Bell className="w-5 h-5" />
-                  {notifications.length > 0 && (
-                    <span
-                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center animate-pulse"
-                      style={{
-                        background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-                        boxShadow: '0 4px 12px rgba(239,68,68,0.5), 0 0 0 4px rgba(239,68,68,0.1)'
-                      }}
-                    >
-                      {notifications.length}
-                    </span>
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-80 p-0 rounded-2xl shadow-2xl border-0 overflow-hidden"
-                style={{
-                  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
-                }}
-              >
-                <div className="px-5 py-4 border-b border-slate-200/50 bg-gradient-to-r from-slate-50 to-slate-100">
-                  <h3 className="font-bold text-base text-slate-800">Notifications</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">{notifications.length} unread</p>
-                </div>
-                {notifications.map((notif, index) => (
-                  <div
-                    key={notif.id}
-                    className="px-5 py-4 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white cursor-pointer border-b last:border-0 border-slate-100 transition-all duration-200"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 mt-1.5 flex-shrink-0 shadow-sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900">{notif.message}</p>
-                        <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Notifications - Using real NotificationCenter instead of hardcoded mock data */}
+            <NotificationCenter />
 
             {/* User Profile */}
             <DropdownMenu>
