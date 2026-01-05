@@ -35,7 +35,7 @@ async function fetchSites() {
   }));
 }
 
-import Header from '@/components/dashboard/Header';
+import BrandedHeader from '@/components/dashboard/BrandedHeader';
 import FilterSection from '@/components/dashboard/FilterSection';
 import StatsCard from '@/components/dashboard/StatsCard';
 import VehicleTable from '@/components/dashboard/VehicleTable';
@@ -307,7 +307,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Header />
+      <BrandedHeader />
       
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 space-y-6">
         {/* Filters */}

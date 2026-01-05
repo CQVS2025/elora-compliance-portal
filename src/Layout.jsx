@@ -11,6 +11,10 @@ export default function Layout({ children }) {
           --elora-navy: #0F172A;
           --elora-blue: #1E293B;
           --elora-slate: #334155;
+
+          /* Client branding variables (dynamically injected) */
+          --client-primary: #2563eb;
+          --client-secondary: #1e40af;
         }
         
         * {
