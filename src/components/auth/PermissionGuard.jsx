@@ -55,12 +55,20 @@ export function usePermissions() {
     queryKey: ['currentUser'],
     queryFn: async () => {
       try {
-        return await base44.auth.me();
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth timeout')), 2000)
+        );
+        const authPromise = base44.auth.me();
+        return await Promise.race([authPromise, timeoutPromise]);
       } catch {
+        // Auth is optional, return null if it fails
         return null;
       }
     },
+    retry: 0, // Don't retry since auth is optional
     staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000,
   });
 
   const permissions = {
