@@ -93,8 +93,6 @@ export default function Dashboard() {
   });
   const [activePeriod, setActivePeriod] = useState('Month');
   const [searchQuery, setSearchQuery] = useState('');
-  const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
-  const [selectedVehicleForModal, setSelectedVehicleForModal] = useState(null);
   const [activeTab, setActiveTab] = useState('compliance');
 
   // Detect mobile and redirect drivers to mobile view
