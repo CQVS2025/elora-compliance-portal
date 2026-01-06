@@ -4,22 +4,17 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   TrendingUp, 
   TrendingDown, 
   CheckCircle, 
-  AlertTriangle, 
   DollarSign, 
   Wrench,
-  Calendar,
-  Building2,
   Download,
   FileSpreadsheet,
   FileText,
-  Filter,
   Brain,
   ZoomIn,
   Sparkles,
@@ -37,7 +32,6 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  Legend, 
   ResponsiveContainer 
 } from 'recharts';
 import moment from 'moment';

@@ -13,8 +13,6 @@ import {
   DollarSign, 
   Users, 
   Calendar,
-  TrendingUp,
-  TrendingDown,
   Download,
   CheckCircle,
   XCircle

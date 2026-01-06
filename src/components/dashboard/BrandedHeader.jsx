@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
-import { Bell, ChevronDown, Settings, LogOut, User } from 'lucide-react';
+import { ChevronDown, Settings, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { base44 } from '@/api/base44Client';

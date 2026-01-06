@@ -1,8 +1,7 @@
 import React from 'react';
-import { X, Truck, MapPin, Target, Calendar, Activity, CheckCircle, XCircle } from 'lucide-react';
+import { Truck, MapPin, Target, Calendar, Activity, CheckCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import moment from 'moment';
 
 export default function VehicleDetailModal({ vehicle, open, onClose }) {

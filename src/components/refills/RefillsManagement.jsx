@@ -7,12 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Droplet, 
-  TrendingUp, 
   DollarSign, 
-  Calendar, 
   Package,
-  AlertTriangle,
-  CheckCircle,
   Clock,
   Download,
   Search

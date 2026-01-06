@@ -8,12 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Server, 
   CheckCircle, 
-  AlertTriangle, 
   XCircle,
   Activity,
-  Wifi,
   Clock,
-  Droplet,
   Search,
   TrendingUp
 } from 'lucide-react';

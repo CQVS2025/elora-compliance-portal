@@ -1,7 +1,6 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Truck, MapPin, Clock, AlertCircle } from 'lucide-react';
 import moment from 'moment';
 

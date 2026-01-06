@@ -8,8 +8,7 @@ import {
   Droplet, 
   TrendingDown, 
   TrendingUp,
-  Minus,
-  DollarSign, 
+  Minus, 
   Calendar,
   MapPin,
   Zap,
@@ -38,8 +37,6 @@ import {
   AreaChart,
   Area,
   Legend,
-  PieChart,
-  Pie,
   Cell
 } from 'recharts';
 import moment from 'moment';
@@ -951,7 +948,7 @@ export default function RefillAnalytics({ refills, scans, sites, selectedCustome
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full bg-[#EF4444]" />
-                <span className="text-slate-600">High (>6L)</span>
+                <span className="text-slate-600">High ({'>'}6L)</span>
               </div>
             </div>
           </CardContent>

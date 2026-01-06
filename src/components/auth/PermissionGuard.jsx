@@ -1,7 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
-import { AlertTriangle } from 'lucide-react';
 
 // User-specific access configuration - takes precedence over domain config
 const USER_SPECIFIC_CONFIG = {
