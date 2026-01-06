@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Wrench, Calendar, DollarSign, TrendingUp } from 'lucide-react';
+import { Wrench, Calendar, TrendingUp } from 'lucide-react';
 import moment from 'moment';
 
 export default function MobileMaintenanceSchedule({ maintenance }) {

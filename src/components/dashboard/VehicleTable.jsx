@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
 import { useQueryClient } from '@tanstack/react-query';
-import { base44 } from "@/api/base44Client";
 import VehicleProfileModal from '@/components/vehicles/VehicleProfileModal';
 import { usePermissions } from '@/components/auth/PermissionGuard';
 

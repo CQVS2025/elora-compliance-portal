@@ -1,22 +1,16 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { base44 } from "@/api/base44Client";
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
-  Search, Plus, Edit, Trash2, Lock, Users, Settings,
+  Search, Plus, Edit, Lock, Users, Settings,
   CheckCircle, XCircle, AlertCircle, Copy, Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
+
 import {
   Dialog,
   DialogContent,
@@ -27,7 +21,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
 export default function MultiTenantConfig() {
   const queryClient = useQueryClient();

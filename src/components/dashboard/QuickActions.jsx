@@ -3,8 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { AlertTriangle, Wrench, TrendingDown, WifiOff, ChevronRight } from 'lucide-react';
+import { AlertTriangle, TrendingDown, WifiOff, ChevronRight } from 'lucide-react';
 import moment from 'moment';
 import { motion } from 'framer-motion';
 

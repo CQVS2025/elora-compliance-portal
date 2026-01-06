@@ -50,10 +50,9 @@ import MobileDashboard from './MobileDashboard';
 import DeviceHealth from '@/components/devices/DeviceHealth';
 import CostForecast from '@/components/analytics/CostForecast';
 import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
-import QuickActions from '@/components/dashboard/QuickActions';
 import RefillAnalytics from '@/components/refills/RefillAnalytics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePermissions, useFilteredData, PermissionGuard, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
+import { usePermissions, useFilteredData, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
 
 export default function Dashboard() {

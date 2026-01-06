@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Legend, LineChart, Line } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar } from 'recharts';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, AlertCircle, BarChart3 } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
