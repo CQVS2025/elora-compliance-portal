@@ -137,7 +137,8 @@ export default function Dashboard() {
   const { data: customers = [], isLoading: customersLoading, error: customersError } = useQuery({
     queryKey: ['customers'],
     queryFn: fetchCustomers,
-    retry: 2,
+    retry: 1,
+    staleTime: 30000,
   });
 
   // Filter customers based on user-specific restrictions
@@ -162,7 +163,8 @@ export default function Dashboard() {
   const { data: rawSites = [], isLoading: sitesLoading, error: sitesError } = useQuery({
     queryKey: ['sites'],
     queryFn: () => fetchSites(),
-    retry: 2,
+    retry: 1,
+    staleTime: 30000,
   });
 
   // Filter sites by selected customer on the client side
@@ -179,7 +181,8 @@ export default function Dashboard() {
       startDate: dateRange.start,
       endDate: dateRange.end
     }),
-    retry: 2,
+    retry: 1,
+    staleTime: 30000,
   });
 
   const { data: refills = [], isLoading: refillsLoading, error: refillsError } = useQuery({
@@ -193,7 +196,8 @@ export default function Dashboard() {
       });
       return response.data || [];
     },
-    retry: 2,
+    retry: 1,
+    staleTime: 30000,
   });
 
   // Reset site when customer changes
