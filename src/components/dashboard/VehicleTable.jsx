@@ -5,17 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
 import moment from 'moment';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from "@/api/base44Client";
-import MaintenanceModal from '@/components/maintenance/MaintenanceModal';
 import VehicleProfileModal from '@/components/vehicles/VehicleProfileModal';
 import { usePermissions } from '@/components/auth/PermissionGuard';
 
 export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
   const permissions = usePermissions();
   const queryClient = useQueryClient();
-  const [maintenanceModalOpen, setMaintenanceModalOpen] = useState(false);
-  const [selectedVehicleForMaintenance, setSelectedVehicleForMaintenance] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [selectedVehicleForProfile, setSelectedVehicleForProfile] = useState(null);
   const [sortField, setSortField] = useState('name');
@@ -82,14 +79,6 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
       <ChevronDown className="w-4 h-4 inline ml-1" />;
   };
 
-  const { data: maintenanceRecords = [] } = useQuery({
-    queryKey: ['maintenance'],
-    queryFn: async () => {
-      const records = await base44.entities.Maintenance.list('-service_date', 1000);
-      return records;
-    }
-  });
-
   const getVehicleScans = (vehicleRef) => {
     if (!scans) return [];
     
@@ -106,29 +95,6 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
     }, []);
     
     return uniqueScans.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  };
-
-  const getVehicleMaintenance = (vehicleId) => {
-    return maintenanceRecords
-      .filter(record => record.vehicle_id === vehicleId)
-      .sort((a, b) => new Date(b.service_date) - new Date(a.service_date));
-  };
-
-  const hasUpcomingMaintenance = (vehicleId) => {
-    const records = maintenanceRecords.filter(r => r.vehicle_id === vehicleId);
-    const now = new Date();
-    return records.some(r => {
-      if (!r.next_service_date) return false;
-      const nextDate = new Date(r.next_service_date);
-      const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
-      return daysUntil >= 0 && daysUntil <= 14;
-    });
-  };
-
-  const handleAddMaintenance = (vehicle, e) => {
-    e.stopPropagation();
-    setSelectedVehicleForMaintenance(vehicle);
-    setMaintenanceModalOpen(true);
   };
 
   const columns = [
@@ -223,8 +189,6 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                 const progress = Math.min(100, Math.round((vehicle.washes_completed / vehicle.target) * 100));
                 const isExpanded = expandedVehicleId === vehicle.id;
                 const vehicleScans = getVehicleScans(vehicle.id);
-                const vehicleMaintenance = getVehicleMaintenance(vehicle.id);
-                const hasAlert = hasUpcomingMaintenance(vehicle.id);
                 
                 return (
                   <React.Fragment key={vehicle.id}>
@@ -253,12 +217,6 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                           >
                             {vehicle.name}
                           </button>
-                          {hasAlert && (
-                            <Badge className="bg-orange-500 text-white text-xs">
-                              <Wrench className="w-3 h-3 mr-1" />
-                              Due
-                            </Badge>
-                          )}
                         </div>
                       </td>
                       <td className="px-4 py-4 font-mono text-sm text-slate-500">{vehicle.rfid}</td>
@@ -453,21 +411,6 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
           </Button>
         </div>
       </div>
-
-      {selectedVehicleForMaintenance && (
-        <MaintenanceModal
-          open={maintenanceModalOpen}
-          onClose={() => {
-            setMaintenanceModalOpen(false);
-            setSelectedVehicleForMaintenance(null);
-          }}
-          vehicle={selectedVehicleForMaintenance}
-          allVehicles={vehicles}
-          onSuccess={() => {
-            queryClient.invalidateQueries(['maintenance']);
-          }}
-        />
-      )}
 
       {selectedVehicleForProfile && (
         <VehicleProfileModal

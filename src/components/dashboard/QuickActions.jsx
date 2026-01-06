@@ -8,14 +8,7 @@ import { AlertTriangle, Wrench, TrendingDown, WifiOff, ChevronRight } from 'luci
 import moment from 'moment';
 import { motion } from 'framer-motion';
 
-export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicle, onOpenDevices }) {
-  const { data: maintenanceRecords = [] } = useQuery({
-    queryKey: ['maintenance'],
-    queryFn: async () => {
-      const records = await base44.entities.Maintenance.list('-service_date', 100);
-      return records;
-    }
-  });
+export default function QuickActions({ vehicles, onOpenVehicle, onOpenDevices }) {
 
   const { data: devices = [] } = useQuery({
     queryKey: ['devices'],
@@ -28,26 +21,6 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
   const urgentItems = useMemo(() => {
     const items = [];
     const now = moment();
-
-    // Check for overdue maintenance
-    const overdueVehicles = vehicles.filter(v => {
-      const record = maintenanceRecords.find(m => m.vehicle_id === v.id);
-      if (!record?.next_service_date) return false;
-      return moment(record.next_service_date).isBefore(now);
-    });
-
-    if (overdueVehicles.length > 0) {
-      items.push({
-        type: 'maintenance_overdue',
-        icon: Wrench,
-        color: 'bg-red-100 text-red-800 border-red-200',
-        title: 'Overdue Maintenance',
-        count: overdueVehicles.length,
-        description: `${overdueVehicles.length} vehicle${overdueVehicles.length > 1 ? 's need' : ' needs'} immediate service`,
-        action: 'View',
-        onClick: onOpenMaintenance
-      });
-    }
 
     // Check for vehicles below target
     const underperformingVehicles = vehicles.filter(v => 
@@ -88,29 +61,8 @@ export default function QuickActions({ vehicles, onOpenMaintenance, onOpenVehicl
       });
     }
 
-    // Check for maintenance due soon (next 7 days)
-    const upcomingMaintenance = vehicles.filter(v => {
-      const record = maintenanceRecords.find(m => m.vehicle_id === v.id);
-      if (!record?.next_service_date) return false;
-      const daysUntil = moment(record.next_service_date).diff(now, 'days');
-      return daysUntil > 0 && daysUntil <= 7;
-    });
-
-    if (upcomingMaintenance.length > 0) {
-      items.push({
-        type: 'maintenance_upcoming',
-        icon: AlertTriangle,
-        color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        title: 'Upcoming Maintenance',
-        count: upcomingMaintenance.length,
-        description: `${upcomingMaintenance.length} vehicle${upcomingMaintenance.length > 1 ? 's' : ''} due within 7 days`,
-        action: 'Schedule',
-        onClick: onOpenMaintenance
-      });
-    }
-
     return items.slice(0, 4); // Show top 4 urgent items
-  }, [vehicles, maintenanceRecords, devices, onOpenMaintenance, onOpenVehicle, onOpenDevices]);
+  }, [vehicles, devices, onOpenVehicle, onOpenDevices]);
 
   if (urgentItems.length === 0) {
     return (
