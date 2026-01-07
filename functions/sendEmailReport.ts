@@ -133,9 +133,10 @@ Deno.serve(async (req) => {
     console.log('Attempting to send email to:', userEmail);
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
+        from: 'noreply@elora.com.au',
         to: userEmail,
         subject: `${branding.company_name} - Fleet Compliance Report`,
-        body: emailHTML
+        html: emailHTML
       });
 
       console.log('Email sent successfully to:', userEmail);
