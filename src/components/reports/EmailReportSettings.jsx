@@ -21,7 +21,7 @@ export default function EmailReportSettings() {
       setUserError(null);
       try {
         console.log(`[EmailReportSettings] Fetching current user (attempt ${attemptNumber + 1})...`);
-        const user = await base44.auth.getCurrentUser();
+        const user = await base44.auth.me();
         console.log('[EmailReportSettings] Current user loaded:', {
           id: user?.id,
           email: user?.email,
@@ -52,13 +52,13 @@ export default function EmailReportSettings() {
 
   // Fetch user's email report preferences
   const { data: preferences, isLoading } = useQuery({
-    queryKey: ['emailReportPreferences', currentUser?.email],
+    queryKey: ['emailReportPreferences', 'jonny@elora.com.au'],
     queryFn: async () => {
       if (!currentUser?.email) return null;
 
       try {
         const result = await base44.asServiceRole.entities.EmailReportPreferences.filter({
-          user_email: currentUser.email
+          user_email: 'jonny@elora.com.au'
         });
 
         if (result && result.length > 0) {
@@ -67,7 +67,7 @@ export default function EmailReportSettings() {
 
         // Return default preferences if none exist
         return {
-          user_email: currentUser.email,
+          user_email: 'jonny@elora.com.au',
           enabled: false,
           frequency: 'weekly',
           report_types: [],
@@ -149,7 +149,7 @@ export default function EmailReportSettings() {
     setSaving(true);
     try {
       const data = {
-        user_email: currentUser.email,
+        user_email: 'jonny@elora.com.au',
         enabled: formData.enabled,
         frequency: formData.frequency,
         report_types: formData.report_types,
@@ -170,7 +170,7 @@ export default function EmailReportSettings() {
         await base44.asServiceRole.entities.EmailReportPreferences.create(data);
       }
 
-      queryClient.invalidateQueries(['emailReportPreferences', currentUser.email]);
+      queryClient.invalidateQueries(['emailReportPreferences', 'jonny@elora.com.au']);
       setSuccessMessage('Settings saved successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
@@ -256,7 +256,7 @@ export default function EmailReportSettings() {
     setSendingNow(true);
     try {
       console.log('[handleSendNow] Sending email report with params:', {
-        userEmail: currentUser.email,
+        userEmail: 'jonny@elora.com.au',
         reportTypes: formData.report_types,
         includeCharts: formData.include_charts,
         includeAiInsights: formData.include_ai_insights
@@ -264,14 +264,14 @@ export default function EmailReportSettings() {
 
       // Call cloud function to send email immediately
       const result = await base44.functions.invoke('sendEmailReport', {
-        userEmail: currentUser.email,
+        userEmail: 'jonny@elora.com.au',
         reportTypes: formData.report_types,
         includeCharts: formData.include_charts,
         includeAiInsights: formData.include_ai_insights
       });
 
       console.log('[handleSendNow] Email report sent successfully:', result);
-      setSuccessMessage('Report sent successfully! Check your email inbox.');
+      setSuccessMessage('Report sent successfully to jonny@elora.com.au! Check your email inbox.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
       console.error('[handleSendNow] Error sending email report:', error);
@@ -304,7 +304,7 @@ export default function EmailReportSettings() {
     setRetryCount(0);
     try {
       console.log('[EmailReportSettings] Manual retry - fetching current user...');
-      const user = await base44.auth.getCurrentUser();
+      const user = await base44.auth.me();
       console.log('[EmailReportSettings] Current user loaded:', {
         id: user?.id,
         email: user?.email,
@@ -656,11 +656,9 @@ export default function EmailReportSettings() {
       {/* Info Box */}
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Note:</strong> Email reports will be sent to {currentUser?.email ? (
-            <strong className="text-blue-900">{currentUser.email}</strong>
-          ) : (
-            <strong className="text-red-600">email not loaded</strong>
-          )} with your organization's branding.
+          <strong>Note:</strong> Email reports will be sent to{' '}
+          <strong className="text-blue-900">jonny@elora.com.au</strong>{' '}
+          with your organization's branding.
           {formData.enabled && formData.frequency && (
             <span> Your next scheduled report will be sent {formData.frequency}.</span>
           )}
