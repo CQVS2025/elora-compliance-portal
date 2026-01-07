@@ -7,6 +7,7 @@ import { Mail, Send, Clock, CheckCircle, Settings, Loader2 } from 'lucide-react'
 export default function EmailReportSettings() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sendingNow, setSendingNow] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -14,11 +15,21 @@ export default function EmailReportSettings() {
   // Get current user
   useEffect(() => {
     const fetchCurrentUser = async () => {
+      setUserLoading(true);
       try {
+        console.log('[EmailReportSettings] Fetching current user...');
         const user = await base44.auth.getCurrentUser();
+        console.log('[EmailReportSettings] Current user loaded:', {
+          id: user?.id,
+          email: user?.email,
+          hasEmail: !!user?.email
+        });
         setCurrentUser(user);
       } catch (error) {
-        console.error('Error fetching current user:', error);
+        console.error('[EmailReportSettings] Error fetching current user:', error);
+        alert('Failed to load user information. Please refresh the page.');
+      } finally {
+        setUserLoading(false);
       }
     };
     fetchCurrentUser();
@@ -46,7 +57,10 @@ export default function EmailReportSettings() {
           frequency: 'weekly',
           report_types: [],
           include_charts: true,
-          include_ai_insights: true
+          include_ai_insights: true,
+          scheduled_time: '09:00',
+          scheduled_day_of_week: 1,
+          scheduled_day_of_month: 1
         };
       } catch (error) {
         console.error('Error fetching preferences:', error);
@@ -62,7 +76,10 @@ export default function EmailReportSettings() {
     frequency: 'weekly',
     report_types: [],
     include_charts: true,
-    include_ai_insights: true
+    include_ai_insights: true,
+    scheduled_time: '09:00',
+    scheduled_day_of_week: 1, // Monday
+    scheduled_day_of_month: 1
   });
 
   // Update form when preferences load
@@ -73,7 +90,10 @@ export default function EmailReportSettings() {
         frequency: preferences.frequency || 'weekly',
         report_types: preferences.report_types || [],
         include_charts: preferences.include_charts !== false,
-        include_ai_insights: preferences.include_ai_insights !== false
+        include_ai_insights: preferences.include_ai_insights !== false,
+        scheduled_time: preferences.scheduled_time || '09:00',
+        scheduled_day_of_week: preferences.scheduled_day_of_week ?? 1,
+        scheduled_day_of_month: preferences.scheduled_day_of_month || 1
       });
     }
   }, [preferences]);
@@ -120,8 +140,11 @@ export default function EmailReportSettings() {
         report_types: formData.report_types,
         include_charts: formData.include_charts,
         include_ai_insights: formData.include_ai_insights,
+        scheduled_time: formData.scheduled_time,
+        scheduled_day_of_week: formData.scheduled_day_of_week,
+        scheduled_day_of_month: formData.scheduled_day_of_month,
         last_sent: preferences?.last_sent || null,
-        next_scheduled: calculateNextScheduled(formData.frequency)
+        next_scheduled: calculateNextScheduled(formData.frequency, formData.scheduled_time, formData.scheduled_day_of_week, formData.scheduled_day_of_month)
       };
 
       if (preferences?.id) {
@@ -144,37 +167,80 @@ export default function EmailReportSettings() {
   };
 
   // Calculate next scheduled date based on frequency
-  const calculateNextScheduled = (frequency) => {
+  const calculateNextScheduled = (frequency, scheduledTime = '09:00', dayOfWeek = 1, dayOfMonth = 1) => {
     const now = new Date();
+    const [hours, minutes] = scheduledTime.split(':').map(Number);
+
+    let nextDate = new Date();
+
     switch (frequency) {
       case 'daily':
-        now.setDate(now.getDate() + 1);
+        nextDate.setHours(hours, minutes, 0, 0);
+        // If the time has passed today, schedule for tomorrow
+        if (nextDate <= now) {
+          nextDate.setDate(nextDate.getDate() + 1);
+        }
         break;
+
       case 'weekly':
-        now.setDate(now.getDate() + 7);
+        nextDate.setHours(hours, minutes, 0, 0);
+        // Set to the specified day of week
+        const currentDay = nextDate.getDay();
+        const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
+        nextDate.setDate(nextDate.getDate() + daysUntilTarget);
+
+        // If that's today but the time has passed, schedule for next week
+        if (nextDate <= now) {
+          nextDate.setDate(nextDate.getDate() + 7);
+        }
         break;
+
       case 'monthly':
-        now.setMonth(now.getMonth() + 1);
+        nextDate.setHours(hours, minutes, 0, 0);
+        nextDate.setDate(dayOfMonth);
+
+        // If the day is in the past this month, schedule for next month
+        if (nextDate <= now) {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          nextDate.setDate(dayOfMonth);
+        }
         break;
     }
-    return now.toISOString();
+
+    return nextDate.toISOString();
   };
 
   // Send email now
   const handleSendNow = async () => {
-    if (!currentUser?.email) {
+    console.log('[handleSendNow] Button clicked');
+    console.log('[handleSendNow] Current user state:', {
+      currentUser: currentUser,
+      email: currentUser?.email,
+      hasEmail: !!currentUser?.email,
+      userLoading: userLoading
+    });
+
+    if (!currentUser) {
+      console.error('[handleSendNow] Current user is null');
+      alert('User not loaded. Please wait a moment and try again.');
+      return;
+    }
+
+    if (!currentUser.email) {
+      console.error('[handleSendNow] Current user has no email field:', currentUser);
       alert('User email not found. Please refresh the page and try again.');
       return;
     }
 
     if (formData.report_types.length === 0) {
+      console.warn('[handleSendNow] No report types selected');
       alert('Please select at least one report type to send');
       return;
     }
 
     setSendingNow(true);
     try {
-      console.log('Sending email report with params:', {
+      console.log('[handleSendNow] Sending email report with params:', {
         userEmail: currentUser.email,
         reportTypes: formData.report_types,
         includeCharts: formData.include_charts,
@@ -189,19 +255,22 @@ export default function EmailReportSettings() {
         includeAiInsights: formData.include_ai_insights
       });
 
-      console.log('Email report sent successfully:', result);
+      console.log('[handleSendNow] Email report sent successfully:', result);
       setSuccessMessage('Report sent successfully! Check your email inbox.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
-      console.error('Error sending email report:', error);
-      console.error('Error details:', {
+      console.error('[handleSendNow] Error sending email report:', error);
+      console.error('[handleSendNow] Error details:', {
         message: error.message,
         stack: error.stack,
-        response: error.response
+        response: error.response,
+        name: error.name
       });
 
       let errorMessage = 'Failed to send email. ';
-      if (error.message) {
+      if (error.message && error.message.includes('User not found')) {
+        errorMessage = 'Your user account was not found in the system. Please contact support.';
+      } else if (error.message) {
         errorMessage += `Error: ${error.message}`;
       } else {
         errorMessage += 'Please try again or contact support.';
@@ -213,10 +282,13 @@ export default function EmailReportSettings() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || userLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-elora-primary" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-elora-primary mx-auto mb-4" />
+          <p className="text-slate-600">Loading email report settings...</p>
+        </div>
       </div>
     );
   }
@@ -274,7 +346,7 @@ export default function EmailReportSettings() {
           <Clock className="w-5 h-5 text-slate-600" />
           <h2 className="text-lg font-semibold text-slate-800">Report Frequency</h2>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {['daily', 'weekly', 'monthly'].map((freq) => (
             <button
               key={freq}
@@ -290,6 +362,96 @@ export default function EmailReportSettings() {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Scheduling Options */}
+        <div className="pt-6 border-t border-slate-200 space-y-4">
+          <h3 className="text-md font-semibold text-slate-700 mb-3">Schedule Details</h3>
+
+          {/* Time Picker (all frequencies) */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+              Time of Day:
+            </label>
+            <input
+              type="time"
+              value={formData.scheduled_time}
+              onChange={(e) => setFormData(prev => ({ ...prev, scheduled_time: e.target.value }))}
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+            />
+            <span className="text-sm text-slate-500">
+              Reports will be sent at this time
+            </span>
+          </div>
+
+          {/* Day of Week Picker (weekly only) */}
+          {formData.frequency === 'weekly' && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+                Day of Week:
+              </label>
+              <select
+                value={formData.scheduled_day_of_week}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_day_of_week: Number(e.target.value) }))}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+              >
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={2}>Tuesday</option>
+                <option value={3}>Wednesday</option>
+                <option value={4}>Thursday</option>
+                <option value={5}>Friday</option>
+                <option value={6}>Saturday</option>
+              </select>
+              <span className="text-sm text-slate-500">
+                Weekly reports will be sent on this day
+              </span>
+            </div>
+          )}
+
+          {/* Day of Month Picker (monthly only) */}
+          {formData.frequency === 'monthly' && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+                Day of Month:
+              </label>
+              <select
+                value={formData.scheduled_day_of_month}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_day_of_month: Number(e.target.value) }))}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+              <span className="text-sm text-slate-500">
+                Monthly reports will be sent on this day
+              </span>
+            </div>
+          )}
+
+          {/* Preview of next scheduled time */}
+          {formData.enabled && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Next scheduled report:</strong>{' '}
+                {new Date(calculateNextScheduled(
+                  formData.frequency,
+                  formData.scheduled_time,
+                  formData.scheduled_day_of_week,
+                  formData.scheduled_day_of_month
+                )).toLocaleString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -390,13 +552,24 @@ export default function EmailReportSettings() {
 
         <button
           onClick={handleSendNow}
-          disabled={sendingNow || formData.report_types.length === 0}
+          disabled={sendingNow || userLoading || !currentUser?.email || formData.report_types.length === 0}
           className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          title={
+            userLoading ? 'Loading user information...' :
+            !currentUser?.email ? 'User email not available' :
+            formData.report_types.length === 0 ? 'Please select at least one report type' :
+            'Send email report now'
+          }
         >
           {sendingNow ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
               Sending...
+            </>
+          ) : userLoading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Loading...
             </>
           ) : (
             <>
@@ -410,12 +583,28 @@ export default function EmailReportSettings() {
       {/* Info Box */}
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Note:</strong> Email reports will be sent to <strong>{currentUser?.email}</strong> with your organization's branding.
+          <strong>Note:</strong> Email reports will be sent to {currentUser?.email ? (
+            <strong className="text-blue-900">{currentUser.email}</strong>
+          ) : (
+            <strong className="text-red-600">email not loaded</strong>
+          )} with your organization's branding.
           {formData.enabled && formData.frequency && (
             <span> Your next scheduled report will be sent {formData.frequency}.</span>
           )}
         </p>
       </div>
+
+      {/* Debug Info (remove after testing) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 border border-gray-300 p-4 rounded-lg text-xs">
+          <p className="font-bold mb-2">Debug Info:</p>
+          <p>User Loading: {userLoading ? 'Yes' : 'No'}</p>
+          <p>Current User: {currentUser ? 'Loaded' : 'Not Loaded'}</p>
+          <p>User Email: {currentUser?.email || 'Not Available'}</p>
+          <p>Report Types Selected: {formData.report_types.length}</p>
+          <p>Button Should Be: {(sendingNow || userLoading || !currentUser?.email || formData.report_types.length === 0) ? 'Disabled' : 'Enabled'}</p>
+        </div>
+      )}
     </div>
   );
 }

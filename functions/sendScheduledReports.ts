@@ -69,7 +69,13 @@ Deno.serve(async (req) => {
         });
 
         // Update next scheduled time
-        const nextScheduled = calculateNextScheduled(pref.frequency, now);
+        const nextScheduled = calculateNextScheduled(
+          pref.frequency,
+          now,
+          pref.scheduled_time || '09:00',
+          pref.scheduled_day_of_week ?? 1,
+          pref.scheduled_day_of_month || 1
+        );
         await base44.asServiceRole.entities.EmailReportPreferences.update(pref.id, {
           last_sent: now.toISOString(),
           next_scheduled: nextScheduled
@@ -116,25 +122,26 @@ Deno.serve(async (req) => {
  */
 function checkIfShouldSend(pref, now) {
   if (!pref.last_sent) {
-    // Never sent before, send now
-    return true;
+    // Never sent before, check if it's the scheduled time today
+    return isScheduledTimeNow(pref, now);
   }
 
   const lastSent = new Date(pref.last_sent);
   const hoursSinceLastSent = (now - lastSent) / (1000 * 60 * 60);
 
+  // Check if enough time has passed AND if it's the scheduled time
   switch (pref.frequency) {
     case 'daily':
-      // Send if more than 23 hours since last sent
-      return hoursSinceLastSent >= 23;
+      // Send if more than 23 hours since last sent AND it's the scheduled time
+      return hoursSinceLastSent >= 23 && isScheduledTimeNow(pref, now);
 
     case 'weekly':
-      // Send if more than 6.5 days (156 hours) since last sent
-      return hoursSinceLastSent >= 156;
+      // Send if more than 6.5 days since last sent AND it's the scheduled day/time
+      return hoursSinceLastSent >= 156 && isScheduledTimeNow(pref, now);
 
     case 'monthly':
-      // Send if more than 29 days (696 hours) since last sent
-      return hoursSinceLastSent >= 696;
+      // Send if more than 29 days since last sent AND it's the scheduled day/time
+      return hoursSinceLastSent >= 696 && isScheduledTimeNow(pref, now);
 
     default:
       return false;
@@ -142,26 +149,71 @@ function checkIfShouldSend(pref, now) {
 }
 
 /**
+ * Check if current time matches the scheduled time for sending
+ */
+function isScheduledTimeNow(pref, now) {
+  const scheduledTime = pref.scheduled_time || '09:00';
+  const [scheduledHour, scheduledMinute] = scheduledTime.split(':').map(Number);
+
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+
+  // Check if we're within a 1-hour window of the scheduled time
+  // This gives flexibility for cron job timing
+  const isTimeMatch = Math.abs(currentHour - scheduledHour) === 0 &&
+                      Math.abs(currentMinute - scheduledMinute) <= 30;
+
+  if (!isTimeMatch) {
+    return false;
+  }
+
+  // For weekly, check day of week
+  if (pref.frequency === 'weekly') {
+    const scheduledDayOfWeek = pref.scheduled_day_of_week ?? 1; // Default Monday
+    const currentDayOfWeek = now.getDay();
+    return currentDayOfWeek === scheduledDayOfWeek;
+  }
+
+  // For monthly, check day of month
+  if (pref.frequency === 'monthly') {
+    const scheduledDayOfMonth = pref.scheduled_day_of_month || 1;
+    const currentDayOfMonth = now.getDate();
+    return currentDayOfMonth === scheduledDayOfMonth;
+  }
+
+  // For daily, just the time match is enough
+  return true;
+}
+
+/**
  * Calculate the next scheduled send time based on frequency
  */
-function calculateNextScheduled(frequency, fromDate) {
-  const nextDate = new Date(fromDate);
+function calculateNextScheduled(frequency, fromDate, scheduledTime = '09:00', dayOfWeek = 1, dayOfMonth = 1) {
+  const now = new Date(fromDate);
+  const [hours, minutes] = scheduledTime.split(':').map(Number);
+
+  let nextDate = new Date(fromDate);
 
   switch (frequency) {
     case 'daily':
+      nextDate.setHours(hours, minutes, 0, 0);
       nextDate.setDate(nextDate.getDate() + 1);
       break;
 
     case 'weekly':
+      nextDate.setHours(hours, minutes, 0, 0);
       nextDate.setDate(nextDate.getDate() + 7);
       break;
 
     case 'monthly':
+      nextDate.setHours(hours, minutes, 0, 0);
       nextDate.setMonth(nextDate.getMonth() + 1);
+      nextDate.setDate(dayOfMonth);
       break;
 
     default:
       // Default to weekly
+      nextDate.setHours(hours, minutes, 0, 0);
       nextDate.setDate(nextDate.getDate() + 7);
   }
 
