@@ -21,7 +21,7 @@ export default function EmailReportSettings() {
       setUserError(null);
       try {
         console.log(`[EmailReportSettings] Fetching current user (attempt ${attemptNumber + 1})...`);
-        const user = await base44.auth.getCurrentUser();
+        const user = await base44.auth.me();
         console.log('[EmailReportSettings] Current user loaded:', {
           id: user?.id,
           email: user?.email,
@@ -304,7 +304,7 @@ export default function EmailReportSettings() {
     setRetryCount(0);
     try {
       console.log('[EmailReportSettings] Manual retry - fetching current user...');
-      const user = await base44.auth.getCurrentUser();
+      const user = await base44.auth.me();
       console.log('[EmailReportSettings] Current user loaded:', {
         id: user?.id,
         email: user?.email,
