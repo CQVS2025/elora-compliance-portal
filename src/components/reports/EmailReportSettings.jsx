@@ -425,6 +425,8 @@ export default function EmailReportSettings() {
   };
 
   const handleExportPdf = async () => {
+    console.log('[handleExportPdf] Starting PDF export...');
+
     if (!currentUser) {
       alert('User not loaded. Please wait a moment and try again.');
       return;
@@ -444,7 +446,10 @@ export default function EmailReportSettings() {
 
     try {
       let reportHtml = '';
+
+      // Try to fetch HTML from backend
       try {
+        console.log('[handleExportPdf] Fetching report HTML from backend...');
         const result = await base44.functions.invoke('sendEmailReport', {
           userEmail: 'jonny@elora.com.au',
           reportTypes: formData.report_types,
@@ -453,29 +458,50 @@ export default function EmailReportSettings() {
           previewOnly: true
         });
 
-        reportHtml = result?.data?.html || '';
+        console.log('[handleExportPdf] Backend response:', result);
+        reportHtml = result?.data?.html || result?.html || '';
       } catch (error) {
-        console.warn('[handleExportPdf] Falling back to local template:', error);
+        console.warn('[handleExportPdf] Backend call failed, using fallback template:', error);
       }
 
+      // Use fallback template if backend failed
       if (!reportHtml) {
+        console.log('[handleExportPdf] Using fallback report template');
         reportHtml = buildFallbackReportHtml();
       }
 
-      setPdfHtml(extractBodyHtml(reportHtml));
+      console.log('[handleExportPdf] Report HTML length:', reportHtml.length);
 
+      // Extract body content and set it in the hidden container
+      const bodyContent = extractBodyHtml(reportHtml);
+      console.log('[handleExportPdf] Setting PDF HTML in container');
+      setPdfHtml(bodyContent);
+
+      // Wait for React to render the HTML
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
+      // Verify the container exists
       if (!pdfContainerRef.current) {
-        throw new Error('PDF container not available.');
+        throw new Error('PDF container not available. Please try again.');
       }
 
+      console.log('[handleExportPdf] Container ready, capturing with html2canvas...');
+
+      // Capture the HTML as a canvas
       const canvas = await html2canvas(pdfContainerRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#f1f5f9'
+        allowTaint: true,
+        backgroundColor: '#f1f5f9',
+        logging: true,
+        windowWidth: 820,
+        windowHeight: pdfContainerRef.current.scrollHeight
       });
 
+      console.log('[handleExportPdf] Canvas captured:', canvas.width, 'x', canvas.height);
+
+      // Convert canvas to PDF
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -485,9 +511,11 @@ export default function EmailReportSettings() {
       let heightLeft = imgHeight;
       let position = 0;
 
+      // Add first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
+      // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -495,15 +523,23 @@ export default function EmailReportSettings() {
         heightLeft -= pageHeight;
       }
 
+      // Save the PDF
       const filename = `fleet-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      console.log('[handleExportPdf] Saving PDF as:', filename);
       pdf.save(filename);
+
       setSuccessMessage('PDF exported successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
+
+      console.log('[handleExportPdf] PDF export completed successfully');
     } catch (error) {
       console.error('[handleExportPdf] Error exporting PDF:', error);
-      alert(`Failed to export PDF. ${error.message || 'Please try again.'}`);
+      console.error('[handleExportPdf] Error stack:', error.stack);
+      alert(`Failed to export PDF: ${error.message || 'Unknown error'}. Check the console for details.`);
     } finally {
       setExportingPdf(false);
+      // Clear the PDF HTML to free up memory
+      setPdfHtml('');
     }
   };
 
@@ -889,13 +925,16 @@ export default function EmailReportSettings() {
 
       <div
         ref={pdfContainerRef}
-        className="fixed left-0 top-0"
         style={{
+          position: 'fixed',
           width: '820px',
           padding: '24px',
           background: '#f1f5f9',
-          left: '-10000px',
-          top: 0
+          top: 0,
+          left: 0,
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -9999
         }}
         aria-hidden="true"
         dangerouslySetInnerHTML={{ __html: pdfHtml }}
