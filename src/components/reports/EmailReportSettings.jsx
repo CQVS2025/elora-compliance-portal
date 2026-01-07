@@ -308,7 +308,7 @@ export default function EmailReportSettings() {
     return doc.body?.innerHTML || html;
   };
 
-  const buildFallbackReportHtml = () => {
+  const buildFallbackReportHtml = (clientBranding = null) => {
     const selectedReports = formData.report_types.length > 0
       ? formData.report_types
       : ['compliance', 'maintenance', 'costs', 'ai_insights'];
@@ -318,8 +318,12 @@ export default function EmailReportSettings() {
       costs: 'Cost Analysis',
       ai_insights: 'AI-Generated Insights'
     };
-    const primaryColor = '#2563eb';
-    const secondaryColor = '#1d4ed8';
+
+    // Use client branding if provided, otherwise use default colors
+    const primaryColor = clientBranding?.primary_color || '#2563eb';
+    const secondaryColor = clientBranding?.secondary_color || '#1d4ed8';
+    const companyName = clientBranding?.company_name || 'ELORA Solutions';
+    const logoUrl = clientBranding?.logo_url || null;
 
     const section = (title, content) => `
       <div style="margin: 40px 0 20px 0;">
@@ -405,13 +409,16 @@ export default function EmailReportSettings() {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Fleet Compliance Report</title>
+        <title>Fleet Compliance Report - ${companyName}</title>
       </head>
       <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif;">
         <div style="width: 700px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <div style="background: ${primaryColor}; padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            ${logoUrl ? `
+              <img src="${logoUrl}" alt="${companyName}" style="height: 60px; object-fit: contain; margin-bottom: 16px; display: inline-block;" />
+            ` : ''}
             <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 1px; word-spacing: 4px;">
-              ELORA Solutions
+              ${companyName}
             </h1>
             <p style="color: rgba(255, 255, 255, 0.95); margin: 12px 0 0 0; font-size: 16px; font-family: Arial, sans-serif; letter-spacing: 0.5px;">
               Compliance Portal Report
@@ -425,7 +432,7 @@ export default function EmailReportSettings() {
               This is a preview PDF generated from your current settings.
             </p>
             <p style="color: #94a3b8; font-size: 11px; margin: 0; font-family: Arial, sans-serif;">
-              © ${new Date().getFullYear()} ELORA Solutions. All rights reserved.
+              © ${new Date().getFullYear()} ${companyName}. All rights reserved.
             </p>
           </div>
         </div>
@@ -455,6 +462,41 @@ export default function EmailReportSettings() {
     setExportingPdf(true);
 
     try {
+      // Fetch user's branding based on email domain
+      let branding = null;
+      try {
+        console.log('[handleExportPdf] Fetching branding for user:', currentUser.email);
+        const emailDomain = currentUser.email.split('@')[1];
+        console.log('[handleExportPdf] Email domain:', emailDomain);
+
+        const brandingResults = await base44.entities.Client_Branding.filter({
+          client_email_domain: emailDomain
+        });
+
+        console.log('[handleExportPdf] Branding results:', brandingResults);
+
+        if (brandingResults && brandingResults.length > 0) {
+          branding = brandingResults[0];
+          console.log('[handleExportPdf] Using client branding:', branding.company_name);
+        } else {
+          console.log('[handleExportPdf] No branding found, using default ELORA branding');
+          branding = {
+            company_name: 'ELORA Solutions',
+            logo_url: null,
+            primary_color: '#2563eb',
+            secondary_color: '#1d4ed8'
+          };
+        }
+      } catch (error) {
+        console.error('[handleExportPdf] Error fetching branding:', error);
+        branding = {
+          company_name: 'ELORA Solutions',
+          logo_url: null,
+          primary_color: '#2563eb',
+          secondary_color: '#1d4ed8'
+        };
+      }
+
       let reportHtml = '';
 
       // Try to fetch HTML from backend
@@ -476,8 +518,8 @@ export default function EmailReportSettings() {
 
       // Use fallback template if backend failed
       if (!reportHtml) {
-        console.log('[handleExportPdf] Using fallback report template');
-        reportHtml = buildFallbackReportHtml();
+        console.log('[handleExportPdf] Using fallback report template with branding');
+        reportHtml = buildFallbackReportHtml(branding);
       }
 
       console.log('[handleExportPdf] Report HTML length:', reportHtml.length);
