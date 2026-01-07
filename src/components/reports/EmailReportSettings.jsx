@@ -8,16 +8,19 @@ export default function EmailReportSettings() {
   const queryClient = useQueryClient();
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [sendingNow, setSendingNow] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Get current user
+  // Get current user with retry logic
   useEffect(() => {
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUser = async (attemptNumber = 0) => {
       setUserLoading(true);
+      setUserError(null);
       try {
-        console.log('[EmailReportSettings] Fetching current user...');
+        console.log(`[EmailReportSettings] Fetching current user (attempt ${attemptNumber + 1})...`);
         const user = await base44.auth.getCurrentUser();
         console.log('[EmailReportSettings] Current user loaded:', {
           id: user?.id,
@@ -25,11 +28,23 @@ export default function EmailReportSettings() {
           hasEmail: !!user?.email
         });
         setCurrentUser(user);
+        setRetryCount(0);
+        setUserLoading(false);
       } catch (error) {
         console.error('[EmailReportSettings] Error fetching current user:', error);
-        alert('Failed to load user information. Please refresh the page.');
-      } finally {
-        setUserLoading(false);
+
+        // Auto-retry up to 3 times with exponential backoff
+        const maxRetries = 3;
+        if (attemptNumber < maxRetries) {
+          const delay = Math.pow(2, attemptNumber) * 1000; // 1s, 2s, 4s
+          console.log(`[EmailReportSettings] Retrying in ${delay}ms...`);
+          setRetryCount(attemptNumber + 1);
+          setTimeout(() => fetchCurrentUser(attemptNumber + 1), delay);
+        } else {
+          // Max retries reached, show error state
+          setUserError(error.message || 'Failed to load user information');
+          setUserLoading(false);
+        }
       }
     };
     fetchCurrentUser();
@@ -282,12 +297,70 @@ export default function EmailReportSettings() {
     }
   };
 
+  // Manual retry for user loading
+  const handleRetryUserLoad = async () => {
+    setUserError(null);
+    setUserLoading(true);
+    setRetryCount(0);
+    try {
+      console.log('[EmailReportSettings] Manual retry - fetching current user...');
+      const user = await base44.auth.getCurrentUser();
+      console.log('[EmailReportSettings] Current user loaded:', {
+        id: user?.id,
+        email: user?.email,
+        hasEmail: !!user?.email
+      });
+      setCurrentUser(user);
+    } catch (error) {
+      console.error('[EmailReportSettings] Error fetching current user:', error);
+      setUserError(error.message || 'Failed to load user information');
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
+  // Show error state if user failed to load
+  if (userError && !userLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Failed to Load User Information</h3>
+              <p className="text-red-700 mb-4">
+                We couldn't load your user information. This might be due to a temporary connection issue.
+              </p>
+              <p className="text-sm text-red-600 mb-4">Error: {userError}</p>
+              <button
+                onClick={handleRetryUserLoad}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading || userLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-elora-primary mx-auto mb-4" />
           <p className="text-slate-600">Loading email report settings...</p>
+          {retryCount > 0 && (
+            <p className="text-slate-500 text-sm mt-2">Retrying... (attempt {retryCount + 1})</p>
+          )}
         </div>
       </div>
     );
