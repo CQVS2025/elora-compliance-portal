@@ -498,28 +498,52 @@ export default function EmailReportSettings() {
       }
 
       let reportHtml = '';
+      let usedBackendData = false;
 
-      // Try to fetch HTML from backend
+      // Try to fetch HTML with real data from backend
       try {
-        console.log('[handleExportPdf] Fetching report HTML from backend...');
+        console.log('[handleExportPdf] Fetching report HTML with real data from backend...');
         const result = await base44.functions.invoke('sendEmailReport', {
-          userEmail: 'jonny@elora.com.au',
+          userEmail: currentUser.email,
           reportTypes: formData.report_types,
           includeCharts: formData.include_charts,
           includeAiInsights: formData.include_ai_insights,
           previewOnly: true
         });
 
-        console.log('[handleExportPdf] Backend response:', result);
-        reportHtml = result?.data?.html || result?.html || '';
+        console.log('[handleExportPdf] Backend response received:', {
+          hasData: !!result?.data,
+          hasHtml: !!(result?.data?.html || result?.html),
+          htmlLength: (result?.data?.html || result?.html || '').length,
+          success: result?.data?.success || result?.success
+        });
+
+        // Extract HTML from response
+        const htmlContent = result?.data?.html || result?.html || '';
+
+        if (htmlContent && htmlContent.length > 100) {
+          reportHtml = htmlContent;
+          usedBackendData = true;
+          console.log('[handleExportPdf] Successfully fetched real data HTML from backend');
+        } else {
+          console.warn('[handleExportPdf] Backend returned empty or invalid HTML, will use fallback');
+        }
       } catch (error) {
-        console.warn('[handleExportPdf] Backend call failed, using fallback template:', error);
+        console.error('[handleExportPdf] Backend call failed:', error);
+        console.error('[handleExportPdf] Error details:', {
+          message: error.message,
+          stack: error.stack
+        });
       }
 
       // Use fallback template if backend failed
       if (!reportHtml) {
-        console.log('[handleExportPdf] Using fallback report template with branding');
+        console.warn('[handleExportPdf] Using fallback template - real data was not available from backend');
+        console.warn('[handleExportPdf] This PDF will show placeholder values instead of real data');
         reportHtml = buildFallbackReportHtml(branding);
+        usedBackendData = false;
+      } else if (usedBackendData) {
+        console.log('[handleExportPdf] ✓ PDF will contain REAL DATA from backend');
       }
 
       console.log('[handleExportPdf] Report HTML length:', reportHtml.length);
@@ -580,8 +604,13 @@ export default function EmailReportSettings() {
       console.log('[handleExportPdf] Saving PDF as:', filename);
       pdf.save(filename);
 
-      setSuccessMessage('PDF exported successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      // Show appropriate success message
+      if (usedBackendData) {
+        setSuccessMessage('PDF exported successfully with real data!');
+      } else {
+        setSuccessMessage('PDF exported with placeholder data. Connect to live data sources for real metrics.');
+      }
+      setTimeout(() => setSuccessMessage(''), 5000);
 
       console.log('[handleExportPdf] PDF export completed successfully');
     } catch (error) {
