@@ -13,7 +13,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { userEmail, reportTypes, includeCharts, includeAiInsights } = body;
 
+    console.log('sendEmailReport invoked with:', {
+      userEmail,
+      reportTypes,
+      includeCharts,
+      includeAiInsights
+    });
+
     if (!userEmail) {
+      console.error('Missing userEmail parameter');
       return new Response(JSON.stringify({ error: 'User email is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
@@ -52,15 +60,19 @@ Deno.serve(async (req) => {
     }
 
     // Fetch user details
+    console.log('Fetching user details for:', userEmail);
     const users = await base44.asServiceRole.entities.User.filter({ email: userEmail });
     const user = users && users.length > 0 ? users[0] : null;
 
     if (!user) {
+      console.error('User not found:', userEmail);
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
+
+    console.log('User found:', { id: user.id, email: user.email, role: user.role });
 
     // Generate report data
     const reports = {};
@@ -111,15 +123,22 @@ Deno.serve(async (req) => {
     }
 
     // Generate HTML email
+    console.log('Generating email HTML with branding:', {
+      company_name: branding.company_name,
+      primary_color: branding.primary_color
+    });
     const emailHTML = generateEmailHTML(reports, branding, userEmail);
 
     // Send email
+    console.log('Attempting to send email to:', userEmail);
     try {
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: userEmail,
         subject: `${branding.company_name} - Fleet Compliance Report`,
         body: emailHTML
       });
+
+      console.log('Email sent successfully to:', userEmail);
 
       // Update last_sent timestamp if this is a scheduled send
       try {
@@ -147,9 +166,15 @@ Deno.serve(async (req) => {
 
     } catch (emailError) {
       console.error('Error sending email:', emailError);
+      console.error('Email error details:', {
+        message: emailError.message,
+        stack: emailError.stack,
+        name: emailError.name
+      });
       return new Response(JSON.stringify({
         error: 'Failed to send email',
-        details: emailError.message
+        details: emailError.message,
+        userEmail: userEmail
       }), {
         status: 500,
         headers: { 'Content-Type': 'application/json' }
@@ -158,6 +183,11 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Function error:', error);
+    console.error('Function error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return new Response(JSON.stringify({
       error: 'Internal server error',
       details: error.message

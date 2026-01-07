@@ -10,6 +10,14 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// ELORA Brand Colors
+  			'elora-primary': '#7CB342',
+  			'elora-primary-light': '#9CCC65',
+  			'elora-primary-dark': '#689F38',
+  			'elora-navy': '#0F172A',
+  			'elora-blue': '#1E293B',
+  			'elora-slate': '#334155',
+  			// Shadcn UI Colors
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
