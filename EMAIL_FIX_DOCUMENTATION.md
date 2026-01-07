@@ -18,73 +18,68 @@ await base44.asServiceRole.integrations.Core.SendEmail({
 });
 ```
 
-**Correct Code:**
-```typescript
-await base44.asServiceRole.integrations.Core.SendEmail({
-  to: userEmail,
-  subject: 'Subject',
-  body: emailHTML
-});
-```
-
 ### Issue #2: External Email Address Limitation
 Base44's `Core.SendEmail` has a significant limitation: **it can only send emails to registered users within your Base44 app**. It does NOT support sending to external email addresses.
 
-## Immediate Fix Applied
-✅ Removed the unsupported `from` parameter from the SendEmail call in `functions/sendEmailReport.ts:135-139`
+## ✅ Final Solution: Resend Integration Implemented
 
-This should resolve the 500 error if the recipient is a registered user in the app.
+The email function now uses **Resend** directly, which solves both problems:
+- ✅ Supports custom sender addresses (jonny@elora.com.au)
+- ✅ Sends to ANY email address (not just registered app users)
+- ✅ Professional email delivery service
+- ✅ Supports file attachments (for future use)
 
-## Long-Term Solution: Use Resend Integration
+### Implementation Details
 
-If you need to send emails to external addresses (users not registered in your Base44 app), you must set up the **Resend integration**.
+**Updated Code in `functions/sendEmailReport.ts`:**
 
-### Why Resend?
-- Supports sending to ANY email address (not just app users)
-- Allows custom sender domains (e.g., noreply@elora.com.au)
-- Supports file attachments
-- Professional email delivery service
-
-### How to Set Up Resend Integration
-
-1. **Requirements:**
-   - Base44 Builder tier or above
-   - Backend functions enabled in your app
-   - Resend account with API key
-
-2. **Setup Steps:**
-   - Create a Resend account at https://resend.com
-   - Add your custom domain to Resend (e.g., elora.com.au)
-   - Get your Resend API key
-   - Add Resend integration to your Base44 app via the AI chat or integrations page
-   - Update your backend function to use `base44.integrations.Resend.SendEmail()` instead of `Core.SendEmail()`
-
-3. **Updated Code Example:**
 ```typescript
-await base44.asServiceRole.integrations.Resend.SendEmail({
-  from: 'noreply@elora.com.au',  // ✅ Supported with custom domain
+import { Resend } from 'npm:resend@4.0.0';
+
+// Initialize Resend with API key
+const resend = new Resend('re_7KDKHjRM_KsRBUbTj2zgjSUHupenSbCBy');
+
+// Send email using Resend
+const emailResult = await resend.emails.send({
+  from: 'Jonny <jonny@elora.com.au>',
   to: userEmail,
   subject: `${branding.company_name} - Fleet Compliance Report`,
-  html: emailHTML  // Note: Resend uses 'html' parameter for HTML content
+  html: emailHTML
 });
 ```
 
-## Testing the Current Fix
+### Key Changes Made:
+1. ✅ Added Resend SDK import (`npm:resend@4.0.0`)
+2. ✅ Configured API key: `re_7KDKHjRM_KsRBUbTj2zgjSUHupenSbCBy`
+3. ✅ Updated sender to: `Jonny <jonny@elora.com.au>`
+4. ✅ Changed from `body` to `html` parameter
+5. ✅ Now supports sending to external email addresses
+
+## Testing the Fix
 
 1. Deploy the updated function to Base44
-2. Test with a user email that is registered in your Base44 app
-3. If still getting 500 errors, check the Base44 function logs for more details
-4. If you need to send to external addresses, proceed with Resend integration setup
+2. Test sending emails to any email address (internal or external)
+3. Emails will now come from jonny@elora.com.au
+4. Check Base44 function logs for detailed send results
+
+## Important: Domain Verification
+
+To send emails from `jonny@elora.com.au`, you need to:
+1. Verify the domain `elora.com.au` in your Resend dashboard
+2. Add the required DNS records (SPF, DKIM, DMARC)
+3. Wait for verification to complete (usually a few minutes)
+
+If the domain is not verified yet, emails may fail or go to spam. Check the Resend dashboard for verification status.
 
 ## References
-- [Base44 SendEmail Documentation](https://docs.base44.com/sdk-docs/type-aliases/integrations)
+- [Resend Documentation](https://resend.com/docs)
+- [Resend Domain Verification](https://resend.com/docs/dashboard/domains/introduction)
 - [Base44 Resend Integration Guide](https://docs.base44.com/Integrations/Resend-integration)
-- [Resend with Base44 Setup](https://resend.com/docs/knowledge-base/base44-integration)
 - [Base44 Troubleshooting](https://docs.base44.com/Community-and-support/Troubleshooting)
 
-## Next Steps
+## Security Note
 
-1. ✅ Deploy the current fix (remove `from` parameter)
-2. Test with registered app users
-3. If sending to external addresses is required, set up Resend integration
-4. Update code to use Resend.SendEmail() for production use
+**Important:** The API key is currently hardcoded in the function. For production:
+- Store the API key as an environment variable in Base44
+- Update the code to use: `Deno.env.get('RESEND_API_KEY')`
+- Never commit API keys to version control
