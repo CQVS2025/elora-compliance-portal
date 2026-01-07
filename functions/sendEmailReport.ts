@@ -1,9 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.4';
+import { Resend } from 'npm:resend@4.0.0';
 
 /**
  * Email Report Generation and Sending Function
  * Supports instant "Email Me Now" and scheduled report delivery
  */
+
+// Initialize Resend with API key
+const resend = new Resend('re_7KDKHjRM_KsRBUbTj2zgjSUHupenSbCBy');
 
 Deno.serve(async (req) => {
   try {
@@ -129,17 +133,17 @@ Deno.serve(async (req) => {
     });
     const emailHTML = generateEmailHTML(reports, branding, userEmail);
 
-    // Send email
+    // Send email using Resend
     console.log('Attempting to send email to:', userEmail);
     try {
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        from: 'noreply@elora.com.au',
+      const emailResult = await resend.emails.send({
+        from: 'Jonny <jonny@elora.com.au>',
         to: userEmail,
         subject: `${branding.company_name} - Fleet Compliance Report`,
-        body: emailHTML
+        html: emailHTML
       });
 
-      console.log('Email sent successfully to:', userEmail);
+      console.log('Email sent successfully to:', userEmail, 'Result:', emailResult);
 
       // Update last_sent timestamp if this is a scheduled send
       try {
