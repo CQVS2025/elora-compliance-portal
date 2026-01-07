@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     const body = await req.json();
-    const { userEmail, reportTypes, includeCharts, includeAiInsights } = body;
+    const { userEmail, reportTypes, includeCharts, includeAiInsights, previewOnly } = body;
 
     console.log('sendEmailReport invoked with:', {
       userEmail,
@@ -132,6 +132,17 @@ Deno.serve(async (req) => {
       primary_color: branding.primary_color
     });
     const emailHTML = generateEmailHTML(reports, branding, userEmail);
+
+    if (previewOnly) {
+      return new Response(JSON.stringify({
+        success: true,
+        preview: true,
+        html: emailHTML
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Send email using Resend
     console.log('Attempting to send email via Resend to:', userEmail);
