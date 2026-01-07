@@ -553,8 +553,8 @@ export default function EmailReportSettings() {
       console.log('[handleExportPdf] Setting PDF HTML in container');
       setPdfHtml(bodyContent);
 
-      // Wait for React to render the HTML
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Wait for React to render the HTML and all resources to load
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       // Verify the container exists
@@ -563,16 +563,23 @@ export default function EmailReportSettings() {
       }
 
       console.log('[handleExportPdf] Container ready, capturing with html2canvas...');
+      console.log('[handleExportPdf] Container dimensions:', {
+        scrollHeight: pdfContainerRef.current.scrollHeight,
+        offsetHeight: pdfContainerRef.current.offsetHeight,
+        clientHeight: pdfContainerRef.current.clientHeight
+      });
 
-      // Capture the HTML as a canvas
+      // Capture the HTML as a canvas with improved settings
       const canvas = await html2canvas(pdfContainerRef.current, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#f1f5f9',
         logging: true,
-        windowWidth: 820,
-        windowHeight: pdfContainerRef.current.scrollHeight
+        width: 820,
+        height: pdfContainerRef.current.scrollHeight || 1200,
+        x: 0,
+        y: 0
       });
 
       console.log('[handleExportPdf] Canvas captured:', canvas.width, 'x', canvas.height);
@@ -1009,13 +1016,15 @@ export default function EmailReportSettings() {
         style={{
           position: 'fixed',
           width: '820px',
+          minHeight: pdfHtml ? '1000px' : '0px',
           padding: '24px',
           background: '#f1f5f9',
-          top: 0,
-          left: 0,
-          opacity: 0,
+          top: '-99999px',
+          left: '0',
           pointerEvents: 'none',
-          zIndex: -9999
+          zIndex: -9999,
+          overflow: 'visible',
+          visibility: pdfHtml ? 'visible' : 'hidden'
         }}
         aria-hidden="true"
         dangerouslySetInnerHTML={{ __html: pdfHtml }}
