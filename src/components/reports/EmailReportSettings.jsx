@@ -308,7 +308,7 @@ export default function EmailReportSettings() {
     return doc.body?.innerHTML || html;
   };
 
-  const buildFallbackReportHtml = () => {
+  const buildFallbackReportHtml = (clientBranding = null) => {
     const selectedReports = formData.report_types.length > 0
       ? formData.report_types
       : ['compliance', 'maintenance', 'costs', 'ai_insights'];
@@ -318,71 +318,85 @@ export default function EmailReportSettings() {
       costs: 'Cost Analysis',
       ai_insights: 'AI-Generated Insights'
     };
-    const primaryColor = '#2563eb';
-    const secondaryColor = '#1d4ed8';
+
+    // Use client branding if provided, otherwise use default colors
+    const primaryColor = clientBranding?.primary_color || '#2563eb';
+    const secondaryColor = clientBranding?.secondary_color || '#1d4ed8';
+    const companyName = clientBranding?.company_name || 'ELORA Solutions';
+    const logoUrl = clientBranding?.logo_url || null;
 
     const section = (title, content) => `
       <div style="margin: 40px 0 20px 0;">
-        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px; word-spacing: 3px;">
           ${title}
         </h2>
-        <div style="height: 3px; width: 60px; background: linear-gradient(90deg, ${primaryColor} 0%, ${secondaryColor} 100%); border-radius: 2px; margin-top: 12px;"></div>
+        <div style="height: 3px; width: 60px; background: ${primaryColor}; margin-bottom: 20px;"></div>
       </div>
       ${content}
     `;
 
     const metricCard = (label, value, subtitle, color = primaryColor) => `
-      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-left: 4px solid ${color};">
-        <h3 style="color: #334155; font-size: 14px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${label}</h3>
-        <p style="color: #0f172a; font-size: 32px; font-weight: 700; margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${value}</p>
-        <p style="color: #64748b; font-size: 14px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${subtitle}</p>
+      <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; border-left: 4px solid ${color}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+        <div style="color: #334155; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, sans-serif;">${label}</div>
+        <div style="color: #0f172a; font-size: 28px; font-weight: 700; margin-bottom: 4px; font-family: Arial, sans-serif;">${value}</div>
+        <div style="color: #64748b; font-size: 13px; font-family: Arial, sans-serif;">${subtitle}</div>
       </div>
     `;
 
+    const twoColumnMetrics = (leftCard, rightCard) => `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+        <tr>
+          <td width="48%" style="vertical-align: top;">${leftCard}</td>
+          <td width="4%"></td>
+          <td width="48%" style="vertical-align: top;">${rightCard}</td>
+        </tr>
+      </table>
+    `;
+
     let content = `
-      <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0 0 30px 0; font-family: Arial, sans-serif;">
         This PDF was generated from your current report selections. Live data could not be loaded, so placeholder values are shown.
       </p>
     `;
 
     if (selectedReports.includes('compliance')) {
-      content += section(reportLabels.compliance, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Average Compliance', '—', 'Awaiting live data')}
-          ${metricCard('Total Vehicles', '—', 'Awaiting live data', secondaryColor)}
-        </div>
+      content += section(reportLabels.compliance,
+        twoColumnMetrics(
+          metricCard('AVERAGE COMPLIANCE', '—', 'Awaiting live data', primaryColor),
+          metricCard('TOTAL VEHICLES', '—', 'Awaiting live data', secondaryColor)
+        ) + `
         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #92400e; font-size: 16px; font-weight: 600; margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Data Pending</h4>
-          <p style="color: #92400e; font-size: 14px; margin: 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
+          <h4 style="color: #92400e; font-size: 15px; font-weight: 600; margin: 0 0 8px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px;">Data Pending</h4>
+          <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6; font-family: Arial, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
         </div>
       `);
     }
 
     if (selectedReports.includes('maintenance')) {
-      content += section(reportLabels.maintenance, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Upcoming Services', '—', 'Awaiting live data')}
-          ${metricCard('Overdue Services', '—', 'Awaiting live data', '#ef4444')}
-        </div>
-        <div style="background: #f8fafc; border-radius: 12px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5f5;">
-          <p style="color: #475569; font-size: 14px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
+      content += section(reportLabels.maintenance,
+        twoColumnMetrics(
+          metricCard('UPCOMING SERVICES', '—', 'Awaiting live data', primaryColor),
+          metricCard('OVERDUE SERVICES', '—', 'Awaiting live data', '#ef4444')
+        ) + `
+        <div style="background: #f8fafc; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5e1;">
+          <p style="color: #475569; font-size: 13px; margin: 0; font-family: Arial, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
         </div>
       `);
     }
 
     if (selectedReports.includes('costs')) {
-      content += section(reportLabels.costs, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Monthly Average', '—', 'Awaiting live data')}
-          ${metricCard('Total This Period', '—', 'Awaiting live data', '#10b981')}
-        </div>
-      `);
+      content += section(reportLabels.costs,
+        twoColumnMetrics(
+          metricCard('MONTHLY AVERAGE', '—', 'Awaiting live data', primaryColor),
+          metricCard('TOTAL THIS PERIOD', '—', 'Awaiting live data', '#10b981')
+        )
+      );
     }
 
     if (selectedReports.includes('ai_insights')) {
       content += section(reportLabels.ai_insights, `
-        <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
-          <p style="color: #334155; font-size: 14px; line-height: 1.8; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="background: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
+          <p style="color: #334155; font-size: 13px; line-height: 1.8; margin: 0; font-family: Arial, sans-serif;">
             AI insights will be generated once live data becomes available.
           </p>
         </div>
@@ -395,27 +409,30 @@ export default function EmailReportSettings() {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Fleet Compliance Report</title>
+        <title>Fleet Compliance Report - ${companyName}</title>
       </head>
-      <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-        <div style="max-width: 680px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              ELORA Solutions
+      <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif;">
+        <div style="width: 700px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="background: ${primaryColor}; padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            ${logoUrl ? `
+              <img src="${logoUrl}" alt="${companyName}" style="height: 60px; object-fit: contain; margin-bottom: 16px; display: inline-block;" />
+            ` : ''}
+            <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 1px; word-spacing: 4px;">
+              ${companyName}
             </h1>
-            <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <p style="color: rgba(255, 255, 255, 0.95); margin: 12px 0 0 0; font-size: 16px; font-family: Arial, sans-serif; letter-spacing: 0.5px;">
               Compliance Portal Report
             </p>
           </div>
-          <div style="padding: 40px 30px;">
+          <div style="padding: 40px 35px;">
             ${content}
           </div>
-          <div style="background: #f8fafc; padding: 30px 20px; text-align: center; border-radius: 0 0 12px 12px; margin-top: 40px; border-top: 2px solid #e2e8f0;">
-            <p style="color: #64748b; font-size: 14px; margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <div style="background: #f8fafc; padding: 25px 20px; text-align: center; border-radius: 0 0 12px 12px; border-top: 2px solid #e2e8f0;">
+            <p style="color: #64748b; font-size: 13px; margin: 0 0 8px 0; font-family: Arial, sans-serif;">
               This is a preview PDF generated from your current settings.
             </p>
-            <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-              © ${new Date().getFullYear()} ELORA Solutions. All rights reserved.
+            <p style="color: #94a3b8; font-size: 11px; margin: 0; font-family: Arial, sans-serif;">
+              © ${new Date().getFullYear()} ${companyName}. All rights reserved.
             </p>
           </div>
         </div>
@@ -425,6 +442,8 @@ export default function EmailReportSettings() {
   };
 
   const handleExportPdf = async () => {
+    console.log('[handleExportPdf] Starting PDF export...');
+
     if (!currentUser) {
       alert('User not loaded. Please wait a moment and try again.');
       return;
@@ -443,39 +462,122 @@ export default function EmailReportSettings() {
     setExportingPdf(true);
 
     try {
-      let reportHtml = '';
+      // Fetch user's branding based on email domain
+      let branding = null;
       try {
+        console.log('[handleExportPdf] Fetching branding for user:', currentUser.email);
+        const emailDomain = currentUser.email.split('@')[1];
+        console.log('[handleExportPdf] Email domain:', emailDomain);
+
+        const brandingResults = await base44.entities.Client_Branding.filter({
+          client_email_domain: emailDomain
+        });
+
+        console.log('[handleExportPdf] Branding results:', brandingResults);
+
+        if (brandingResults && brandingResults.length > 0) {
+          branding = brandingResults[0];
+          console.log('[handleExportPdf] Using client branding:', branding.company_name);
+        } else {
+          console.log('[handleExportPdf] No branding found, using default ELORA branding');
+          branding = {
+            company_name: 'ELORA Solutions',
+            logo_url: null,
+            primary_color: '#2563eb',
+            secondary_color: '#1d4ed8'
+          };
+        }
+      } catch (error) {
+        console.error('[handleExportPdf] Error fetching branding:', error);
+        branding = {
+          company_name: 'ELORA Solutions',
+          logo_url: null,
+          primary_color: '#2563eb',
+          secondary_color: '#1d4ed8'
+        };
+      }
+
+      let reportHtml = '';
+      let usedBackendData = false;
+
+      // Try to fetch HTML with real data from backend
+      try {
+        console.log('[handleExportPdf] Fetching report HTML with real data from backend...');
         const result = await base44.functions.invoke('sendEmailReport', {
-          userEmail: 'jonny@elora.com.au',
+          userEmail: currentUser.email,
           reportTypes: formData.report_types,
           includeCharts: formData.include_charts,
           includeAiInsights: formData.include_ai_insights,
           previewOnly: true
         });
 
-        reportHtml = result?.data?.html || '';
+        console.log('[handleExportPdf] Backend response received:', {
+          hasData: !!result?.data,
+          hasHtml: !!(result?.data?.html || result?.html),
+          htmlLength: (result?.data?.html || result?.html || '').length,
+          success: result?.data?.success || result?.success
+        });
+
+        // Extract HTML from response
+        const htmlContent = result?.data?.html || result?.html || '';
+
+        if (htmlContent && htmlContent.length > 100) {
+          reportHtml = htmlContent;
+          usedBackendData = true;
+          console.log('[handleExportPdf] Successfully fetched real data HTML from backend');
+        } else {
+          console.warn('[handleExportPdf] Backend returned empty or invalid HTML, will use fallback');
+        }
       } catch (error) {
-        console.warn('[handleExportPdf] Falling back to local template:', error);
+        console.error('[handleExportPdf] Backend call failed:', error);
+        console.error('[handleExportPdf] Error details:', {
+          message: error.message,
+          stack: error.stack
+        });
       }
 
+      // Use fallback template if backend failed
       if (!reportHtml) {
-        reportHtml = buildFallbackReportHtml();
+        console.warn('[handleExportPdf] Using fallback template - real data was not available from backend');
+        console.warn('[handleExportPdf] This PDF will show placeholder values instead of real data');
+        reportHtml = buildFallbackReportHtml(branding);
+        usedBackendData = false;
+      } else if (usedBackendData) {
+        console.log('[handleExportPdf] ✓ PDF will contain REAL DATA from backend');
       }
 
-      setPdfHtml(extractBodyHtml(reportHtml));
+      console.log('[handleExportPdf] Report HTML length:', reportHtml.length);
 
+      // Extract body content and set it in the hidden container
+      const bodyContent = extractBodyHtml(reportHtml);
+      console.log('[handleExportPdf] Setting PDF HTML in container');
+      setPdfHtml(bodyContent);
+
+      // Wait for React to render the HTML
+      await new Promise((resolve) => setTimeout(resolve, 100));
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
+      // Verify the container exists
       if (!pdfContainerRef.current) {
-        throw new Error('PDF container not available.');
+        throw new Error('PDF container not available. Please try again.');
       }
 
+      console.log('[handleExportPdf] Container ready, capturing with html2canvas...');
+
+      // Capture the HTML as a canvas
       const canvas = await html2canvas(pdfContainerRef.current, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#f1f5f9'
+        allowTaint: true,
+        backgroundColor: '#f1f5f9',
+        logging: true,
+        windowWidth: 820,
+        windowHeight: pdfContainerRef.current.scrollHeight
       });
 
+      console.log('[handleExportPdf] Canvas captured:', canvas.width, 'x', canvas.height);
+
+      // Convert canvas to PDF
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
       const pageWidth = pdf.internal.pageSize.getWidth();
@@ -485,9 +587,11 @@ export default function EmailReportSettings() {
       let heightLeft = imgHeight;
       let position = 0;
 
+      // Add first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight;
 
+      // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -495,15 +599,28 @@ export default function EmailReportSettings() {
         heightLeft -= pageHeight;
       }
 
+      // Save the PDF
       const filename = `fleet-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      console.log('[handleExportPdf] Saving PDF as:', filename);
       pdf.save(filename);
-      setSuccessMessage('PDF exported successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+
+      // Show appropriate success message
+      if (usedBackendData) {
+        setSuccessMessage('PDF exported successfully with real data!');
+      } else {
+        setSuccessMessage('PDF exported with placeholder data. Connect to live data sources for real metrics.');
+      }
+      setTimeout(() => setSuccessMessage(''), 5000);
+
+      console.log('[handleExportPdf] PDF export completed successfully');
     } catch (error) {
       console.error('[handleExportPdf] Error exporting PDF:', error);
-      alert(`Failed to export PDF. ${error.message || 'Please try again.'}`);
+      console.error('[handleExportPdf] Error stack:', error.stack);
+      alert(`Failed to export PDF: ${error.message || 'Unknown error'}. Check the console for details.`);
     } finally {
       setExportingPdf(false);
+      // Clear the PDF HTML to free up memory
+      setPdfHtml('');
     }
   };
 
@@ -889,13 +1006,16 @@ export default function EmailReportSettings() {
 
       <div
         ref={pdfContainerRef}
-        className="fixed left-0 top-0"
         style={{
+          position: 'fixed',
           width: '820px',
           padding: '24px',
           background: '#f1f5f9',
-          left: '-10000px',
-          top: 0
+          top: 0,
+          left: 0,
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -9999
         }}
         aria-hidden="true"
         dangerouslySetInnerHTML={{ __html: pdfHtml }}
