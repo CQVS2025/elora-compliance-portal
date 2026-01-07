@@ -163,7 +163,7 @@ export default function EmailReportSettings() {
   // Send email now
   const handleSendNow = async () => {
     if (!currentUser?.email) {
-      alert('User email not found');
+      alert('User email not found. Please refresh the page and try again.');
       return;
     }
 
@@ -174,19 +174,40 @@ export default function EmailReportSettings() {
 
     setSendingNow(true);
     try {
-      // Call cloud function to send email immediately
-      await base44.functions.invoke('sendEmailReport', {
+      console.log('Sending email report with params:', {
         userEmail: currentUser.email,
         reportTypes: formData.report_types,
         includeCharts: formData.include_charts,
         includeAiInsights: formData.include_ai_insights
       });
 
-      setSuccessMessage('Report sent successfully! Check your email.');
+      // Call cloud function to send email immediately
+      const result = await base44.functions.invoke('sendEmailReport', {
+        userEmail: currentUser.email,
+        reportTypes: formData.report_types,
+        includeCharts: formData.include_charts,
+        includeAiInsights: formData.include_ai_insights
+      });
+
+      console.log('Email report sent successfully:', result);
+      setSuccessMessage('Report sent successfully! Check your email inbox.');
       setTimeout(() => setSuccessMessage(''), 5000);
     } catch (error) {
-      console.error('Error sending email:', error);
-      alert('Failed to send email. Please try again or contact support.');
+      console.error('Error sending email report:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+
+      let errorMessage = 'Failed to send email. ';
+      if (error.message) {
+        errorMessage += `Error: ${error.message}`;
+      } else {
+        errorMessage += 'Please try again or contact support.';
+      }
+
+      alert(errorMessage);
     } finally {
       setSendingNow(false);
     }
