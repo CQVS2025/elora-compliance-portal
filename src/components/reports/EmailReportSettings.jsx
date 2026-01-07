@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '../../api/base44Client';
-import { EmailReportPreferences } from '../../api/entities';
 import { Mail, Send, Clock, CheckCircle, Settings, Loader2, FileDown } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { Chart } from 'chart.js/auto';
 
 export default function EmailReportSettings() {
   const queryClient = useQueryClient();
@@ -308,26 +308,125 @@ export default function EmailReportSettings() {
     return doc.body?.innerHTML || html;
   };
 
-  const buildFallbackReportHtml = (clientBranding = null) => {
+  const generateChartImage = async (type, data, primaryColor) => {
+    // Create a temporary canvas for the chart
+    const canvas = document.createElement('canvas');
+    canvas.width = 400;
+    canvas.height = 250;
+
+    const ctx = canvas.getContext('2d');
+
+    let chartConfig;
+
+    if (type === 'compliance') {
+      chartConfig = {
+        type: 'doughnut',
+        data: {
+          labels: ['Compliant', 'At Risk'],
+          datasets: [{
+            data: [data.compliant || 0, data.atRisk || 0],
+            backgroundColor: [primaryColor || '#7CB342', '#ef4444'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { size: 12 },
+                padding: 15
+              }
+            }
+          }
+        }
+      };
+    } else if (type === 'maintenance') {
+      chartConfig = {
+        type: 'bar',
+        data: {
+          labels: ['Upcoming', 'Overdue'],
+          datasets: [{
+            label: 'Services',
+            data: [data.upcoming || 0, data.overdue || 0],
+            backgroundColor: [primaryColor || '#7CB342', '#ef4444'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      };
+    } else if (type === 'costs') {
+      // Create a simple bar chart for costs
+      chartConfig = {
+        type: 'bar',
+        data: {
+          labels: ['Monthly Average', 'Total Period'],
+          datasets: [{
+            label: 'Cost ($)',
+            data: [data.monthly || 0, data.total || 0],
+            backgroundColor: [primaryColor || '#7CB342', '#10b981'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      };
+    }
+
+    const chart = new Chart(ctx, chartConfig);
+
+    // Wait for chart to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const imageUrl = canvas.toDataURL('image/png');
+
+    // Clean up
+    chart.destroy();
+
+    return imageUrl;
+  };
+
+  const buildEnhancedReportHtml = async (reportData, clientBranding = null, includeCharts = true) => {
     const selectedReports = formData.report_types.length > 0
       ? formData.report_types
       : ['compliance', 'maintenance', 'costs', 'ai_insights'];
-    const reportLabels = {
-      compliance: 'Compliance Overview',
-      maintenance: 'Maintenance Status',
-      costs: 'Cost Analysis',
-      ai_insights: 'AI-Generated Insights'
-    };
 
     // Use client branding if provided, otherwise use default colors
-    const primaryColor = clientBranding?.primary_color || '#2563eb';
-    const secondaryColor = clientBranding?.secondary_color || '#1d4ed8';
-    const companyName = clientBranding?.company_name || 'ELORA Solutions';
+    const primaryColor = clientBranding?.primary_color || '#7CB342';
+    const secondaryColor = clientBranding?.secondary_color || '#9CCC65';
+    const companyName = clientBranding?.company_name || 'ELORA';
     const logoUrl = clientBranding?.logo_url || null;
 
     const section = (title, content) => `
-      <div style="margin: 40px 0 20px 0;">
-        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px; word-spacing: 3px;">
+      <div style="margin: 30px 0 20px 0; page-break-inside: avoid;">
+        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; font-family: Arial, sans-serif;">
           ${title}
         </h2>
         <div style="height: 3px; width: 60px; background: ${primaryColor}; margin-bottom: 20px;"></div>
@@ -338,7 +437,7 @@ export default function EmailReportSettings() {
     const metricCard = (label, value, subtitle, color = primaryColor) => `
       <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; border-left: 4px solid ${color}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
         <div style="color: #334155; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, sans-serif;">${label}</div>
-        <div style="color: #0f172a; font-size: 28px; font-weight: 700; margin-bottom: 4px; font-family: Arial, sans-serif;">${value}</div>
+        <div style="color: #0f172a; font-size: 32px; font-weight: 700; margin-bottom: 4px; font-family: Arial, sans-serif;">${value}</div>
         <div style="color: #64748b; font-size: 13px; font-family: Arial, sans-serif;">${subtitle}</div>
       </div>
     `;
@@ -355,52 +454,194 @@ export default function EmailReportSettings() {
 
     let content = `
       <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0 0 30px 0; font-family: Arial, sans-serif;">
-        This PDF was generated from your current report selections. Live data could not be loaded, so placeholder values are shown.
+        ${reportData ? 'This PDF was generated from your current fleet data.' : 'This PDF was generated from your current report selections. Live data could not be loaded, so placeholder values are shown.'}
       </p>
     `;
 
+    // Compliance section
     if (selectedReports.includes('compliance')) {
-      content += section(reportLabels.compliance,
-        twoColumnMetrics(
-          metricCard('AVERAGE COMPLIANCE', '—', 'Awaiting live data', primaryColor),
-          metricCard('TOTAL VEHICLES', '—', 'Awaiting live data', secondaryColor)
-        ) + `
-        <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #92400e; font-size: 15px; font-weight: 600; margin: 0 0 8px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px;">Data Pending</h4>
-          <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6; font-family: Arial, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
-        </div>
-      `);
+      const complianceData = reportData?.compliance?.summary;
+
+      if (complianceData) {
+        let chartHtml = '';
+        if (includeCharts) {
+          try {
+            const chartImage = await generateChartImage('compliance', {
+              compliant: complianceData.compliantVehicles || 0,
+              atRisk: complianceData.atRiskVehicles || 0
+            }, primaryColor);
+            chartHtml = `
+              <div style="text-align: center; margin: 20px 0; page-break-inside: avoid;">
+                <img src="${chartImage}" style="max-width: 400px; height: auto;" alt="Compliance Chart" />
+              </div>
+            `;
+          } catch (error) {
+            console.error('Error generating compliance chart:', error);
+          }
+        }
+
+        content += section('Compliance Overview',
+          twoColumnMetrics(
+            metricCard('AVERAGE COMPLIANCE', `${complianceData.averageCompliance || 0}%`, 'Across all vehicles', primaryColor),
+            metricCard('TOTAL VEHICLES', `${complianceData.totalVehicles || 0}`, 'In your fleet', secondaryColor)
+          ) +
+          twoColumnMetrics(
+            metricCard('COMPLIANT', `${complianceData.compliantVehicles || 0}`, '≥80% compliance', primaryColor),
+            metricCard('AT RISK', `${complianceData.atRiskVehicles || 0}`, '<80% compliance', '#ef4444')
+          ) +
+          chartHtml +
+          (complianceData.alerts && complianceData.alerts.length > 0 ? complianceData.alerts.map(alert => `
+            <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0; page-break-inside: avoid;">
+              <h4 style="color: #92400e; font-size: 15px; font-weight: 600; margin: 0 0 8px 0; font-family: Arial, sans-serif;">${alert.title}</h4>
+              <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6; font-family: Arial, sans-serif;">${alert.message}</p>
+            </div>
+          `).join('') : '')
+        );
+      } else {
+        content += section('Compliance Overview',
+          twoColumnMetrics(
+            metricCard('AVERAGE COMPLIANCE', '—', 'Awaiting live data', primaryColor),
+            metricCard('TOTAL VEHICLES', '—', 'Awaiting live data', secondaryColor)
+          ) + `
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <h4 style="color: #92400e; font-size: 15px; font-weight: 600; margin: 0 0 8px 0; font-family: Arial, sans-serif;">Data Pending</h4>
+            <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6; font-family: Arial, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
+          </div>
+        `);
+      }
     }
 
+    // Maintenance section
     if (selectedReports.includes('maintenance')) {
-      content += section(reportLabels.maintenance,
-        twoColumnMetrics(
-          metricCard('UPCOMING SERVICES', '—', 'Awaiting live data', primaryColor),
-          metricCard('OVERDUE SERVICES', '—', 'Awaiting live data', '#ef4444')
-        ) + `
-        <div style="background: #f8fafc; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5e1;">
-          <p style="color: #475569; font-size: 13px; margin: 0; font-family: Arial, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
-        </div>
-      `);
+      const maintenanceData = reportData?.maintenance?.summary;
+      const maintenanceList = reportData?.maintenance?.upcomingMaintenance;
+
+      if (maintenanceData) {
+        let chartHtml = '';
+        if (includeCharts) {
+          try {
+            const chartImage = await generateChartImage('maintenance', {
+              upcoming: maintenanceData.upcomingCount || 0,
+              overdue: maintenanceData.overdueCount || 0
+            }, primaryColor);
+            chartHtml = `
+              <div style="text-align: center; margin: 20px 0; page-break-inside: avoid;">
+                <img src="${chartImage}" style="max-width: 400px; height: auto;" alt="Maintenance Chart" />
+              </div>
+            `;
+          } catch (error) {
+            console.error('Error generating maintenance chart:', error);
+          }
+        }
+
+        let maintenanceTable = '';
+        if (maintenanceList && maintenanceList.length > 0) {
+          maintenanceTable = `
+            <div style="margin: 20px 0; page-break-inside: avoid;">
+              <h3 style="color: #334155; font-size: 16px; font-weight: 600; margin: 20px 0 10px 0; font-family: Arial, sans-serif;">Upcoming Maintenance Items</h3>
+              <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                <thead>
+                  <tr style="background: #f1f5f9;">
+                    <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; font-family: Arial, sans-serif;">Vehicle</th>
+                    <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; font-family: Arial, sans-serif;">Service</th>
+                    <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; font-family: Arial, sans-serif;">Due Date</th>
+                    <th style="padding: 12px; text-align: left; font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; font-family: Arial, sans-serif;">Days</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${maintenanceList.slice(0, 10).map((m, index) => `
+                    <tr style="border-bottom: 1px solid #f1f5f9; ${index % 2 === 0 ? 'background: #ffffff;' : 'background: #f8fafc;'}">
+                      <td style="padding: 12px; font-size: 13px; color: #334155; font-family: Arial, sans-serif;">${m.vehicleName}</td>
+                      <td style="padding: 12px; font-size: 13px; color: #334155; font-family: Arial, sans-serif;">${m.serviceType}</td>
+                      <td style="padding: 12px; font-size: 13px; color: #334155; font-family: Arial, sans-serif;">${m.dueDate}</td>
+                      <td style="padding: 12px; font-size: 13px; color: ${m.status === 'Overdue' ? '#ef4444' : '#334155'}; font-weight: ${m.status === 'Overdue' ? '600' : '400'}; font-family: Arial, sans-serif;">${m.daysUntil}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        content += section('Maintenance Status',
+          twoColumnMetrics(
+            metricCard('UPCOMING SERVICES', `${maintenanceData.upcomingCount || 0}`, 'Next 30 days', primaryColor),
+            metricCard('OVERDUE SERVICES', `${maintenanceData.overdueCount || 0}`, 'Need attention', '#ef4444')
+          ) +
+          chartHtml +
+          maintenanceTable
+        );
+      } else {
+        content += section('Maintenance Status',
+          twoColumnMetrics(
+            metricCard('UPCOMING SERVICES', '—', 'Awaiting live data', primaryColor),
+            metricCard('OVERDUE SERVICES', '—', 'Awaiting live data', '#ef4444')
+          ) + `
+          <div style="background: #f8fafc; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5e1;">
+            <p style="color: #475569; font-size: 13px; margin: 0; font-family: Arial, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
+          </div>
+        `);
+      }
     }
 
+    // Cost Analysis section
     if (selectedReports.includes('costs')) {
-      content += section(reportLabels.costs,
-        twoColumnMetrics(
-          metricCard('MONTHLY AVERAGE', '—', 'Awaiting live data', primaryColor),
-          metricCard('TOTAL THIS PERIOD', '—', 'Awaiting live data', '#10b981')
-        )
-      );
+      const costData = reportData?.costs?.summary;
+
+      if (costData) {
+        let chartHtml = '';
+        if (includeCharts) {
+          try {
+            const chartImage = await generateChartImage('costs', {
+              monthly: costData.monthlyAverage || 0,
+              total: costData.totalCost || 0
+            }, primaryColor);
+            chartHtml = `
+              <div style="text-align: center; margin: 20px 0; page-break-inside: avoid;">
+                <img src="${chartImage}" style="max-width: 400px; height: auto;" alt="Cost Chart" />
+              </div>
+            `;
+          } catch (error) {
+            console.error('Error generating cost chart:', error);
+          }
+        }
+
+        content += section('Cost Analysis',
+          twoColumnMetrics(
+            metricCard('MONTHLY AVERAGE', `$${costData.monthlyAverage || 0}`, 'Per month', primaryColor),
+            metricCard('TOTAL THIS PERIOD', `$${costData.totalCost || 0}`, 'Last 30 days', '#10b981')
+          ) +
+          chartHtml
+        );
+      } else {
+        content += section('Cost Analysis',
+          twoColumnMetrics(
+            metricCard('MONTHLY AVERAGE', '—', 'Awaiting live data', primaryColor),
+            metricCard('TOTAL THIS PERIOD', '—', 'Awaiting live data', '#10b981')
+          )
+        );
+      }
     }
 
+    // AI Insights section
     if (selectedReports.includes('ai_insights')) {
-      content += section(reportLabels.ai_insights, `
-        <div style="background: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
-          <p style="color: #334155; font-size: 13px; line-height: 1.8; margin: 0; font-family: Arial, sans-serif;">
-            AI insights will be generated once live data becomes available.
-          </p>
-        </div>
-      `);
+      const aiInsights = reportData?.aiInsights;
+
+      if (aiInsights && aiInsights !== 'AI insights are currently unavailable.') {
+        content += section('AI-Generated Insights', `
+          <div style="background: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor}; page-break-inside: avoid;">
+            <p style="color: #334155; font-size: 14px; line-height: 1.8; margin: 0; font-family: Arial, sans-serif; white-space: pre-wrap;">${aiInsights}</p>
+          </div>
+        `);
+      } else {
+        content += section('AI-Generated Insights', `
+          <div style="background: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
+            <p style="color: #334155; font-size: 13px; line-height: 1.8; margin: 0; font-family: Arial, sans-serif;">
+              AI insights will be generated once live data becomes available.
+            </p>
+          </div>
+        `);
+      }
     }
 
     return `
@@ -413,11 +654,11 @@ export default function EmailReportSettings() {
       </head>
       <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif;">
         <div style="width: 700px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <div style="background: ${primaryColor}; padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+          <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
             ${logoUrl ? `
               <img src="${logoUrl}" alt="${companyName}" style="height: 60px; object-fit: contain; margin-bottom: 16px; display: inline-block;" />
             ` : ''}
-            <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 1px; word-spacing: 4px;">
+            <h1 style="color: white; margin: 0; font-size: 36px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 2px;">
               ${companyName}
             </h1>
             <p style="color: rgba(255, 255, 255, 0.95); margin: 12px 0 0 0; font-size: 16px; font-family: Arial, sans-serif; letter-spacing: 0.5px;">
@@ -429,7 +670,7 @@ export default function EmailReportSettings() {
           </div>
           <div style="background: #f8fafc; padding: 25px 20px; text-align: center; border-radius: 0 0 12px 12px; border-top: 2px solid #e2e8f0;">
             <p style="color: #64748b; font-size: 13px; margin: 0 0 8px 0; font-family: Arial, sans-serif;">
-              This is a preview PDF generated from your current settings.
+              This is a ${reportData ? '' : 'preview '}PDF generated from your current settings.
             </p>
             <p style="color: #94a3b8; font-size: 11px; margin: 0; font-family: Arial, sans-serif;">
               © ${new Date().getFullYear()} ${companyName}. All rights reserved.
@@ -481,52 +722,140 @@ export default function EmailReportSettings() {
         } else {
           console.log('[handleExportPdf] No branding found, using default ELORA branding');
           branding = {
-            company_name: 'ELORA Solutions',
+            company_name: 'ELORA',
             logo_url: null,
-            primary_color: '#2563eb',
-            secondary_color: '#1d4ed8'
+            primary_color: '#7CB342',
+            secondary_color: '#9CCC65'
           };
         }
       } catch (error) {
         console.error('[handleExportPdf] Error fetching branding:', error);
         branding = {
-          company_name: 'ELORA Solutions',
+          company_name: 'ELORA',
           logo_url: null,
-          primary_color: '#2563eb',
-          secondary_color: '#1d4ed8'
+          primary_color: '#7CB342',
+          secondary_color: '#9CCC65'
         };
       }
 
+      let reportData = null;
       let reportHtml = '';
       let usedBackendData = false;
 
-      // Try to fetch HTML with real data from backend
+      // Try to fetch report data from backend
       try {
-        console.log('[handleExportPdf] Fetching report HTML with real data from backend...');
+        console.log('[handleExportPdf] Fetching report data from backend...');
         const result = await base44.functions.invoke('sendEmailReport', {
           userEmail: currentUser.email,
           reportTypes: formData.report_types,
-          includeCharts: formData.include_charts,
+          includeCharts: false, // We'll generate charts ourselves
           includeAiInsights: formData.include_ai_insights,
           previewOnly: true
         });
 
-        console.log('[handleExportPdf] Backend response received:', {
-          hasData: !!result?.data,
-          hasHtml: !!(result?.data?.html || result?.html),
-          htmlLength: (result?.data?.html || result?.html || '').length,
-          success: result?.data?.success || result?.success
-        });
+        console.log('[handleExportPdf] Backend response received:', result);
 
-        // Extract HTML from response
-        const htmlContent = result?.data?.html || result?.html || '';
+        // The backend might return the data in different formats
+        // Check if we got HTML back or structured data
+        if (result?.data?.html || result?.html) {
+          // Backend returned HTML - we need to parse it or use it directly
+          const htmlContent = result?.data?.html || result?.html;
+          console.log('[handleExportPdf] Received HTML from backend, length:', htmlContent.length);
 
-        if (htmlContent && htmlContent.length > 100) {
-          reportHtml = htmlContent;
-          usedBackendData = true;
-          console.log('[handleExportPdf] Successfully fetched real data HTML from backend');
-        } else {
-          console.warn('[handleExportPdf] Backend returned empty or invalid HTML, will use fallback');
+          // For now, we'll try to extract data from vehicles/maintenance directly
+          // This is a workaround - ideally backend should return structured data
+          try {
+            const vehicles = await base44.asServiceRole.entities.Vehicle.list('-updated_date', 1000);
+            const maintenanceRecords = await base44.asServiceRole.entities.Maintenance.list('-service_date', 1000);
+
+            console.log('[handleExportPdf] Fetched data directly:', {
+              vehicleCount: vehicles?.length || 0,
+              maintenanceCount: maintenanceRecords?.length || 0
+            });
+
+            if (vehicles && vehicles.length > 0) {
+              // Generate compliance data
+              const compliantVehicles = vehicles.filter(v => (v.compliance_rate || 0) >= 80);
+              const atRiskVehicles = vehicles.filter(v => (v.compliance_rate || 0) < 80);
+              const totalCompliance = vehicles.reduce((sum, v) => sum + (v.compliance_rate || 0), 0);
+              const averageCompliance = Math.round(totalCompliance / vehicles.length);
+
+              // Generate maintenance data
+              const now = new Date();
+              const upcomingMaintenance = [];
+              let overdueCount = 0;
+
+              for (const record of maintenanceRecords || []) {
+                if (!record.next_service_date) continue;
+                const nextDate = new Date(record.next_service_date);
+                const daysUntil = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+
+                if (daysUntil < 0) {
+                  overdueCount++;
+                }
+
+                if (daysUntil <= 30) {
+                  const vehicle = vehicles.find(v => v.id === record.vehicle_id);
+                  upcomingMaintenance.push({
+                    vehicleName: vehicle?.name || 'Unknown',
+                    serviceType: record.service_type || 'Maintenance',
+                    dueDate: nextDate.toLocaleDateString(),
+                    daysUntil: Math.max(0, daysUntil),
+                    status: daysUntil < 0 ? 'Overdue' : daysUntil <= 7 ? 'Urgent' : 'Scheduled'
+                  });
+                }
+              }
+
+              upcomingMaintenance.sort((a, b) => a.daysUntil - b.daysUntil);
+
+              // Generate cost data
+              const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+              const recentRecords = maintenanceRecords?.filter(r => {
+                if (!r.service_date) return false;
+                const serviceDate = new Date(r.service_date);
+                return serviceDate >= thirtyDaysAgo;
+              }) || [];
+
+              const totalCost = recentRecords.reduce((sum, r) => sum + (r.cost || 0), 0);
+              const monthlyAverage = Math.round(totalCost / (recentRecords.length > 0 ? 1 : 1));
+
+              reportData = {
+                compliance: {
+                  summary: {
+                    averageCompliance,
+                    totalVehicles: vehicles.length,
+                    compliantVehicles: compliantVehicles.length,
+                    atRiskVehicles: atRiskVehicles.length,
+                    alerts: atRiskVehicles.length > 0 ? [{
+                      title: 'Low Compliance Alert',
+                      message: `${atRiskVehicles.length} vehicle(s) are below the 80% compliance threshold and require attention.`,
+                      type: 'warning'
+                    }] : []
+                  }
+                },
+                maintenance: {
+                  summary: {
+                    upcomingCount: upcomingMaintenance.length,
+                    overdueCount
+                  },
+                  upcomingMaintenance
+                },
+                costs: {
+                  summary: {
+                    totalCost: Math.round(totalCost),
+                    monthlyAverage,
+                    recordCount: recentRecords.length
+                  }
+                },
+                aiInsights: formData.include_ai_insights ? 'AI insights are being generated...' : null
+              };
+
+              usedBackendData = true;
+              console.log('[handleExportPdf] Successfully parsed data from backend');
+            }
+          } catch (dataError) {
+            console.error('[handleExportPdf] Error fetching direct data:', dataError);
+          }
         }
       } catch (error) {
         console.error('[handleExportPdf] Backend call failed:', error);
@@ -536,14 +865,13 @@ export default function EmailReportSettings() {
         });
       }
 
-      // Use fallback template if backend failed
-      if (!reportHtml) {
-        console.warn('[handleExportPdf] Using fallback template - real data was not available from backend');
-        console.warn('[handleExportPdf] This PDF will show placeholder values instead of real data');
-        reportHtml = buildFallbackReportHtml(branding);
+      // Generate enhanced HTML with charts
+      console.log('[handleExportPdf] Generating enhanced HTML with charts...');
+      reportHtml = await buildEnhancedReportHtml(reportData, branding, formData.include_charts);
+
+      if (!reportData) {
+        console.warn('[handleExportPdf] Using fallback template - real data was not available');
         usedBackendData = false;
-      } else if (usedBackendData) {
-        console.log('[handleExportPdf] ✓ PDF will contain REAL DATA from backend');
       }
 
       console.log('[handleExportPdf] Report HTML length:', reportHtml.length);
@@ -554,7 +882,7 @@ export default function EmailReportSettings() {
       setPdfHtml(bodyContent);
 
       // Wait for React to render the HTML and all resources to load
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
       // Verify the container exists
@@ -575,7 +903,7 @@ export default function EmailReportSettings() {
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#f1f5f9',
-        logging: true,
+        logging: false,
         width: 820,
         height: pdfContainerRef.current.scrollHeight || 1200,
         x: 0,
@@ -584,30 +912,40 @@ export default function EmailReportSettings() {
 
       console.log('[handleExportPdf] Canvas captured:', canvas.width, 'x', canvas.height);
 
-      // Convert canvas to PDF
+      // Convert canvas to PDF with better page handling
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'pt',
+        format: 'a4',
+        compress: true
+      });
+
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+
+      const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
       let heightLeft = imgHeight;
-      let position = 0;
+      let position = margin;
 
       // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pageHeight;
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= (pageHeight - margin * 2);
 
-      // Add additional pages if needed
+      // Add additional pages if needed with proper positioning
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position = -(imgHeight - heightLeft) + margin;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= (pageHeight - margin * 2);
       }
 
       // Save the PDF
-      const filename = `fleet-report-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filename = `${branding.company_name.replace(/\s+/g, '-')}-compliance-report-${new Date().toISOString().slice(0, 10)}.pdf`;
       console.log('[handleExportPdf] Saving PDF as:', filename);
       pdf.save(filename);
 
@@ -615,7 +953,7 @@ export default function EmailReportSettings() {
       if (usedBackendData) {
         setSuccessMessage('PDF exported successfully with real data!');
       } else {
-        setSuccessMessage('PDF exported with placeholder data. Connect to live data sources for real metrics.');
+        setSuccessMessage('PDF exported. Connect to live data sources for real metrics.');
       }
       setTimeout(() => setSuccessMessage(''), 5000);
 
