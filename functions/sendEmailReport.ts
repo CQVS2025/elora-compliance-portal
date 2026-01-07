@@ -134,7 +134,14 @@ Deno.serve(async (req) => {
     const emailHTML = generateEmailHTML(reports, branding, userEmail);
 
     // Send email using Resend
-    console.log('Attempting to send email to:', userEmail);
+    console.log('Attempting to send email via Resend to:', userEmail);
+    console.log('Resend config:', {
+      from: 'Jonny <jonny@elora.com.au>',
+      to: userEmail,
+      hasHtmlContent: !!emailHTML,
+      htmlLength: emailHTML.length
+    });
+
     try {
       const emailResult = await resend.emails.send({
         from: 'Jonny <jonny@elora.com.au>',
@@ -143,45 +150,94 @@ Deno.serve(async (req) => {
         html: emailHTML
       });
 
-      console.log('Email sent successfully to:', userEmail, 'Result:', emailResult);
+      console.log('Resend API response:', JSON.stringify(emailResult, null, 2));
 
-      // Update last_sent timestamp if this is a scheduled send
-      try {
-        const prefs = await base44.asServiceRole.entities.EmailReportPreferences.filter({
-          user_email: userEmail
-        });
+      // Check if the response indicates success
+      if (emailResult && emailResult.id) {
+        console.log('Email sent successfully! Resend ID:', emailResult.id);
 
-        if (prefs && prefs.length > 0) {
-          await base44.asServiceRole.entities.EmailReportPreferences.update(prefs[0].id, {
-            last_sent: now.toISOString()
+        // Update last_sent timestamp if this is a scheduled send
+        try {
+          const prefs = await base44.asServiceRole.entities.EmailReportPreferences.filter({
+            user_email: userEmail
           });
+
+          if (prefs && prefs.length > 0) {
+            await base44.asServiceRole.entities.EmailReportPreferences.update(prefs[0].id, {
+              last_sent: now.toISOString()
+            });
+          }
+        } catch (error) {
+          console.error('Error updating last_sent:', error);
         }
-      } catch (error) {
-        console.error('Error updating last_sent:', error);
+
+        return new Response(JSON.stringify({
+          success: true,
+          message: 'Email report sent successfully',
+          recipient: userEmail,
+          resendId: emailResult.id
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      } else {
+        // No error thrown but no ID returned - unexpected response
+        console.error('Unexpected Resend response - no email ID:', emailResult);
+        return new Response(JSON.stringify({
+          error: 'Email sending failed - unexpected response from email service',
+          details: 'The email service did not confirm the email was sent. Please check your Resend dashboard.',
+          response: emailResult
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+    } catch (emailError) {
+      console.error('Resend API error:', emailError);
+      console.error('Error details:', {
+        message: emailError.message,
+        stack: emailError.stack,
+        name: emailError.name,
+        cause: emailError.cause
+      });
+
+      // Parse Resend error for helpful messages
+      let errorMessage = 'Failed to send email';
+      let errorDetails = emailError.message;
+      let statusCode = 500;
+
+      // Check for common Resend errors
+      if (emailError.message) {
+        const msg = emailError.message.toLowerCase();
+
+        if (msg.includes('domain') || msg.includes('verify') || msg.includes('dns')) {
+          errorMessage = 'Email domain not verified';
+          errorDetails = 'The domain elora.com.au needs to be verified in Resend. Please verify the domain and add DNS records in your Resend dashboard.';
+          statusCode = 403;
+        } else if (msg.includes('api key') || msg.includes('unauthorized') || msg.includes('authentication')) {
+          errorMessage = 'Email service authentication failed';
+          errorDetails = 'The Resend API key appears to be invalid or expired. Please check your Resend API key configuration.';
+          statusCode = 401;
+        } else if (msg.includes('rate limit') || msg.includes('quota')) {
+          errorMessage = 'Email rate limit exceeded';
+          errorDetails = 'You have exceeded your Resend email sending quota. Please check your Resend dashboard.';
+          statusCode = 429;
+        } else if (msg.includes('invalid email') || msg.includes('recipient')) {
+          errorMessage = 'Invalid email address';
+          errorDetails = `The recipient email address "${userEmail}" appears to be invalid.`;
+          statusCode = 400;
+        }
       }
 
       return new Response(JSON.stringify({
-        success: true,
-        message: 'Email report sent successfully',
-        recipient: userEmail
+        error: errorMessage,
+        details: errorDetails,
+        userEmail: userEmail,
+        technicalDetails: emailError.message,
+        hint: 'Check the Resend dashboard at https://resend.com/emails for more details'
       }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-    } catch (emailError) {
-      console.error('Error sending email:', emailError);
-      console.error('Email error details:', {
-        message: emailError.message,
-        stack: emailError.stack,
-        name: emailError.name
-      });
-      return new Response(JSON.stringify({
-        error: 'Failed to send email',
-        details: emailError.message,
-        userEmail: userEmail
-      }), {
-        status: 500,
+        status: statusCode,
         headers: { 'Content-Type': 'application/json' }
       });
     }
