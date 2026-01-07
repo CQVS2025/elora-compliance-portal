@@ -154,6 +154,7 @@ Deno.serve(async (req) => {
       if (userPrefs?.email_notifications_enabled) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
+            from: 'noreply@elora.com.au',
             to: notification.user_email,
             subject: notification.title,
             body: `${notification.message}\n\nThis is an automated notification from Fleet Compliance Portal.`
