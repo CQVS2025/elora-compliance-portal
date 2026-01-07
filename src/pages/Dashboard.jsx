@@ -43,6 +43,7 @@ import WashAnalytics from '@/components/dashboard/WashAnalytics';
 import VehiclePerformanceChart from '@/components/dashboard/VehiclePerformanceChart';
 import SiteManagement from '@/components/sites/SiteManagement';
 import ReportsDashboard from '@/components/reports/ReportsDashboard';
+import EmailReportSettings from '@/components/reports/EmailReportSettings';
 import RoleManagement from '@/components/admin/RoleManagement';
 import MultiTenantConfig from '@/components/admin/MultiTenantConfig';
 import UsageCosts from '@/components/costs/UsageCosts';
@@ -73,6 +74,7 @@ export default function Dashboard() {
       { value: 'devices', label: 'Device Health' },
       { value: 'sites', label: 'Sites' },
       { value: 'reports', label: 'Reports' },
+      { value: 'email-reports', label: 'Email Reports' },
       { value: 'users', label: 'Users' }
     ];
 
@@ -507,6 +509,10 @@ export default function Dashboard() {
 
           <TabsContent value="reports" className="mt-6">
             <ReportsDashboard vehicles={filteredVehicles} scans={scans} />
+          </TabsContent>
+
+          <TabsContent value="email-reports" className="mt-6">
+            <EmailReportSettings />
           </TabsContent>
 
           <TabsContent value="users" className="mt-6">

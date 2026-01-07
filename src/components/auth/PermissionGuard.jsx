@@ -10,7 +10,7 @@ const USER_SPECIFIC_CONFIG = {
     showAllData: false, // Only show data for restricted customer
     defaultSite: 'all',
     hiddenTabs: ['costs', 'refills', 'devices', 'sites'],
-    visibleTabs: ['compliance', 'maintenance', 'reports']
+    visibleTabs: ['compliance', 'maintenance', 'reports', 'email-reports']
   }
   // Add more user-specific restrictions as needed
 };
@@ -22,14 +22,14 @@ const DOMAIN_CONFIG = {
     defaultCustomer: 'all', // or specific customer ID/name
     defaultSite: 'all',
     hiddenTabs: [], // e.g., ['users', 'sites'] to hide tabs
-    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'email-reports', 'users']
   },
   'heidelberg.com.au': {
     showAllData: true,
     defaultCustomer: 'all',
     defaultSite: 'all',
     hiddenTabs: [],
-    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'users']
+    visibleTabs: ['compliance', 'maintenance', 'costs', 'refills', 'devices', 'sites', 'reports', 'email-reports', 'users']
   }
   // Add more domains as needed
 };
