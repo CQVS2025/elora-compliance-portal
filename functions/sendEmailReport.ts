@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
         from: 'noreply@elora.com.au',
         to: userEmail,
         subject: `${branding.company_name} - Fleet Compliance Report`,
-        html: emailHTML
+        body: emailHTML
       });
 
       console.log('Email sent successfully to:', userEmail);
