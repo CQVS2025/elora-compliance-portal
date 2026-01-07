@@ -323,66 +323,76 @@ export default function EmailReportSettings() {
 
     const section = (title, content) => `
       <div style="margin: 40px 0 20px 0;">
-        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <h2 style="color: #0f172a; font-size: 24px; font-weight: 700; margin: 0 0 12px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px; word-spacing: 3px;">
           ${title}
         </h2>
-        <div style="height: 3px; width: 60px; background: linear-gradient(90deg, ${primaryColor} 0%, ${secondaryColor} 100%); border-radius: 2px; margin-top: 12px;"></div>
+        <div style="height: 3px; width: 60px; background: ${primaryColor}; margin-bottom: 20px;"></div>
       </div>
       ${content}
     `;
 
     const metricCard = (label, value, subtitle, color = primaryColor) => `
-      <div style="background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-left: 4px solid ${color};">
-        <h3 style="color: #334155; font-size: 14px; font-weight: 600; margin: 0 0 8px 0; text-transform: uppercase; letter-spacing: 0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${label}</h3>
-        <p style="color: #0f172a; font-size: 32px; font-weight: 700; margin: 0 0 4px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${value}</p>
-        <p style="color: #64748b; font-size: 14px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${subtitle}</p>
+      <div style="background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px; border-left: 4px solid ${color}; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+        <div style="color: #334155; font-size: 12px; font-weight: 600; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-family: Arial, sans-serif;">${label}</div>
+        <div style="color: #0f172a; font-size: 28px; font-weight: 700; margin-bottom: 4px; font-family: Arial, sans-serif;">${value}</div>
+        <div style="color: #64748b; font-size: 13px; font-family: Arial, sans-serif;">${subtitle}</div>
       </div>
     `;
 
+    const twoColumnMetrics = (leftCard, rightCard) => `
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
+        <tr>
+          <td width="48%" style="vertical-align: top;">${leftCard}</td>
+          <td width="4%"></td>
+          <td width="48%" style="vertical-align: top;">${rightCard}</td>
+        </tr>
+      </table>
+    `;
+
     let content = `
-      <p style="color: #64748b; font-size: 16px; line-height: 1.6; margin: 0 0 30px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0 0 30px 0; font-family: Arial, sans-serif;">
         This PDF was generated from your current report selections. Live data could not be loaded, so placeholder values are shown.
       </p>
     `;
 
     if (selectedReports.includes('compliance')) {
-      content += section(reportLabels.compliance, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Average Compliance', '—', 'Awaiting live data')}
-          ${metricCard('Total Vehicles', '—', 'Awaiting live data', secondaryColor)}
-        </div>
+      content += section(reportLabels.compliance,
+        twoColumnMetrics(
+          metricCard('AVERAGE COMPLIANCE', '—', 'Awaiting live data', primaryColor),
+          metricCard('TOTAL VEHICLES', '—', 'Awaiting live data', secondaryColor)
+        ) + `
         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h4 style="color: #92400e; font-size: 16px; font-weight: 600; margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Data Pending</h4>
-          <p style="color: #92400e; font-size: 14px; margin: 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
+          <h4 style="color: #92400e; font-size: 15px; font-weight: 600; margin: 0 0 8px 0; font-family: Arial, sans-serif; letter-spacing: 0.3px;">Data Pending</h4>
+          <p style="color: #92400e; font-size: 13px; margin: 0; line-height: 1.6; font-family: Arial, sans-serif;">Connect to live data sources to populate compliance metrics.</p>
         </div>
       `);
     }
 
     if (selectedReports.includes('maintenance')) {
-      content += section(reportLabels.maintenance, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Upcoming Services', '—', 'Awaiting live data')}
-          ${metricCard('Overdue Services', '—', 'Awaiting live data', '#ef4444')}
-        </div>
-        <div style="background: #f8fafc; border-radius: 12px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5f5;">
-          <p style="color: #475569; font-size: 14px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
+      content += section(reportLabels.maintenance,
+        twoColumnMetrics(
+          metricCard('UPCOMING SERVICES', '—', 'Awaiting live data', primaryColor),
+          metricCard('OVERDUE SERVICES', '—', 'Awaiting live data', '#ef4444')
+        ) + `
+        <div style="background: #f8fafc; border-radius: 8px; padding: 18px; margin: 20px 0; border: 1px dashed #cbd5e1;">
+          <p style="color: #475569; font-size: 13px; margin: 0; font-family: Arial, sans-serif;">Maintenance items will appear here once data syncing is complete.</p>
         </div>
       `);
     }
 
     if (selectedReports.includes('costs')) {
-      content += section(reportLabels.costs, `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px;">
-          ${metricCard('Monthly Average', '—', 'Awaiting live data')}
-          ${metricCard('Total This Period', '—', 'Awaiting live data', '#10b981')}
-        </div>
-      `);
+      content += section(reportLabels.costs,
+        twoColumnMetrics(
+          metricCard('MONTHLY AVERAGE', '—', 'Awaiting live data', primaryColor),
+          metricCard('TOTAL THIS PERIOD', '—', 'Awaiting live data', '#10b981')
+        )
+      );
     }
 
     if (selectedReports.includes('ai_insights')) {
       content += section(reportLabels.ai_insights, `
-        <div style="background: #f8fafc; border-radius: 12px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
-          <p style="color: #334155; font-size: 14px; line-height: 1.8; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+        <div style="background: #f8fafc; border-radius: 8px; padding: 24px; margin: 20px 0; border-left: 4px solid ${primaryColor};">
+          <p style="color: #334155; font-size: 13px; line-height: 1.8; margin: 0; font-family: Arial, sans-serif;">
             AI insights will be generated once live data becomes available.
           </p>
         </div>
@@ -397,24 +407,24 @@ export default function EmailReportSettings() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Fleet Compliance Report</title>
       </head>
-      <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-        <div style="max-width: 680px; margin: 40px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 700; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <body style="margin: 0; padding: 0; background: #f1f5f9; font-family: Arial, sans-serif;">
+        <div style="width: 700px; margin: 30px auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <div style="background: ${primaryColor}; padding: 40px 20px; text-align: center; border-radius: 12px 12px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 32px; font-weight: 700; font-family: Arial, sans-serif; letter-spacing: 1px; word-spacing: 4px;">
               ELORA Solutions
             </h1>
-            <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <p style="color: rgba(255, 255, 255, 0.95); margin: 12px 0 0 0; font-size: 16px; font-family: Arial, sans-serif; letter-spacing: 0.5px;">
               Compliance Portal Report
             </p>
           </div>
-          <div style="padding: 40px 30px;">
+          <div style="padding: 40px 35px;">
             ${content}
           </div>
-          <div style="background: #f8fafc; padding: 30px 20px; text-align: center; border-radius: 0 0 12px 12px; margin-top: 40px; border-top: 2px solid #e2e8f0;">
-            <p style="color: #64748b; font-size: 14px; margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+          <div style="background: #f8fafc; padding: 25px 20px; text-align: center; border-radius: 0 0 12px 12px; border-top: 2px solid #e2e8f0;">
+            <p style="color: #64748b; font-size: 13px; margin: 0 0 8px 0; font-family: Arial, sans-serif;">
               This is a preview PDF generated from your current settings.
             </p>
-            <p style="color: #94a3b8; font-size: 12px; margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <p style="color: #94a3b8; font-size: 11px; margin: 0; font-family: Arial, sans-serif;">
               © ${new Date().getFullYear()} ELORA Solutions. All rights reserved.
             </p>
           </div>
