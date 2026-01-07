@@ -46,7 +46,10 @@ export default function EmailReportSettings() {
           frequency: 'weekly',
           report_types: [],
           include_charts: true,
-          include_ai_insights: true
+          include_ai_insights: true,
+          scheduled_time: '09:00',
+          scheduled_day_of_week: 1,
+          scheduled_day_of_month: 1
         };
       } catch (error) {
         console.error('Error fetching preferences:', error);
@@ -62,7 +65,10 @@ export default function EmailReportSettings() {
     frequency: 'weekly',
     report_types: [],
     include_charts: true,
-    include_ai_insights: true
+    include_ai_insights: true,
+    scheduled_time: '09:00',
+    scheduled_day_of_week: 1, // Monday
+    scheduled_day_of_month: 1
   });
 
   // Update form when preferences load
@@ -73,7 +79,10 @@ export default function EmailReportSettings() {
         frequency: preferences.frequency || 'weekly',
         report_types: preferences.report_types || [],
         include_charts: preferences.include_charts !== false,
-        include_ai_insights: preferences.include_ai_insights !== false
+        include_ai_insights: preferences.include_ai_insights !== false,
+        scheduled_time: preferences.scheduled_time || '09:00',
+        scheduled_day_of_week: preferences.scheduled_day_of_week ?? 1,
+        scheduled_day_of_month: preferences.scheduled_day_of_month || 1
       });
     }
   }, [preferences]);
@@ -120,8 +129,11 @@ export default function EmailReportSettings() {
         report_types: formData.report_types,
         include_charts: formData.include_charts,
         include_ai_insights: formData.include_ai_insights,
+        scheduled_time: formData.scheduled_time,
+        scheduled_day_of_week: formData.scheduled_day_of_week,
+        scheduled_day_of_month: formData.scheduled_day_of_month,
         last_sent: preferences?.last_sent || null,
-        next_scheduled: calculateNextScheduled(formData.frequency)
+        next_scheduled: calculateNextScheduled(formData.frequency, formData.scheduled_time, formData.scheduled_day_of_week, formData.scheduled_day_of_month)
       };
 
       if (preferences?.id) {
@@ -144,20 +156,47 @@ export default function EmailReportSettings() {
   };
 
   // Calculate next scheduled date based on frequency
-  const calculateNextScheduled = (frequency) => {
+  const calculateNextScheduled = (frequency, scheduledTime = '09:00', dayOfWeek = 1, dayOfMonth = 1) => {
     const now = new Date();
+    const [hours, minutes] = scheduledTime.split(':').map(Number);
+
+    let nextDate = new Date();
+
     switch (frequency) {
       case 'daily':
-        now.setDate(now.getDate() + 1);
+        nextDate.setHours(hours, minutes, 0, 0);
+        // If the time has passed today, schedule for tomorrow
+        if (nextDate <= now) {
+          nextDate.setDate(nextDate.getDate() + 1);
+        }
         break;
+
       case 'weekly':
-        now.setDate(now.getDate() + 7);
+        nextDate.setHours(hours, minutes, 0, 0);
+        // Set to the specified day of week
+        const currentDay = nextDate.getDay();
+        const daysUntilTarget = (dayOfWeek - currentDay + 7) % 7;
+        nextDate.setDate(nextDate.getDate() + daysUntilTarget);
+
+        // If that's today but the time has passed, schedule for next week
+        if (nextDate <= now) {
+          nextDate.setDate(nextDate.getDate() + 7);
+        }
         break;
+
       case 'monthly':
-        now.setMonth(now.getMonth() + 1);
+        nextDate.setHours(hours, minutes, 0, 0);
+        nextDate.setDate(dayOfMonth);
+
+        // If the day is in the past this month, schedule for next month
+        if (nextDate <= now) {
+          nextDate.setMonth(nextDate.getMonth() + 1);
+          nextDate.setDate(dayOfMonth);
+        }
         break;
     }
-    return now.toISOString();
+
+    return nextDate.toISOString();
   };
 
   // Send email now
@@ -274,7 +313,7 @@ export default function EmailReportSettings() {
           <Clock className="w-5 h-5 text-slate-600" />
           <h2 className="text-lg font-semibold text-slate-800">Report Frequency</h2>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           {['daily', 'weekly', 'monthly'].map((freq) => (
             <button
               key={freq}
@@ -290,6 +329,96 @@ export default function EmailReportSettings() {
               </div>
             </button>
           ))}
+        </div>
+
+        {/* Scheduling Options */}
+        <div className="pt-6 border-t border-slate-200 space-y-4">
+          <h3 className="text-md font-semibold text-slate-700 mb-3">Schedule Details</h3>
+
+          {/* Time Picker (all frequencies) */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+              Time of Day:
+            </label>
+            <input
+              type="time"
+              value={formData.scheduled_time}
+              onChange={(e) => setFormData(prev => ({ ...prev, scheduled_time: e.target.value }))}
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+            />
+            <span className="text-sm text-slate-500">
+              Reports will be sent at this time
+            </span>
+          </div>
+
+          {/* Day of Week Picker (weekly only) */}
+          {formData.frequency === 'weekly' && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+                Day of Week:
+              </label>
+              <select
+                value={formData.scheduled_day_of_week}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_day_of_week: Number(e.target.value) }))}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+              >
+                <option value={0}>Sunday</option>
+                <option value={1}>Monday</option>
+                <option value={2}>Tuesday</option>
+                <option value={3}>Wednesday</option>
+                <option value={4}>Thursday</option>
+                <option value={5}>Friday</option>
+                <option value={6}>Saturday</option>
+              </select>
+              <span className="text-sm text-slate-500">
+                Weekly reports will be sent on this day
+              </span>
+            </div>
+          )}
+
+          {/* Day of Month Picker (monthly only) */}
+          {formData.frequency === 'monthly' && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <label className="text-sm font-medium text-slate-600 min-w-[100px]">
+                Day of Month:
+              </label>
+              <select
+                value={formData.scheduled_day_of_month}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_day_of_month: Number(e.target.value) }))}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-elora-primary focus:border-transparent"
+              >
+                {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+              <span className="text-sm text-slate-500">
+                Monthly reports will be sent on this day
+              </span>
+            </div>
+          )}
+
+          {/* Preview of next scheduled time */}
+          {formData.enabled && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Next scheduled report:</strong>{' '}
+                {new Date(calculateNextScheduled(
+                  formData.frequency,
+                  formData.scheduled_time,
+                  formData.scheduled_day_of_week,
+                  formData.scheduled_day_of_month
+                )).toLocaleString('en-US', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -390,7 +519,7 @@ export default function EmailReportSettings() {
 
         <button
           onClick={handleSendNow}
-          disabled={sendingNow || formData.report_types.length === 0}
+          disabled={sendingNow || !currentUser?.email || formData.report_types.length === 0}
           className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-4 px-6 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
         >
           {sendingNow ? (
