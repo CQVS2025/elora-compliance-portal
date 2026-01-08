@@ -608,7 +608,11 @@ export default function Dashboard() {
       )}
 
       {/* Onboarding Wizard - First Time User Experience */}
-      <OnboardingWizard userEmail={permissions.user?.email} />
+      <OnboardingWizard
+        userEmail={permissions.user?.email}
+        userName="Rebekah Sharp"
+        companyName="Heidelberg Materials"
+      />
     </div>
   );
 }

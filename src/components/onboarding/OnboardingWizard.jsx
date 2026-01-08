@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronRight, ChevronLeft, Check, Rocket, Target, Bell, Layout } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-const ONBOARDING_STEPS = [
+const getOnboardingSteps = (userName, companyName) => [
   {
     id: 'welcome',
-    title: 'Welcome to Your Compliance Portal',
+    title: `Welcome, ${userName}!`,
     description: 'Let\'s get you started with a quick tour',
     icon: Rocket,
     content: ({ onNext }) => (
@@ -15,10 +15,11 @@ const ONBOARDING_STEPS = [
           <Rocket className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-2xl font-bold text-slate-800">
-          Welcome to Your Fleet Compliance Portal
+          Welcome to {companyName}'s Fleet Compliance Portal
         </h2>
         <p className="text-slate-600 max-w-md mx-auto">
-          Track vehicle wash compliance, manage maintenance, and monitor your entire fleet - all in one place.
+          Hi {userName}! We're excited to have you here. This portal will help you track vehicle wash compliance,
+          manage maintenance, and monitor your entire fleet - all in one place.
         </p>
         <div className="grid grid-cols-3 gap-4 mt-8">
           <div className="p-4 bg-slate-50 rounded-lg">
@@ -44,7 +45,10 @@ const ONBOARDING_STEPS = [
     icon: Layout,
     content: () => (
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-slate-800">Dashboard Features</h3>
+        <h3 className="text-xl font-semibold text-slate-800">Your {companyName} Dashboard</h3>
+        <p className="text-slate-600">
+          Everything you need to monitor vehicle wash compliance and maintain fleet standards.
+        </p>
         <div className="space-y-3">
           <div className="flex gap-3 p-3 bg-slate-50 rounded-lg">
             <div className="w-10 h-10 bg-[#7CB342] rounded-lg flex items-center justify-center flex-shrink-0">
@@ -52,7 +56,7 @@ const ONBOARDING_STEPS = [
             </div>
             <div>
               <div className="font-medium text-slate-800">Fleet Overview</div>
-              <div className="text-sm text-slate-600">See compliance rates and wash statistics at a glance</div>
+              <div className="text-sm text-slate-600">Monitor compliance rates and wash statistics for all {companyName} vehicles</div>
             </div>
           </div>
           <div className="flex gap-3 p-3 bg-slate-50 rounded-lg">
@@ -60,8 +64,8 @@ const ONBOARDING_STEPS = [
               <Check className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-medium text-slate-800">Vehicle Tables</div>
-              <div className="text-sm text-slate-600">Filter, search, and manage all your vehicles</div>
+              <div className="font-medium text-slate-800">Recent Activity Feed</div>
+              <div className="text-sm text-slate-600">Stay updated with real-time vehicle wash events and maintenance activities</div>
             </div>
           </div>
           <div className="flex gap-3 p-3 bg-slate-50 rounded-lg">
@@ -69,8 +73,8 @@ const ONBOARDING_STEPS = [
               <Check className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="font-medium text-slate-800">Analytics Charts</div>
-              <div className="text-sm text-slate-600">Visualize trends and performance over time</div>
+              <div className="font-medium text-slate-800">Analytics & Reports</div>
+              <div className="text-sm text-slate-600">Generate detailed reports and visualize trends over time</div>
             </div>
           </div>
         </div>
@@ -123,9 +127,10 @@ const ONBOARDING_STEPS = [
     icon: Bell,
     content: () => (
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-slate-800">Never Miss Important Updates</h3>
+        <h3 className="text-xl font-semibold text-slate-800">You're All Set, {userName}!</h3>
         <p className="text-slate-600">
-          Customize your email digest preferences to receive updates on your schedule.
+          The {companyName} fleet is now at your fingertips. Customize your email digest preferences
+          to receive updates on your schedule.
         </p>
         <div className="grid grid-cols-2 gap-3">
           <div className="p-4 border-2 border-slate-200 rounded-lg">
@@ -137,10 +142,11 @@ const ONBOARDING_STEPS = [
             <div className="text-sm text-slate-600">Perfect for executive overview</div>
           </div>
         </div>
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-          <div className="font-medium text-blue-900 mb-1">Customize in Settings</div>
-          <div className="text-sm text-blue-700">
-            Visit Email Digest Preferences to choose what you want to receive and when.
+        <div className="bg-gradient-to-r from-[#7CB342] to-[#9CCC65] rounded-lg p-5 text-white">
+          <div className="font-semibold mb-2 text-lg">Ready to Start Tracking!</div>
+          <div className="text-sm text-white/90">
+            Click "Get Started" to begin managing {companyName}'s vehicle compliance.
+            Visit the Users → Email Digest tab to customize your notification preferences anytime.
           </div>
         </div>
       </div>
@@ -148,16 +154,21 @@ const ONBOARDING_STEPS = [
   }
 ];
 
-export default function OnboardingWizard({ userEmail, onComplete }) {
+export default function OnboardingWizard({ userEmail, userName = 'User', companyName = 'Your Company', onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
+
+  const ONBOARDING_STEPS = getOnboardingSteps(userName, companyName);
 
   useEffect(() => {
     // Check if user has completed onboarding
     const onboardingKey = `onboarding_completed_${userEmail}`;
     const completed = localStorage.getItem(onboardingKey);
 
-    if (!completed) {
+    // Force show for jonny@elora.com.au (for demo purposes)
+    const forceShowForUser = userEmail === 'jonny@elora.com.au';
+
+    if (!completed || forceShowForUser) {
       setShowWizard(true);
     }
   }, [userEmail]);
