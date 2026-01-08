@@ -419,34 +419,38 @@ export default function Dashboard() {
 
 
 
-        {/* Cost Forecast */}
-        <CostForecast 
-          scans={scans}
-          selectedCustomer={selectedCustomer}
-          selectedSite={selectedSite}
-        />
+        {/* Cost Forecast - Hidden for restricted users */}
+        {!userConfig?.hideCostForecast && (
+          <CostForecast
+            scans={scans}
+            selectedCustomer={selectedCustomer}
+            selectedSite={selectedSite}
+          />
+        )}
 
-        {/* Leaderboard Quick Link */}
-        <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer group"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                  <Trophy className="w-6 h-6" />
-                  Driver Leaderboard
-                </h3>
-                <p className="text-purple-100">
-                  See who's leading the pack this month! 🏆
-                </p>
+        {/* Leaderboard Quick Link - Hidden for restricted users */}
+        {!userConfig?.hideLeaderboard && (
+          <Link to={`${createPageUrl('Leaderboard')}?customer=${selectedCustomer}&site=${selectedSite}`}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+                    <Trophy className="w-6 h-6" />
+                    Driver Leaderboard
+                  </h3>
+                  <p className="text-purple-100">
+                    See who's leading the pack this month! 🏆
+                  </p>
+                </div>
+                <ChevronRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
               </div>
-              <ChevronRight className="w-8 h-8 group-hover:translate-x-2 transition-transform" />
-            </div>
-          </motion.div>
-        </Link>
+            </motion.div>
+          </Link>
+        )}
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
