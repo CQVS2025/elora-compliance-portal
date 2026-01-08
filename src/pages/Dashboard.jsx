@@ -56,6 +56,9 @@ import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
 import FavoriteVehicles from '@/components/dashboard/FavoriteVehicles';
 import DashboardCustomizer from '@/components/dashboard/DashboardCustomizer';
 import EmailDigestPreferences from '@/components/settings/EmailDigestPreferences';
+import TimezoneSelector from '@/components/settings/TimezoneSelector';
+import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
+import CustomComplianceTargets from '@/components/compliance/CustomComplianceTargets';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
@@ -439,8 +442,8 @@ export default function Dashboard() {
         {/* Activity Feed and Favorites Widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentActivityFeed
-            selectedCustomer={selectedCustomer}
-            selectedSite={selectedSite}
+            customerRef={selectedCustomer}
+            siteRef={selectedSite}
           />
           <FavoriteVehicles
             vehicles={filteredVehicles}
@@ -503,13 +506,22 @@ export default function Dashboard() {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <WashAnalytics 
-                data={washTrendsData} 
+              <WashAnalytics
+                data={washTrendsData}
                 vehicles={filteredVehicles}
                 scans={scans}
               />
               <VehiclePerformanceChart vehicles={filteredVehicles} />
             </div>
+
+            {/* Custom Compliance Targets */}
+            {permissions.isAdmin && selectedCustomer !== 'all' && (
+              <CustomComplianceTargets
+                customerRef={selectedCustomer}
+                vehicles={enrichedVehicles}
+                sites={allSites}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="costs" className="mt-6">
@@ -555,13 +567,25 @@ export default function Dashboard() {
                 <TabsList>
                   <TabsTrigger value="roles">User Roles</TabsTrigger>
                   <TabsTrigger value="multitenant">Multi-Tenant Config</TabsTrigger>
-                  <TabsTrigger value="digest">Email Digest Preferences</TabsTrigger>
+                  <TabsTrigger value="preferences">User Preferences</TabsTrigger>
+                  <TabsTrigger value="digest">Email Digest</TabsTrigger>
                 </TabsList>
                 <TabsContent value="roles" className="mt-6">
                   <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
                 </TabsContent>
                 <TabsContent value="multitenant" className="mt-6">
                   <MultiTenantConfig />
+                </TabsContent>
+                <TabsContent value="preferences" className="mt-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <TimezoneSelector />
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                      <h3 className="text-lg font-semibold text-slate-800 mb-4">More Settings Coming Soon</h3>
+                      <p className="text-sm text-slate-500">
+                        Additional user preference options will be available here.
+                      </p>
+                    </div>
+                  </div>
                 </TabsContent>
                 <TabsContent value="digest" className="mt-6">
                   <EmailDigestPreferences />
@@ -582,6 +606,13 @@ export default function Dashboard() {
           onClose={() => setShowCustomizer(false)}
         />
       )}
+
+      {/* Onboarding Wizard - First Time User Experience */}
+      <OnboardingWizard
+        userEmail={permissions.user?.email}
+        userName="Rebekah Sharp"
+        companyName="Heidelberg Materials"
+      />
     </div>
   );
 }

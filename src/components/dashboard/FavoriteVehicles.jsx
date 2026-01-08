@@ -215,3 +215,24 @@ export function FavoritesQuickList({ userEmail, onVehicleClick, className = '' }
     </div>
   );
 }
+
+/**
+ * Default Export - Dashboard Favorite Vehicles Widget
+ * Adapts FavoritesQuickList for use in Dashboard with user context
+ */
+export default function FavoriteVehicles({ vehicles, selectedCustomer, selectedSite }) {
+  // Get user email from context or permissions
+  const userEmail = typeof window !== 'undefined'
+    ? localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail')
+    : null;
+
+  return (
+    <FavoritesQuickList
+      userEmail={userEmail}
+      onVehicleClick={(vehicleRef) => {
+        // Could navigate to vehicle details or filter table
+        console.log('Clicked favorite vehicle:', vehicleRef);
+      }}
+    />
+  );
+}
