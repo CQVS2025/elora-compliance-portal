@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, CheckCircle, Droplet, Users, Loader2, Trophy, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Truck, CheckCircle, Droplet, Users, Loader2, Trophy, ChevronRight, AlertTriangle, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import moment from 'moment';
 import { base44 } from "@/api/base44Client";
@@ -52,6 +52,10 @@ import DeviceHealth from '@/components/devices/DeviceHealth';
 import CostForecast from '@/components/analytics/CostForecast';
 import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
 import RefillAnalytics from '@/components/refills/RefillAnalytics';
+import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
+import FavoriteVehicles from '@/components/dashboard/FavoriteVehicles';
+import DashboardCustomizer from '@/components/dashboard/DashboardCustomizer';
+import EmailDigestPreferences from '@/components/settings/EmailDigestPreferences';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
@@ -61,6 +65,7 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState('all');
   const [selectedSite, setSelectedSite] = useState('all');
+  const [showCustomizer, setShowCustomizer] = useState(false);
 
   // Get user-specific configuration
   const userConfig = getUserSpecificConfig(permissions.user?.email);
@@ -394,21 +399,35 @@ export default function Dashboard() {
       <BrandedHeader />
       
       <main className="max-w-[1600px] mx-auto px-4 md:px-6 py-6 space-y-6">
-        {/* Filters */}
-        <FilterSection
-          customers={filteredCustomers}
-          sites={allSites}
-          selectedCustomer={selectedCustomer}
-          setSelectedCustomer={setSelectedCustomer}
-          selectedSite={selectedSite}
-          setSelectedSite={setSelectedSite}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          activePeriod={activePeriod}
-          setActivePeriod={setActivePeriod}
-          lockCustomerFilter={userConfig?.lockCustomerFilter}
-          restrictedCustomerName={userConfig?.restrictedCustomer}
-        />
+        {/* Filters and Customizer Button */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <FilterSection
+                customers={filteredCustomers}
+                sites={allSites}
+                selectedCustomer={selectedCustomer}
+                setSelectedCustomer={setSelectedCustomer}
+                selectedSite={selectedSite}
+                setSelectedSite={setSelectedSite}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                activePeriod={activePeriod}
+                setActivePeriod={setActivePeriod}
+                lockCustomerFilter={userConfig?.lockCustomerFilter}
+                restrictedCustomerName={userConfig?.restrictedCustomer}
+              />
+            </div>
+            <button
+              onClick={() => setShowCustomizer(true)}
+              className="flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg border border-slate-200 transition-colors shadow-sm"
+              title="Customize Dashboard"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Customize</span>
+            </button>
+          </div>
+        </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -417,7 +436,18 @@ export default function Dashboard() {
           ))}
         </div>
 
-
+        {/* Activity Feed and Favorites Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentActivityFeed
+            selectedCustomer={selectedCustomer}
+            selectedSite={selectedSite}
+          />
+          <FavoriteVehicles
+            vehicles={filteredVehicles}
+            selectedCustomer={selectedCustomer}
+            selectedSite={selectedSite}
+          />
+        </div>
 
         {/* Cost Forecast - Hidden for restricted users */}
         {!userConfig?.hideCostForecast && (
@@ -525,12 +555,16 @@ export default function Dashboard() {
                 <TabsList>
                   <TabsTrigger value="roles">User Roles</TabsTrigger>
                   <TabsTrigger value="multitenant">Multi-Tenant Config</TabsTrigger>
+                  <TabsTrigger value="digest">Email Digest Preferences</TabsTrigger>
                 </TabsList>
                 <TabsContent value="roles" className="mt-6">
                   <RoleManagement vehicles={enrichedVehicles} sites={allSites} />
                 </TabsContent>
                 <TabsContent value="multitenant" className="mt-6">
                   <MultiTenantConfig />
+                </TabsContent>
+                <TabsContent value="digest" className="mt-6">
+                  <EmailDigestPreferences />
                 </TabsContent>
               </Tabs>
             </div>
@@ -541,6 +575,13 @@ export default function Dashboard() {
         <WashPatternAnalytics scans={scans} />
       </main>
 
+      {/* Dashboard Customizer Modal */}
+      {showCustomizer && (
+        <DashboardCustomizer
+          userEmail={permissions.user?.email}
+          onClose={() => setShowCustomizer(false)}
+        />
+      )}
     </div>
   );
 }
