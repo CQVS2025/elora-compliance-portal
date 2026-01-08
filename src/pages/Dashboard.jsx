@@ -439,8 +439,8 @@ export default function Dashboard() {
         {/* Activity Feed and Favorites Widgets */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentActivityFeed
-            selectedCustomer={selectedCustomer}
-            selectedSite={selectedSite}
+            customerRef={selectedCustomer}
+            siteRef={selectedSite}
           />
           <FavoriteVehicles
             vehicles={filteredVehicles}
