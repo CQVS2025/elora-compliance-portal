@@ -56,7 +56,6 @@ import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
 import FavoriteVehicles from '@/components/dashboard/FavoriteVehicles';
 import DashboardCustomizer from '@/components/dashboard/DashboardCustomizer';
 import EmailDigestPreferences from '@/components/settings/EmailDigestPreferences';
-import TimezoneSelector from '@/components/settings/TimezoneSelector';
 import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
 import CustomComplianceTargets from '@/components/compliance/CustomComplianceTargets';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -577,14 +576,11 @@ export default function Dashboard() {
                   <MultiTenantConfig />
                 </TabsContent>
                 <TabsContent value="preferences" className="mt-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <TimezoneSelector />
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                      <h3 className="text-lg font-semibold text-slate-800 mb-4">More Settings Coming Soon</h3>
-                      <p className="text-sm text-slate-500">
-                        Additional user preference options will be available here.
-                      </p>
-                    </div>
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 className="text-lg font-semibold text-slate-800 mb-4">User Preferences</h3>
+                    <p className="text-sm text-slate-500">
+                      User preference options will be available here.
+                    </p>
                   </div>
                 </TabsContent>
                 <TabsContent value="digest" className="mt-6">
