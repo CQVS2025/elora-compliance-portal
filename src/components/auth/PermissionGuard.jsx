@@ -9,8 +9,10 @@ const USER_SPECIFIC_CONFIG = {
     lockCustomerFilter: true, // Prevent changing customer filter
     showAllData: false, // Only show data for restricted customer
     defaultSite: 'all',
-    hiddenTabs: ['costs', 'refills', 'devices', 'sites'],
-    visibleTabs: ['compliance', 'maintenance', 'reports', 'email-reports']
+    hiddenTabs: ['costs', 'refills', 'devices', 'sites', 'users'],
+    visibleTabs: ['compliance', 'reports', 'email-reports'],
+    hideCostForecast: true, // Hide cost forecast component
+    hideLeaderboard: true // Hide leaderboard link
   }
   // Add more user-specific restrictions as needed
 };
