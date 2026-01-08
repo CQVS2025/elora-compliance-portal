@@ -155,6 +155,9 @@ const getOnboardingSteps = (userName, companyName) => [
 ];
 
 export default function OnboardingWizard({ userEmail, userName = 'User', companyName = 'Your Company', onComplete }) {
+  // Disabled for all users
+  return null;
+
   const [currentStep, setCurrentStep] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
 
