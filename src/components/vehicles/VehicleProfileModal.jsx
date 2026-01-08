@@ -6,12 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Truck, 
-  Wrench, 
-  Droplet, 
-  DollarSign, 
-  Users, 
+import {
+  Truck,
+  Wrench,
+  Droplet,
+  DollarSign,
+  Users,
   Calendar,
   Download,
   CheckCircle,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import moment from 'moment';
+import { usePermissions, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
 // Pricing calculation functions
 const PRICING_RULES = {
@@ -72,6 +73,8 @@ const getStateFromSite = (siteName, customerName = '') => {
 
 export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const permissions = usePermissions();
+  const userConfig = getUserSpecificConfig(permissions.user?.email);
 
   const { data: maintenanceRecords = [] } = useQuery({
     queryKey: ['maintenance', vehicle?.id],
@@ -229,11 +232,13 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className={`grid w-full ${userConfig?.hideUsageCosts ? 'grid-cols-4' : 'grid-cols-5'}`}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="compliance">Compliance</TabsTrigger>
-            <TabsTrigger value="costs">Usage Costs</TabsTrigger>
+            {!userConfig?.hideUsageCosts && (
+              <TabsTrigger value="costs">Usage Costs</TabsTrigger>
+            )}
             <TabsTrigger value="assignments">Assignments</TabsTrigger>
           </TabsList>
 
@@ -283,7 +288,7 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
                 <CardContent>
                   <p className="text-lg font-semibold text-slate-800">{vehicle.site_name}</p>
                   <p className="text-sm text-slate-500 mt-1">Last scan: {moment(vehicle.last_scan).fromNow()}</p>
-                  {usageCosts && (
+                  {usageCosts && !userConfig?.hideUsageCosts && (
                     <Badge className="mt-3 bg-blue-100 text-blue-800">
                       {usageCosts.state}
                     </Badge>
@@ -311,7 +316,7 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
                 </Card>
               )}
 
-              {usageCosts && (
+              {usageCosts && !userConfig?.hideUsageCosts && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -500,6 +505,7 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
           </TabsContent>
 
           {/* Usage Costs Tab */}
+          {!userConfig?.hideUsageCosts && (
           <TabsContent value="costs" className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold">Detailed Usage Cost Breakdown</h3>
@@ -615,6 +621,7 @@ export default function VehicleProfileModal({ vehicle, open, onClose, scans }) {
               </>
             )}
           </TabsContent>
+          )}
 
           {/* Assignments Tab */}
           <TabsContent value="assignments" className="space-y-4">
