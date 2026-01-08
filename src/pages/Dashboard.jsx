@@ -56,6 +56,7 @@ import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
 import FavoriteVehicles from '@/components/dashboard/FavoriteVehicles';
 import DashboardCustomizer from '@/components/dashboard/DashboardCustomizer';
 import EmailDigestPreferences from '@/components/settings/EmailDigestPreferences';
+import OnboardingWizard from '@/components/onboarding/OnboardingWizard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePermissions, useFilteredData, getUserSpecificConfig } from '@/components/auth/PermissionGuard';
 
@@ -582,6 +583,9 @@ export default function Dashboard() {
           onClose={() => setShowCustomizer(false)}
         />
       )}
+
+      {/* Onboarding Wizard - First Time User Experience */}
+      <OnboardingWizard userEmail={permissions.user?.email} />
     </div>
   );
 }
