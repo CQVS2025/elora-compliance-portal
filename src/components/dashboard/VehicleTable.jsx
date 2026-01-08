@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon, Truck } from 'lucide-react';
+import { Search, Download, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon, Truck, Plus, Wrench } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import moment from 'moment';
 import { useQueryClient } from '@tanstack/react-query';
 import VehicleProfileModal from '@/components/vehicles/VehicleProfileModal';
 import { usePermissions } from '@/components/auth/PermissionGuard';
+import { FavoriteButton } from '@/components/dashboard/FavoriteVehicles';
 
 export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQuery }) {
   const permissions = usePermissions();
@@ -19,6 +20,20 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedVehicleId, setExpandedVehicleId] = useState(null);
   const itemsPerPage = 10;
+
+  // Get user email for favorites functionality
+  const userEmail = typeof window !== 'undefined'
+    ? localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail')
+    : null;
+
+  // Placeholder for maintenance data - can be enhanced later
+  const vehicleMaintenance = [];
+
+  const handleAddMaintenance = (vehicle, e) => {
+    e.stopPropagation();
+    // TODO: Implement add maintenance functionality
+    console.log('Add maintenance for vehicle:', vehicle.name);
+  };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -203,9 +218,16 @@ export default function VehicleTable({ vehicles, scans, searchQuery, setSearchQu
                     >
                       <td className="px-4 py-4 font-semibold text-slate-800">
                         <div className="flex items-center gap-2">
-                          <ChevronRightIcon 
+                          <ChevronRightIcon
                             className={`w-4 h-4 text-slate-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                           />
+                          {userEmail && (
+                            <FavoriteButton
+                              vehicleRef={vehicle.id}
+                              vehicleName={vehicle.name}
+                              userEmail={userEmail}
+                            />
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
