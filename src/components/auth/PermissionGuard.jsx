@@ -12,7 +12,7 @@ const USER_SPECIFIC_CONFIG = {
     hiddenTabs: ['costs', 'refills', 'devices', 'sites', 'users'],
     visibleTabs: ['compliance', 'reports', 'email-reports'],
     hideCostForecast: true, // Hide cost forecast component
-    hideLeaderboard: true, // Hide leaderboard link
+    hideLeaderboard: false, // Hide leaderboard link
     hideUsageCosts: true // Hide usage costs in vehicle profile modal
   }
   // Add more user-specific restrictions as needed
