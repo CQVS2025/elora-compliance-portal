@@ -29,3 +29,9 @@ dist-ssr
 *.sw?
 
 .env
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/.git/
+.env.local
