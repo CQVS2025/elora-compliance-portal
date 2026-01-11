@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Execute Supabase Migrations - ELORA Compliance Portal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            color: #333;
+        }
+        h1 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 32px;
+        }
+        .step {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .step h2 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button:active {
+            background: #4451b8;
+        }
+        .success {
+            background: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+            margin-top: 20px;
+            color: white;
+            font-weight: 600;
+        }
+        .success.show {
+            display: block;
+        }
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: background 0.3s;
+        }
+        .cta-button:hover {
+            background: #059669;
+            text-decoration: none;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            color: #92400e;
+        }
+        .code {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        ul {
+            line-height: 1.8;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 ELORA Fleet Compliance Portal - Database Setup</h1>
+
+        <p style="font-size: 18px; color: #64748b;">
+            Complete your Supabase database setup in <strong>3 simple steps</strong>
+        </p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">10</div>
+                <div class="stat-label">Tables</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">33</div>
+                <div class="stat-label">Indexes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">31</div>
+                <div class="stat-label">RLS Policies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">889</div>
+                <div class="stat-label">Lines of SQL</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2>Step 1: Copy the SQL Migration</h2>
+            <p>Click the button below to copy all migration SQL to your clipboard:</p>
+            <button onclick="copySql()" id="copyBtn">📋 Copy SQL to Clipboard</button>
+            <div class="success" id="copySuccess">✅ Copied! Now proceed to Step 2</div>
+        </div>
+
+        <div class="step">
+            <h2>Step 2: Open Supabase SQL Editor</h2>
+            <p>Click this link to open your Supabase SQL Editor:</p>
+            <a href="https://app.supabase.com/project/mtjfypwrtvzhnzgatoim/sql/new" target="_blank" class="cta-button">
+                🌐 Open SQL Editor
+            </a>
+            <p style="color: #64748b; margin-top: 10px;">
+                <small>Opens in a new tab</small>
+            </p>
+        </div>
+
+        <div class="step">
+            <h2>Step 3: Execute the Migration</h2>
+            <ul>
+                <li>Paste the SQL you copied in Step 1 into the editor</li>
+                <li>Click the <strong>"Run"</strong> button (or press Ctrl+Enter / Cmd+Enter)</li>
+                <li>Wait for the success message (should take 5-10 seconds)</li>
+            </ul>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Make sure to paste ALL the SQL from the clipboard.
+            It contains 889 lines that will create your complete database schema.
+        </div>
+
+        <div class="step">
+            <h2>✅ Verification</h2>
+            <p>After running the migration, verify your tables were created:</p>
+            <a href="https://app.supabase.com/project/mtjfypwrtvzhnzgatoim/editor" target="_blank" class="cta-button">
+                📊 View Tables
+            </a>
+            <p style="margin-top: 20px;">You should see these 10 tables:</p>
+            <div class="code">
+                ✓ companies<br>
+                ✓ user_profiles<br>
+                ✓ client_branding<br>
+                ✓ compliance_targets<br>
+                ✓ favorite_vehicles<br>
+                ✓ maintenance_records<br>
+                ✓ notifications<br>
+                ✓ notification_preferences<br>
+                ✓ email_digest_preferences<br>
+                ✓ email_report_preferences
+            </div>
+        </div>
+
+        <div class="step">
+            <h2>🎯 Next Steps (After Migration)</h2>
+            <ol>
+                <li>Create test users in Supabase Authentication:
+                    <br><a href="https://app.supabase.com/project/mtjfypwrtvzhnzgatoim/auth/users" target="_blank">Open Auth Users</a>
+                    <ul>
+                        <li>admin@heidelberg.com.au</li>
+                        <li>user@heidelberg.com.au</li>
+                    </ul>
+                </li>
+                <li>Test your application with the new Supabase backend</li>
+                <li>Configure environment variables in your app</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        async function copySql() {
+            try {
+                // Fetch the SQL file
+                const response = await fetch('supabase-setup-complete.sql');
+                const sql = await response.text();
+
+                // Copy to clipboard
+                await navigator.clipboard.writeText(sql);
+
+                // Show success message
+                const successDiv = document.getElementById('copySuccess');
+                successDiv.classList.add('show');
+
+                // Change button text
+                const btn = document.getElementById('copyBtn');
+                btn.textContent = '✅ Copied!';
+                btn.style.background = '#10b981';
+
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    btn.textContent = '📋 Copy SQL to Clipboard';
+                    btn.style.background = '#667eea';
+                }, 3000);
+
+            } catch (err) {
+                alert('Error copying SQL. Please open supabase-setup-complete.sql manually and copy the contents.');
+                console.error('Copy failed:', err);
+            }
+        }
+    </script>
+</body>
+</html>
