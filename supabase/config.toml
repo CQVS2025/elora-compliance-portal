@@ -24,7 +24,7 @@ max_client_conn = 100
 
 [realtime]
 enabled = true
-ip_version = "ipv4"
+ip_version = "IPv4"
 
 [studio]
 enabled = true
@@ -126,7 +126,6 @@ enabled = false
 
 [edge_runtime]
 enabled = true
-port = 54288
 
 [analytics]
 enabled = false
