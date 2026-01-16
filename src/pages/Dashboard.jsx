@@ -52,6 +52,7 @@ import DeviceHealth from '@/components/devices/DeviceHealth';
 import CostForecast from '@/components/analytics/CostForecast';
 import WashPatternAnalytics from '@/components/analytics/WashPatternAnalytics';
 import RefillAnalytics from '@/components/refills/RefillAnalytics';
+import Refills2 from '@/components/refills/Refills2';
 import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed';
 import FavoriteVehicles from '@/components/dashboard/FavoriteVehicles';
 import DashboardCustomizer from '@/components/dashboard/DashboardCustomizer';
@@ -543,12 +544,11 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="refills2" className="mt-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Refills2</h3>
-              <p className="text-sm text-slate-500">
-                Content for Refills2 tab will be available here.
-              </p>
-            </div>
+            <Refills2
+              selectedCustomer={selectedCustomer}
+              selectedSite={selectedSite}
+              dateRange={dateRange}
+            />
           </TabsContent>
 
           <TabsContent value="devices" className="mt-6">
