@@ -78,6 +78,7 @@ export default function Dashboard() {
       { value: 'compliance', label: 'Compliance' },
       { value: 'costs', label: 'Usage Costs' },
       { value: 'refills', label: 'Refills' },
+      { value: 'refills2', label: 'Refills2' },
       { value: 'devices', label: 'Device Health' },
       { value: 'sites', label: 'Sites' },
       { value: 'reports', label: 'Reports' },
@@ -539,6 +540,15 @@ export default function Dashboard() {
               selectedCustomer={selectedCustomer}
               selectedSite={selectedSite}
             />
+          </TabsContent>
+
+          <TabsContent value="refills2" className="mt-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h3 className="text-lg font-semibold text-slate-800 mb-4">Refills2</h3>
+              <p className="text-sm text-slate-500">
+                Content for Refills2 tab will be available here.
+              </p>
+            </div>
           </TabsContent>
 
           <TabsContent value="devices" className="mt-6">
